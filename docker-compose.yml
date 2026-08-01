@@ -1,0 +1,74 @@
+name: yincools
+
+services:
+  yincools:
+    image: ${DOCKER_IMAGE:-samadeolu7/yincools:latest}
+    container_name: yincools
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - APP_PIN=${APP_PIN}
+      - APP_REMEMBER_ME_KEY=${APP_REMEMBER_ME_KEY}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - yincools_internal
+      - yincools_traefik_net
+    # No `ports:` mapping -- reachable only via Traefik on the shared
+    # external network below, never directly from the host or internet.
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.yincools.rule=Host(`${TRAEFIK_DOMAIN:?set TRAEFIK_DOMAIN in .env}`)
+      - traefik.http.routers.yincools.entrypoints=websecure
+      - traefik.http.routers.yincools.tls=true
+      - traefik.http.routers.yincools.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}
+      - traefik.http.services.yincools.loadbalancer.server.port=8080
+      - traefik.docker.network=${TRAEFIK_NETWORK:?set TRAEFIK_NETWORK in .env}
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - |
+          wget -qO- http://localhost:8080/actuator/health | grep -q '"status":"UP"' || exit 1
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: yincools_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - yincools_postgres_data:/var/lib/postgresql/data
+    networks:
+      - yincools_internal
+    # Deliberately no `ports:` mapping -- only reachable from the yincools
+    # container on the internal network, never from the host or internet.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  yincools_internal:
+    driver: bridge
+  # External network Traefik itself is attached to -- must already exist on
+  # the VPS (Traefik doesn't get started by this compose file).
+  yincools_traefik_net:
+    external: true
+    name: ${TRAEFIK_NETWORK:?set TRAEFIK_NETWORK in .env}
+
+volumes:
+  yincools_postgres_data:

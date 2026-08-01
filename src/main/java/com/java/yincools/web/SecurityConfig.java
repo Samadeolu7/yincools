@@ -30,7 +30,7 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http, @Value("${app.remember-me-key}") String rememberMeKey) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login").permitAll()
+                        .requestMatchers("/login", "/actuator/health").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")

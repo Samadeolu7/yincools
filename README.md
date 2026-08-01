@@ -83,6 +83,59 @@ not of code that could be mocked into passing.
 
 ---
 
+## Deployment
+
+Docker/CI-CD setup mirrors the pattern already used for Bank-Recon on the
+same VPS (multi-stage Dockerfile, Docker Hub image, GitHub Actions build +
+SSH deploy) with two differences that reflect Yincools actually needing to
+be reached directly by a browser rather than only by another backend
+service internally:
+
+- **Traefik-routed, not internal-only.** Bank-Recon publishes no port and
+  is reachable only from Django's containers on a backend-only network.
+  Yincools needs Dad's phone to reach it, so `docker-compose.yml` instead
+  joins the network Traefik itself routes from and carries the standard
+  `traefik.http.routers.*` labels, with `TRAEFIK_DOMAIN` / `TRAEFIK_NETWORK`
+  required (no default) in `.env` -- the compose file refuses to start
+  without them rather than silently using a wrong guess.
+- **Dedicated Postgres, not a shared instance.** A `postgres` container
+  lives in this app's own compose stack (`yincools_internal` network, no
+  published port, persistent named volume) rather than pointing at
+  infrastructure shared with other apps -- keeps this app's data isolated
+  and its compose stack self-contained.
+
+**Files:**
+
+| File | Purpose |
+|---|---|
+| `Dockerfile` | Multi-stage: `eclipse-temurin:21-jdk` builds the jar via the project's own Gradle wrapper, `eclipse-temurin:21-jre` runs it |
+| `docker-compose.yml` | `yincools` service (Traefik-labeled) + dedicated `postgres` service |
+| `.env.example` | Every variable the compose file needs, with comments -- copy to `.env` on the server (gitignored) |
+| `.github/workflows/deploy.yml` | Build+test with Gradle, build/push image to `samadeolu7/yincools`, SCP compose file + SSH `docker compose up -d` on push to `master` |
+| `application-prod.properties` | Activated via `SPRING_PROFILES_ACTIVE=prod`; Postgres datasource from env vars, H2 console disabled |
+
+Reuses the same `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` / `SSH_HOST` /
+`SSH_USER` / `SSH_PRIVATE_KEY` GitHub secrets already configured for
+Bank-Recon. Deploy path on the server: `/opt/java-app/Yincools`.
+
+**Before the first real deploy**, fill in `.env` on the server:
+`TRAEFIK_DOMAIN`, `TRAEFIK_NETWORK` (the network your Traefik container
+actually routes from -- **not** Bank-Recon's internal-only
+`phoenix_kti_backend`), `APP_PIN`, `APP_REMEMBER_ME_KEY` (`openssl rand
+-hex 32`), and Postgres credentials. `application-prod.properties`
+requires `APP_PIN`/`APP_REMEMBER_ME_KEY` with no fallback, so the app
+fails to start rather than silently running with the insecure dev default.
+
+**Verification status:** the H2 dev profile has been exercised live
+end-to-end throughout this build (every phase above). The `prod` profile
+and the container path have *not* been -- neither Docker nor a usable local
+Postgres login were available in the environment this was built in. Before
+trusting this in production, do a dry run: `docker compose up` locally (or
+on the VPS) against a throwaway `.env` and confirm the app boots, connects
+to Postgres, and passes its healthcheck.
+
+---
+
 ## Build Phase Progress
 
 - [x] **Phase 0 — Skeleton.** Spring Boot project, `domain`/`persistence`/`web`
@@ -164,9 +217,10 @@ not of code that could be mocked into passing.
   visibly flagged as approximate wherever a visit shared costs across
   multiple vehicles (§7 of the build plan).
 - No offline support yet (Phase 6b).
-- `/h2-console` requires login like everything else (rather than being
-  publicly reachable) -- fine for now, but plan to disable it entirely via
-  a prod profile before real deployment.
+- `/h2-console` requires login in dev; the `prod` profile disables it
+  outright (`spring.h2.console.enabled=false`) since prod uses Postgres and
+  a raw SQL browser has no business being reachable at all once real data
+  exists.
 
 ---
 
