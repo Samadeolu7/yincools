@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="/css/components.css">
     <title>Quote</title>
     <style>
         .letterhead {
@@ -17,12 +18,7 @@
         .letterhead .business-name { font-size: 1.6rem; font-weight: 700; }
         .letterhead .business-contact { color: var(--color-ink-secondary); font-size: 0.95rem; }
         h1 { font-size: 1.3rem; margin: 0 0 1rem; text-align: center; }
-        .card {
-            border: 2px solid var(--color-ink);
-            border-radius: var(--radius);
-            padding: 1.1rem;
-            line-height: 1.7;
-        }
+        .card { line-height: 1.7; }
         .card .row { display: flex; justify-content: space-between; }
         .card .amount {
             margin-top: 0.75rem;
@@ -42,21 +38,6 @@
             font-weight: 600;
             text-align: center;
         }
-        a.button, button.button {
-            display: block;
-            width: 100%;
-            margin-top: 1rem;
-            padding: 1.1rem;
-            font-size: 1.15rem;
-            font-weight: 700;
-            text-align: center;
-            text-decoration: none;
-            border-radius: var(--radius);
-            border: none;
-            cursor: pointer;
-        }
-        .convert { background: var(--color-primary); color: var(--color-surface); }
-        .new-quote { background: var(--color-surface); color: var(--color-primary); border: 2px solid var(--color-primary); }
     </style>
 </head>
 <body>
@@ -83,9 +64,9 @@
 </div>
 
 <form th:if="${quote.convertedToJobId == null}" method="post" th:action="@{/quotes/{id}/convert(id=${quote.id})}">
-    <button type="submit" class="button convert">Convert to Job</button>
+    <button type="submit" class="btn btn-primary">Convert to Job</button>
 </form>
 
-<a th:href="@{/quotes/new}" class="button new-quote">New quote</a>
+<a th:href="@{/quotes/new}" class="btn btn-outline">New quote</a>
 </body>
 </html>

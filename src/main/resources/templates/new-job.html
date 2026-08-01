@@ -7,87 +7,11 @@
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" href="/icon-192.png">
     <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="/css/components.css">
     <title>New Job</title>
     <style>
         h1 { font-size: 1.4rem; margin: 0 0 1rem; }
-        label {
-            display: block;
-            font-weight: 600;
-            margin: 1.1rem 0 0.35rem;
-        }
-        input, select {
-            width: 100%;
-            padding: 0.9rem;
-            font-size: 1.1rem;
-            border: 2px solid var(--color-ink);
-            border-radius: var(--radius-sm);
-        }
-        .quick-picks {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            flex-wrap: wrap;
-        }
-        .quick-pick {
-            flex: 1 1 auto;
-            padding: 0.75rem 0.5rem;
-            font-size: 1rem;
-            border: 2px solid var(--color-ink);
-            border-radius: var(--radius-sm);
-            background: var(--color-surface-muted);
-            cursor: pointer;
-        }
-        .recent-customers, .vehicle-picker, .parts-chips {
-            display: flex;
-            gap: 0.5rem;
-            overflow-x: auto;
-            padding-bottom: 0.25rem;
-            flex-wrap: wrap;
-        }
-        .recent-customer, .vehicle-chip, .part-chip {
-            flex: 0 0 auto;
-            padding: 0.75rem 1rem;
-            border: 2px solid var(--color-primary);
-            color: var(--color-primary);
-            border-radius: var(--radius-sm);
-            background: var(--color-surface);
-            font-size: 1rem;
-            white-space: nowrap;
-            cursor: pointer;
-        }
-        .vehicle-chip.selected, .part-chip.selected {
-            background: var(--color-primary);
-            color: var(--color-surface);
-        }
-        .plate {
-            width: 100%;
-            padding: 0.9rem;
-            font-size: 1.1rem;
-            border: 2px solid var(--color-ink);
-            border-radius: var(--radius-sm);
-            margin-top: 0.5rem;
-        }
-        .checkbox-row {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            margin-top: 0.75rem;
-        }
-        .checkbox-row input { width: auto; }
-        .checkbox-row label { margin: 0; font-weight: 500; }
-        button.submit {
-            width: 100%;
-            margin-top: 1.75rem;
-            padding: 1.1rem;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--color-surface);
-            background: var(--color-primary);
-            border: none;
-            border-radius: var(--radius);
-            cursor: pointer;
-        }
-        .hint { color: var(--color-ink-secondary); font-size: 0.9rem; margin-top: 0.25rem; }
+        .plate { margin-top: 0.5rem; }
         .last-entry {
             border: 2px solid #b8860b;
             border-radius: var(--radius);
@@ -177,7 +101,7 @@
 
 <div th:if="${not #lists.isEmpty(recentCustomers)}">
     <label>Recent customers</label>
-    <div class="recent-customers">
+    <div class="chip-row">
         <button type="button" class="recent-customer"
                 th:each="c : ${recentCustomers}"
                 th:text="${c.name != null and !c.name.isEmpty()} ? ${c.name} : ${c.phone}"
@@ -200,7 +124,7 @@
     <div class="hint">Add this later if you want to share a WhatsApp receipt.</div>
 
     <label for="vehicleDescription">Vehicle (optional)</label>
-    <div id="vehiclePicker" class="vehicle-picker" style="display:none;"></div>
+    <div id="vehiclePicker" class="chip-row" style="display:none;"></div>
     <input type="text" id="vehicleDescription" name="vehicleDescription" list="vehicle-suggestions"
            placeholder="e.g. Camry 2010" oninput="clearVehicleSelection()">
     <datalist id="vehicle-suggestions"></datalist>
@@ -224,7 +148,7 @@
 
     <label for="partsCost">Parts cost (optional)</label>
     <input type="text" inputmode="numeric" id="partsCost" name="partsCost" placeholder="0">
-    <div id="partsChips" class="parts-chips"></div>
+    <div id="partsChips" class="chip-row"></div>
     <input type="text" id="partsOther" placeholder="Other part">
     <input type="hidden" id="partsNote" name="partsNote">
     <div class="checkbox-row">
@@ -232,7 +156,7 @@
         <label for="sharedPartsCost">Shared across today's visit (not just this car)</label>
     </div>
 
-    <button type="submit" class="submit">Save job</button>
+    <button type="submit" class="btn btn-primary">Save job</button>
 </form>
 
 <script th:inline="javascript">

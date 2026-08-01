@@ -4,48 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="/css/components.css">
     <title>Shop Expense</title>
     <style>
         h1 { font-size: 1.4rem; margin: 0 0 1rem; }
-        label {
-            display: block;
-            font-weight: 600;
-            margin: 1.1rem 0 0.35rem;
-        }
-        input {
-            width: 100%;
-            padding: 0.9rem;
-            font-size: 1.1rem;
-            border: 2px solid var(--color-ink);
-            border-radius: var(--radius-sm);
-        }
-        .quick-picks {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            flex-wrap: wrap;
-        }
-        .quick-pick {
-            flex: 1 1 auto;
-            padding: 0.75rem 0.5rem;
-            font-size: 1rem;
-            border: 2px solid var(--color-ink);
-            border-radius: var(--radius-sm);
-            background: var(--color-surface-muted);
-            cursor: pointer;
-        }
-        button.submit {
-            width: 100%;
-            margin-top: 1.75rem;
-            padding: 1.1rem;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--color-surface);
-            background: var(--color-primary);
-            border: none;
-            border-radius: var(--radius);
-            cursor: pointer;
-        }
         .saved {
             border: 2px solid var(--color-ink);
             background: var(--color-surface-muted);
@@ -57,7 +19,7 @@
         }
     </style>
 </head>
-<body>
+<body class="has-bottom-nav">
 <h1>Shop Expense</h1>
 
 <div class="saved" th:if="${param.saved != null}">Saved.</div>
@@ -75,7 +37,7 @@
     <label for="note">What was it for? (optional)</label>
     <input type="text" id="note" name="note" placeholder="e.g. rent, fuel, tools">
 
-    <button type="submit" class="submit">Save expense</button>
+    <button type="submit" class="btn btn-primary">Save expense</button>
 </form>
 
 <script>
@@ -83,5 +45,6 @@
         document.getElementById('amount').value = value;
     }
 </script>
+<div th:replace="~{fragments/bottom-nav :: nav('expense')}"></div>
 </body>
 </html>

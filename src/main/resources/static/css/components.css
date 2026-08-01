@@ -1,0 +1,149 @@
+/*
+ * Reusable UI primitives built from tokens.css's values. This is the
+ * structural payoff of the token system: a new screen gets consistent
+ * buttons/inputs/chips for free by linking this file, instead of every
+ * template carrying its own copy of the same rules (which is what led to
+ * drift before -- e.g. the old green accent color existing in ten places).
+ * Link tokens.css before this file.
+ */
+
+label {
+    display: block;
+    font-weight: 600;
+    margin: 1.1rem 0 0.35rem;
+}
+
+/* Every text/number/tel/password input and select in the app looks the
+   same -- there's no case yet where one should look different, so this is
+   a plain element selector, not a class every template has to remember. */
+input[type="text"],
+input[type="tel"],
+input[type="password"],
+input[type="number"],
+select {
+    width: 100%;
+    padding: 0.9rem;
+    font-size: 1.1rem;
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    background: var(--color-surface);
+    color: var(--color-ink);
+}
+
+.hint {
+    color: var(--color-ink-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+/* Buttons -- one base, three fills. */
+.btn {
+    display: block;
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 1.1rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+}
+.btn:active { opacity: 0.85; }
+
+.btn-primary { background: var(--color-primary); color: var(--color-surface); }
+.btn-outline { background: var(--color-surface); color: var(--color-primary); border: 2px solid var(--color-primary); }
+.btn-ink-outline { background: var(--color-surface); color: var(--color-ink); border: 2px solid var(--color-ink); }
+
+/* Quick-pick amount buttons -- fill a field in one tap, still editable. */
+.quick-picks {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+.quick-pick {
+    flex: 1 1 auto;
+    padding: 0.75rem 0.5rem;
+    font-size: 1rem;
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-muted);
+    cursor: pointer;
+}
+.quick-pick:active { opacity: 0.85; }
+
+/* Chips: recent customers, vehicle picks, part picks, open quotes -- same
+   look everywhere they appear, different classes only because JS targets
+   them separately (see vehicle-picker.js / parts-chips.js). */
+.chip-row {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    flex-wrap: wrap;
+}
+.recent-customer, .vehicle-chip, .part-chip, .open-quote {
+    flex: 0 0 auto;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    font-size: 1rem;
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: none;
+}
+.vehicle-chip.selected, .part-chip.selected {
+    background: var(--color-primary);
+    color: var(--color-surface);
+}
+
+.card {
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius);
+    padding: 1rem;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+}
+.checkbox-row input { width: auto; }
+.checkbox-row label { margin: 0; font-weight: 500; }
+
+/*
+ * Persistent bottom nav for the occasional screens (This Week, Who Owes
+ * Me, Shop Expense, New Quote) -- deliberately NOT on New Job/Receipt/Edit
+ * Job, which stay exactly as lean as before since that's the 15-20x/day
+ * loop. Adding a new section later (customer list, settings, ...) means
+ * one new <a> in fragments/bottom-nav.html, not a per-screen redesign.
+ */
+body.has-bottom-nav { padding-bottom: 5rem; }
+
+.bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    background: var(--color-surface);
+    border-top: 2px solid var(--color-ink);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    z-index: 10;
+}
+.bottom-nav a {
+    flex: 1;
+    text-align: center;
+    padding: 0.85rem 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-ink-secondary);
+    text-decoration: none;
+}
+.bottom-nav a.active { color: var(--color-primary); }

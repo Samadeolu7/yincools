@@ -63,12 +63,33 @@ Yincools mark, not a palette invented from scratch:
 
 Red is used as an accent only, never a surface — a large red background
 reads as a warning banner, and the mark itself only ever uses red as an
-accent against black and white. Every screen links the same stylesheet, so
-a color change happens in one file, not a screen-by-screen hunt. The
-home-screen icon (`icon-192.png` / `icon-512.png`) and the letterhead
-(`fragments/letterhead.html`, used by both the receipt and the quote
-preview) are generated from the actual logo file
-(`static/square_yincools_logo.png`), not a placeholder.
+accent against black and white. The home-screen icon (`icon-192.png` /
+`icon-512.png`) and the letterhead (`fragments/letterhead.html`, used by
+both the receipt and the quote preview) are generated from the actual logo
+file (`static/square_yincools_logo.png`), not a placeholder.
+
+**Two-layer CSS, on purpose.** `tokens.css` holds only values (colors,
+spacing, radius); `static/css/components.css` builds the actual reusable
+UI out of them — `.btn`/`.btn-primary`/`.btn-outline`, form inputs (plain
+element selectors, not a class every template has to remember — every
+text/tel/password input and select looks the same, there's no case yet
+where one shouldn't), chips, cards, quick-picks, the bottom nav. Every
+screen links both files instead of carrying its own copy of the same
+rules. This is the concrete answer to "keep this future-proof without
+sacrificing ease of use now": a new screen gets consistent styling for
+free by linking two stylesheets, and a system-wide visual change (which
+already happened once, going from a placeholder green accent to the real
+brand red) is a one-file edit instead of a hunt through every template.
+
+**Navigation matches how often a screen is actually used, not a blanket
+pattern.** New Job, Receipt, and Edit Job are the 15–20×/day loop — they
+carry zero navigation chrome, exactly as before. This Week, Who Owes Me,
+Shop Expense, and New Quote are occasional, so they share a persistent
+bottom nav (`fragments/bottom-nav.html`) that lets Dad jump between them
+directly instead of bouncing back through New Job. Adding a new occasional
+section later (customer list, settings, ...) is one line in that fragment,
+not a per-screen redesign — and it never touches the high-frequency path
+at all.
 
 **Vehicles, in three shapes, matching what's actually known:** a `Job` can
 reference a persisted `Vehicle` (customer with 1+ cars — auto-selected if
@@ -301,11 +322,11 @@ to Postgres, and passes its healthcheck.
   customers, last entry) would go stale sitting in a cache. The offline
   submission path doesn't depend on that token anyway (see the CSRF point
   above), so a stale cached copy of the page still submits correctly.
-- Manifest/icon links, `tokens.css`, and the offline scripts are only on
-  New Job and the login page -- the landing/entry screens, so those are
-  the ones that matter for "add to home screen" and first impression.
-  Other screens carry `tokens.css` for consistent colors but not the
-  manifest/offline scripts.
+- Manifest/icon links and the offline scripts are only on New Job and the
+  login page -- the landing/entry screens, so those are the ones that
+  matter for "add to home screen" and first impression. Every screen links
+  `tokens.css` + `components.css` for consistent colors and controls, but
+  only those two carry the manifest/offline scripts.
 - `SecurityConfig` permits static assets (`/css/**`, `/images/**`,
   `/manifest.webmanifest`, icons, the JS/JSON files) without login --
   they're not per-user data, and the login page itself (rendered before

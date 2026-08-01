@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="/css/components.css">
     <title>Who Owes Me</title>
     <style>
         h1 { font-size: 1.4rem; margin: 0 0 1rem; }
@@ -11,8 +12,6 @@
             display: block;
             padding: 0.9rem;
             margin-bottom: 0.6rem;
-            border: 2px solid var(--color-ink);
-            border-radius: var(--radius);
             text-decoration: none;
             color: var(--color-ink);
         }
@@ -32,32 +31,19 @@
             border-radius: var(--radius);
             padding: 2rem 1rem;
         }
-        a.button {
-            display: block;
-            width: 100%;
-            margin-top: 1.5rem;
-            padding: 1.1rem;
-            font-size: 1.15rem;
-            font-weight: 700;
-            text-align: center;
-            text-decoration: none;
-            border-radius: var(--radius);
-            background: var(--color-primary);
-            color: var(--color-surface);
-        }
     </style>
 </head>
-<body>
+<body class="has-bottom-nav">
 <h1>Who Owes Me</h1>
 
 <p class="empty" th:if="${#lists.isEmpty(debtors)}">Nobody owes you anything right now.</p>
 
-<a class="debtor" th:each="d : ${debtors}" th:href="@{/jobs/{id}/edit(id=${d.job().id})}">
+<a class="debtor card" th:each="d : ${debtors}" th:href="@{/jobs/{id}/edit(id=${d.job().id})}">
     <div class="name" th:text="${d.customerLabel()} != null ? ${d.customerLabel()} : 'Unnamed customer'"></div>
     <div class="job" th:text="${d.job().workType} + ' — ' + ${d.vehicleLabel()}"></div>
     <div class="balance" th:text="'NGN ' + ${d.job().cachedBalance}"></div>
 </a>
 
-<a th:href="@{/jobs/new}" class="button">Back to New Job</a>
+<div th:replace="~{fragments/bottom-nav :: nav('debtors')}"></div>
 </body>
 </html>

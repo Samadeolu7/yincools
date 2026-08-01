@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="/css/components.css">
     <title>Receipt</title>
     <style>
         h1 { font-size: 1.4rem; margin: 0 0 1rem; }
@@ -16,45 +17,27 @@
         .letterhead-logo { height: 48px; width: auto; }
         .letterhead .business-name { font-size: 1.3rem; font-weight: 700; }
         .letterhead .business-contact { color: var(--color-ink-secondary); font-size: 0.95rem; }
-        .card {
-            border: 2px solid var(--color-ink);
-            border-radius: var(--radius);
-            padding: 1rem;
+        .receipt-text {
             white-space: pre-wrap;
             font-family: var(--font-mono);
             font-size: 1rem;
             line-height: 1.5;
         }
-        a.button, button.button {
-            display: block;
-            width: 100%;
-            margin-top: 1rem;
-            padding: 1.1rem;
-            font-size: 1.15rem;
-            font-weight: 700;
-            text-align: center;
-            text-decoration: none;
-            border-radius: var(--radius);
-            border: none;
-            cursor: pointer;
-        }
         .whatsapp { background: #25D366; color: var(--color-surface); }
-        .new-job { background: var(--color-primary); color: var(--color-surface); }
-        .edit { background: var(--color-surface); color: var(--color-primary); border: 2px solid var(--color-primary); }
     </style>
 </head>
 <body>
 <div th:replace="~{fragments/letterhead :: letterhead}"></div>
 <h1>Job Saved</h1>
 
-<div class="card" th:text="${receiptText}"></div>
+<div class="card receipt-text" th:text="${receiptText}"></div>
 
-<a th:if="${whatsappLink != null}" th:href="${whatsappLink}" class="button whatsapp" target="_blank">
+<a th:if="${whatsappLink != null}" th:href="${whatsappLink}" class="btn whatsapp" target="_blank">
     Share on WhatsApp
 </a>
 
-<a th:href="@{/jobs/{id}/edit(id=${job.id})}" class="button edit">Fix this entry</a>
+<a th:href="@{/jobs/{id}/edit(id=${job.id})}" class="btn btn-outline">Fix this entry</a>
 
-<a th:href="@{/jobs/new}" class="button new-job">New job</a>
+<a th:href="@{/jobs/new}" class="btn btn-primary">New job</a>
 </body>
 </html>

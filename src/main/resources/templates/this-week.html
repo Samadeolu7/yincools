@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="/css/components.css">
     <title>This Week</title>
     <style>
         h1 { font-size: 1.4rem; margin: 0 0 0.25rem; }
@@ -18,22 +19,9 @@
         .stat .label { font-weight: 600; }
         .stat .value { font-size: 1.2rem; font-family: var(--font-mono); }
         .profit .value { font-weight: 700; color: var(--color-primary); }
-        a.button {
-            display: block;
-            width: 100%;
-            margin-top: 1.5rem;
-            padding: 1.1rem;
-            font-size: 1.15rem;
-            font-weight: 700;
-            text-align: center;
-            text-decoration: none;
-            border-radius: var(--radius);
-            background: var(--color-primary);
-            color: var(--color-surface);
-        }
     </style>
 </head>
-<body>
+<body class="has-bottom-nav">
 <h1>This Week</h1>
 <div class="range" th:text="${summary.weekStart()} + ' to ' + ${summary.weekEnd()}"></div>
 
@@ -62,6 +50,6 @@
     <span class="value" th:text="'NGN ' + ${summary.profit()}"></span>
 </div>
 
-<a th:href="@{/jobs/new}" class="button">Back to New Job</a>
+<div th:replace="~{fragments/bottom-nav :: nav('week')}"></div>
 </body>
 </html>

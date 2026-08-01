@@ -4,100 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="/css/components.css">
     <title>New Quote</title>
     <style>
         h1 { font-size: 1.4rem; margin: 0 0 1rem; }
-        label {
-            display: block;
-            font-weight: 600;
-            margin: 1.1rem 0 0.35rem;
-        }
-        input, select {
-            width: 100%;
-            padding: 0.9rem;
-            font-size: 1.1rem;
-            border: 2px solid var(--color-ink);
-            border-radius: var(--radius-sm);
-        }
-        .quick-picks {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            flex-wrap: wrap;
-        }
-        .quick-pick {
-            flex: 1 1 auto;
-            padding: 0.75rem 0.5rem;
-            font-size: 1rem;
-            border: 2px solid var(--color-ink);
-            border-radius: var(--radius-sm);
-            background: var(--color-surface-muted);
-            cursor: pointer;
-        }
-        .vehicle-picker, .parts-chips, .open-quotes {
-            display: flex;
-            gap: 0.5rem;
-            overflow-x: auto;
-            padding-bottom: 0.25rem;
-            flex-wrap: wrap;
-        }
-        .vehicle-chip, .part-chip, .open-quote {
-            flex: 0 0 auto;
-            padding: 0.75rem 1rem;
-            border: 2px solid var(--color-primary);
-            color: var(--color-primary);
-            border-radius: var(--radius-sm);
-            background: var(--color-surface);
-            font-size: 1rem;
-            white-space: nowrap;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        .vehicle-chip.selected, .part-chip.selected {
-            background: var(--color-primary);
-            color: var(--color-surface);
-        }
-        .plate {
-            width: 100%;
-            padding: 0.9rem;
-            font-size: 1.1rem;
-            border: 2px solid var(--color-ink);
-            border-radius: var(--radius-sm);
-            margin-top: 0.5rem;
-        }
-        button.submit {
-            width: 100%;
-            margin-top: 1.75rem;
-            padding: 1.1rem;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--color-surface);
-            background: var(--color-primary);
-            border: none;
-            border-radius: var(--radius);
-            cursor: pointer;
-        }
-        .hint { color: var(--color-ink-secondary); font-size: 0.9rem; margin-top: 0.25rem; }
-        nav.insights {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-        nav.insights a { color: var(--color-ink-secondary); }
+        .plate { margin-top: 0.5rem; }
         #partsOther { margin-top: 0.5rem; display: none; }
     </style>
 </head>
-<body>
+<body class="has-bottom-nav">
 <h1>New Quote</h1>
-
-<nav class="insights">
-    <a th:href="@{/jobs/new}">New job</a>
-</nav>
 
 <div th:if="${not #lists.isEmpty(recentQuotes)}">
     <label>Open quotes</label>
-    <div class="open-quotes">
+    <div class="chip-row">
         <a class="open-quote" th:each="q : ${recentQuotes}" th:href="@{/quotes/{id}(id=${q.quote().id})}"
            th:text="${q.quote().workType} + ' — ' + ${q.vehicleLabel()} + ' (NGN ' + ${q.quote().amount} + ')'"></a>
     </div>
@@ -116,7 +36,7 @@
     <input type="tel" inputmode="tel" id="customerPhone" name="customerPhone" onchange="lookupVehicles(this.value)">
 
     <label for="vehicleDescription">Vehicle (optional)</label>
-    <div id="vehiclePicker" class="vehicle-picker" style="display:none;"></div>
+    <div id="vehiclePicker" class="chip-row" style="display:none;"></div>
     <input type="text" id="vehicleDescription" name="vehicleDescription" list="vehicle-suggestions"
            placeholder="e.g. Camry 2010" oninput="clearVehicleSelection()">
     <datalist id="vehicle-suggestions"></datalist>
@@ -125,7 +45,7 @@
     <input type="hidden" id="vehicleId" name="vehicleId">
 
     <label>Likely parts (optional)</label>
-    <div id="partsChips" class="parts-chips"></div>
+    <div id="partsChips" class="chip-row"></div>
     <input type="text" id="partsOther" placeholder="Other part">
     <input type="hidden" id="partsNote" name="partsNote">
 
@@ -137,7 +57,7 @@
     </div>
     <div class="hint">One total, no per-part pricing -- matches how you actually quote a job.</div>
 
-    <button type="submit" class="submit">Save quote</button>
+    <button type="submit" class="btn btn-primary">Save quote</button>
 </form>
 
 <script>
@@ -147,5 +67,6 @@
 </script>
 <script src="/vehicle-picker.js"></script>
 <script src="/parts-chips.js"></script>
+<div th:replace="~{fragments/bottom-nav :: nav('quote')}"></div>
 </body>
 </html>
