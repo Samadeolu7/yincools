@@ -42,4 +42,12 @@ public class Job {
     private BigDecimal cachedPaid;
 
     private BigDecimal cachedBalance;
+
+    /**
+     * Client-generated UUID from the offline job-capture flow -- lets a
+     * retried submission (phone lost signal before the first response
+     * arrived) be recognized as already-processed instead of creating a
+     * duplicate job. Null for jobs created through the normal form.
+     */
+    private String clientId;
 }

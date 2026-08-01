@@ -215,4 +215,35 @@ class JobServiceTest {
         assertThat(entries).hasSize(1);
         assertThat(entries.get(0).getNote()).isEqualTo("Compressor, Relay");
     }
+
+    @Test
+    void createJobIdempotentRetryWithSameClientIdReturnsTheSameJobWithoutDuplicating() {
+        Job first = jobService.createJobIdempotent("client-abc", "Bode", "08010000000",
+                null, "Camry 2010", null, null, "REGAS",
+                new BigDecimal("15000"), BigDecimal.ZERO, null, false, new BigDecimal("15000"));
+
+        Job retry = jobService.createJobIdempotent("client-abc", "Bode", "08010000000",
+                null, "Camry 2010", null, null, "REGAS",
+                new BigDecimal("15000"), BigDecimal.ZERO, null, false, new BigDecimal("15000"));
+
+        assertThat(retry.getId()).isEqualTo(first.getId());
+        assertThat(jobRepository.count()).isEqualTo(1);
+        assertThat(customerRepository.count()).isEqualTo(1);
+        assertThat(vehicleRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    void createJobIdempotentRetryDoesNotDuplicateASharedPartsCostEntry() {
+        jobService.createJobIdempotent("client-shared", "Fleet Co", "0800000009",
+                null, "Truck 1", null, null, "REGAS",
+                new BigDecimal("10000"), new BigDecimal("6000"), "shared gas can", true, new BigDecimal("10000"));
+
+        Job retry = jobService.createJobIdempotent("client-shared", "Fleet Co", "0800000009",
+                null, "Truck 1", null, null, "REGAS",
+                new BigDecimal("10000"), new BigDecimal("6000"), "shared gas can", true, new BigDecimal("10000"));
+
+        // CHARGE + PAYMENT (tied to the job) + one shared PARTS_COST entry -- a
+        // duplicated retry would produce 6, not 3.
+        assertThat(ledgerRepository.findByCustomerId(retry.getCustomerId())).hasSize(3);
+    }
 }

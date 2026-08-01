@@ -17,4 +17,6 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     long countByDateBetween(LocalDate start, LocalDate end);
 
     List<Job> findByCachedBalanceGreaterThanOrderByCachedBalanceDesc(BigDecimal threshold);
+
+    Optional<Job> findByClientId(String clientId);
 }

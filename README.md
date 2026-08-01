@@ -192,8 +192,22 @@ to Postgres, and passes its healthcheck.
   Dad logs in once on his phone and never sees the login screen again.
   `app.pin` / `app.remember-me-key` come from `APP_PIN` / `APP_REMEMBER_ME_KEY`
   env vars in real deployments (dev defaults are insecure placeholders).
-- [ ] **Phase 7b — PWA + offline.** Manifest + icon for home-screen install,
-  service worker + local queue for offline job capture.
+- [x] **Phase 7b — PWA + offline.** `manifest.webmanifest` + generated icons
+  (installable, `start_url=/jobs/new`). `sw.js` precaches New Job's static
+  assets and keeps a network-first/cache-fallback copy of the page shell
+  itself. New Job's submit is intercepted by `offline-queue.js`: tries the
+  JSON `/api/jobs` endpoint with a timeout, and on failure queues the job in
+  `localStorage`, shows a client-rendered receipt (with a working WhatsApp
+  link) immediately, and retries on the next page load or `online` event.
+  A client-generated `clientId` UUID makes retries safe --
+  `JobService.createJobIdempotent()` returns the existing job instead of
+  writing a duplicate if the same `clientId` comes in twice (the real risk:
+  a lost *response*, not a lost request). `/api/jobs` is deliberately
+  CSRF-exempt (see below) but still requires the same login as everything
+  else. Aggregate screens (This Week, Who Owes Me) were deliberately **not**
+  made to work offline -- they're reads over server data, and failing
+  honestly with no signal is fine; only capturing the job was worth the
+  complexity.
 - [ ] **Phase 8 — Later insights** (once real data exists). Regas-due list
   (per-vehicle, unlocked by Phase 1's `Vehicle` entity), monthly profit
   trend, busiest job type.
@@ -221,6 +235,8 @@ to Postgres, and passes its healthcheck.
 | `POST /quotes` | Creates a quote (no `LedgerEntry` written), redirects to its preview |
 | `GET /quotes/{id}` | Letterhead-styled preview, screenshot-shareable; Convert to Job button if still open |
 | `POST /quotes/{id}/convert` | Creates the job (paid in full by default) and redirects to its Edit screen; idempotent |
+| `POST /api/jobs` | JSON, CSRF-exempt: idempotent-by-`clientId` job creation for the offline queue |
+| `GET /manifest.webmanifest`, `/sw.js` | PWA manifest and service worker |
 
 ### Known simplifications (intentional, not gaps)
 
@@ -249,11 +265,24 @@ to Postgres, and passes its healthcheck.
   amount only — the quote's `partsNote` (informational text) isn't copied
   to the job, matching a Job's existing level of simplicity (no itemized
   parts on jobs either).
-- No offline support yet (Phase 7b).
 - `/h2-console` requires login in dev; the `prod` profile disables it
   outright (`spring.h2.console.enabled=false`) since prod uses Postgres and
   a raw SQL browser has no business being reachable at all once real data
   exists.
+- `/api/jobs` is exempt from CSRF, unlike every other POST endpoint. This is
+  safe because it only accepts `application/json`, which browsers can't
+  send cross-origin as a "simple request" -- it triggers a CORS preflight,
+  and no CORS policy is configured to allow one, so the browser blocks it.
+  It still requires the same session/remember-me login as everything else.
+- The service worker only precaches New Job's static assets and the *last
+  successfully-loaded* copy of `/jobs/new` itself -- it never precaches the
+  page at install time, since the server-rendered HTML (CSRF token, recent
+  customers, last entry) would go stale sitting in a cache. The offline
+  submission path doesn't depend on that token anyway (see the CSRF point
+  above), so a stale cached copy of the page still submits correctly.
+- Manifest/icon links and the offline scripts are only on the New Job page
+  -- it's the landing page after login, so it's the one Dad would actually
+  add to his home screen from. Other screens don't carry them.
 
 ---
 

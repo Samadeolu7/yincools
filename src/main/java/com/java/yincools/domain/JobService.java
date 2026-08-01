@@ -66,6 +66,42 @@ public class JobService {
         return persistJob(customerId, vehicleId, vehicleNote, workType, charge, BigDecimal.ZERO, null, paid);
     }
 
+    /**
+     * For the offline job-capture API: if a job with this clientId already
+     * exists (the phone retried a submission whose first response never
+     * arrived), return it untouched instead of resolving the customer/
+     * vehicle and writing the ledger a second time. The shared-cost decision
+     * has to live inside this same idempotency check, not in the caller --
+     * otherwise a retry would skip creating a duplicate job but still log a
+     * duplicate shared-cost entry, since recordSharedPartsCost is a plain
+     * append with no idempotency of its own (see LedgerService.recordSharedCost).
+     */
+    @Transactional
+    public Job createJobIdempotent(String clientId, String customerName, String customerPhone,
+                                    Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
+                                    String vehicleNote, String workType, BigDecimal charge,
+                                    BigDecimal partsCost, String partsNote, boolean partsCostIsShared, BigDecimal paid) {
+        Optional<Job> existing = jobRepo.findByClientId(clientId);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
+        boolean hasCustomer = StringUtils.hasText(customerName) || StringUtils.hasText(customerPhone);
+        boolean logAsSharedCost = partsCostIsShared && hasCustomer
+                && partsCost != null && partsCost.compareTo(BigDecimal.ZERO) != 0;
+
+        Job job = createJob(customerName, customerPhone, vehicleId, newVehicleDescription, newVehiclePlateNumber,
+                vehicleNote, workType, charge, logAsSharedCost ? BigDecimal.ZERO : partsCost, partsNote, paid);
+        job.setClientId(clientId);
+        job = jobRepo.save(job);
+
+        if (logAsSharedCost) {
+            recordSharedPartsCost(job.getCustomerId(), partsCost, partsNote);
+        }
+
+        return job;
+    }
+
     private Job persistJob(Long customerId, Long vehicleId, String vehicleNote, String workType,
                             BigDecimal charge, BigDecimal partsCost, String partsNote, BigDecimal paid) {
         Job job = new Job();

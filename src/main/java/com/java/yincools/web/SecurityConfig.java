@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .key(rememberMeKey)
                         .tokenValiditySeconds(REMEMBER_ME_VALIDITY_SECONDS)
                         .alwaysRemember(true))
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/api/jobs"))
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
         return http.build();

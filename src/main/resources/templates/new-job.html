@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="theme-color" content="#0a6b3d">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/icon-192.png">
     <title>New Job</title>
     <style>
         * { box-sizing: border-box; }
@@ -121,6 +124,41 @@
         }
         nav.insights a { color: #555555; }
         #partsOther { margin-top: 0.5rem; display: none; }
+        #unsyncedBadge {
+            display: none;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            background: #f2f2f2;
+            color: #555555;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        #offlineSavedBanner {
+            display: none;
+            margin-bottom: 1.25rem;
+            padding: 0.9rem;
+            border: 2px solid #b8860b;
+            border-radius: 10px;
+            background: #fffbea;
+        }
+        #offlineSavedBanner .label {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #8a6400;
+            margin-bottom: 0.5rem;
+        }
+        #offlineSavedBanner pre {
+            white-space: pre-wrap;
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 0.95rem;
+            margin: 0 0 0.5rem;
+        }
+        #offlineSavedBanner .wa-link {
+            display: inline-block;
+            font-weight: 700;
+            color: #0a6b3d;
+        }
     </style>
 </head>
 <body>
@@ -132,6 +170,9 @@
     <a th:href="@{/expenses/new}">Shop expense</a>
     <a th:href="@{/quotes/new}">New quote</a>
 </nav>
+
+<div id="unsyncedBadge"></div>
+<div id="offlineSavedBanner"></div>
 
 <div class="last-entry" th:if="${lastJob != null}">
     <div class="label">LAST ENTRY -- tap to fix</div>
@@ -153,7 +194,7 @@
     </div>
 </div>
 
-<form method="post" th:action="@{/jobs}">
+<form method="post" th:action="@{/jobs}" id="newJobForm">
     <label for="workType">Work type</label>
     <select id="workType" name="workType" required>
         <option th:each="w : ${workTypes}" th:value="${w}" th:text="${w}"></option>
@@ -202,12 +243,14 @@
     <button type="submit" class="submit">Save job</button>
 </form>
 
-<script>
+<script th:inline="javascript">
     function setAmount(fieldId, value) {
         document.getElementById(fieldId).value = value;
     }
+    window.YINCOOLS_BUSINESS_NAME = /*[[${businessName}]]*/ 'AC Tech';
 </script>
 <script src="/vehicle-picker.js"></script>
 <script src="/parts-chips.js"></script>
+<script src="/offline-queue.js"></script>
 </body>
 </html>
