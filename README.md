@@ -46,9 +46,11 @@ web/              Thymeleaf controllers + templates. Talk only to domain/ servic
 ./gradlew bootRun
 ```
 
-Opens on `http://localhost:8080`, redirects straight to the New Job screen.
-Data is stored in a file-backed H2 database at `./data/` (gitignored) — the
-H2 console is at `/h2-console` if you need to poke at the raw tables.
+Opens on `http://localhost:8080`, redirects to `/login` (PIN defaults to
+`1234` locally via `APP_PIN` — override it for anything beyond a laptop).
+After login it lands on the New Job screen. Data is stored in a file-backed
+H2 database at `./data/` (gitignored) — the H2 console is at `/h2-console`
+if you need to poke at the raw tables (also behind login).
 
 ## Running tests
 
@@ -87,8 +89,13 @@ not of code that could be mocked into passing.
   `SHOP_EXPENSE` ledger entry (amount + optional note) via
   `LedgerService.recordShopExpense()`; feeds straight into the weekly
   profit calculation with no separate write path.
-- [ ] **Phase 6 — PWA + offline.** Manifest + icon for home-screen install,
-  PIN login, service worker + local queue for offline job capture.
+- [x] **Phase 6a — PIN login + long-lived cookie.** Spring Security, single
+  in-memory user, PIN-only login page, remember-me cookie valid ~1 year so
+  Dad logs in once on his phone and never sees the login screen again.
+  `app.pin` / `app.remember-me-key` come from `APP_PIN` / `APP_REMEMBER_ME_KEY`
+  env vars in real deployments (dev defaults are insecure placeholders).
+- [ ] **Phase 6b — PWA + offline.** Manifest + icon for home-screen install,
+  service worker + local queue for offline job capture.
 - [ ] **Phase 7 — Later insights** (once real data exists). Regas-due list,
   monthly profit trend, busiest job type.
 
@@ -107,6 +114,8 @@ not of code that could be mocked into passing.
 | `GET /insights/debtors` | Who owes me: jobs with a positive balance, highest first, tap to edit |
 | `GET /expenses/new` | Shop expense form |
 | `POST /expenses` | Records a shop expense, redirects back with a saved banner |
+| `GET /login` | PIN entry screen; everything else requires auth |
+| `POST /login` | Verifies the PIN, sets a ~1 year remember-me cookie |
 
 ### Known simplifications (intentional, not gaps)
 
@@ -119,8 +128,10 @@ not of code that could be mocked into passing.
 - "Profit" in the weekly summary is billed revenue minus costs (charged −
   parts cost − shop expenses), not cash collected — it reflects work done
   this week regardless of whether the customer has paid yet.
-- No auth yet (Phase 6 adds PIN + long-lived cookie).
-- No offline support yet (Phase 6).
+- No offline support yet (Phase 6b).
+- `/h2-console` requires login like everything else (rather than being
+  publicly reachable) -- fine for now, but plan to disable it entirely via
+  a prod profile before real deployment.
 
 ---
 
