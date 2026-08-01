@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <title>New Job</title>
+    <title>New Quote</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -42,14 +42,14 @@
             background: #f2f2f2;
             cursor: pointer;
         }
-        .recent-customers, .vehicle-picker, .parts-chips {
+        .vehicle-picker, .parts-chips, .open-quotes {
             display: flex;
             gap: 0.5rem;
             overflow-x: auto;
             padding-bottom: 0.25rem;
             flex-wrap: wrap;
         }
-        .recent-customer, .vehicle-chip, .part-chip {
+        .vehicle-chip, .part-chip, .open-quote {
             flex: 0 0 auto;
             padding: 0.75rem 1rem;
             border: 2px solid #0a6b3d;
@@ -59,6 +59,7 @@
             font-size: 1rem;
             white-space: nowrap;
             cursor: pointer;
+            text-decoration: none;
         }
         .vehicle-chip.selected, .part-chip.selected {
             background: #0a6b3d;
@@ -72,14 +73,6 @@
             border-radius: 8px;
             margin-top: 0.5rem;
         }
-        .checkbox-row {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            margin-top: 0.75rem;
-        }
-        .checkbox-row input { width: auto; }
-        .checkbox-row label { margin: 0; font-weight: 500; }
         button.submit {
             width: 100%;
             margin-top: 1.75rem;
@@ -93,67 +86,32 @@
             cursor: pointer;
         }
         .hint { color: #555555; font-size: 0.9rem; margin-top: 0.25rem; }
-        .last-entry {
-            border: 2px solid #b8860b;
-            border-radius: 10px;
-            padding: 0.85rem;
-            margin-bottom: 1.25rem;
-            background: #fffbea;
-        }
-        .last-entry .label {
-            font-weight: 700;
-            font-size: 0.85rem;
-            color: #8a6400;
-            margin-bottom: 0.35rem;
-        }
-        .last-entry a {
-            display: inline-block;
-            margin-top: 0.5rem;
-            font-weight: 700;
-            color: #0a6b3d;
-        }
         nav.insights {
             display: flex;
             gap: 1rem;
             margin-bottom: 1rem;
             font-size: 0.9rem;
-            flex-wrap: wrap;
         }
         nav.insights a { color: #555555; }
         #partsOther { margin-top: 0.5rem; display: none; }
     </style>
 </head>
 <body>
-<h1>New Job</h1>
+<h1>New Quote</h1>
 
 <nav class="insights">
-    <a th:href="@{/insights/week}">This week</a>
-    <a th:href="@{/insights/debtors}">Who owes me</a>
-    <a th:href="@{/expenses/new}">Shop expense</a>
-    <a th:href="@{/quotes/new}">New quote</a>
+    <a th:href="@{/jobs/new}">New job</a>
 </nav>
 
-<div class="last-entry" th:if="${lastJob != null}">
-    <div class="label">LAST ENTRY -- tap to fix</div>
-    <div th:text="${lastJob.workType} + ' — ' + ${lastJobVehicleLabel}"></div>
-    <div th:if="${lastJobCustomer != null and lastJobCustomer.name != null and !lastJobCustomer.name.isEmpty()}"
-         th:text="${lastJobCustomer.name}"></div>
-    <div th:text="'Charge: NGN ' + ${lastJob.cachedCharge} + '  Paid: NGN ' + ${lastJob.cachedPaid} + '  Balance: NGN ' + ${lastJob.cachedBalance}"></div>
-    <a th:href="@{/jobs/{id}/edit(id=${lastJob.id})}">Edit this entry</a>
-</div>
-
-<div th:if="${not #lists.isEmpty(recentCustomers)}">
-    <label>Recent customers</label>
-    <div class="recent-customers">
-        <button type="button" class="recent-customer"
-                th:each="c : ${recentCustomers}"
-                th:text="${c.name != null and !c.name.isEmpty()} ? ${c.name} : ${c.phone}"
-                th:attr="data-name=${c.name},data-phone=${c.phone}"
-                onclick="fillCustomer(this)"></button>
+<div th:if="${not #lists.isEmpty(recentQuotes)}">
+    <label>Open quotes</label>
+    <div class="open-quotes">
+        <a class="open-quote" th:each="q : ${recentQuotes}" th:href="@{/quotes/{id}(id=${q.quote().id})}"
+           th:text="${q.quote().workType} + ' — ' + ${q.vehicleLabel()} + ' (NGN ' + ${q.quote().amount} + ')'"></a>
     </div>
 </div>
 
-<form method="post" th:action="@{/jobs}">
+<form method="post" th:action="@{/quotes}">
     <label for="workType">Work type</label>
     <select id="workType" name="workType" required>
         <option th:each="w : ${workTypes}" th:value="${w}" th:text="${w}"></option>
@@ -164,7 +122,6 @@
 
     <label for="customerPhone">Customer phone (optional)</label>
     <input type="tel" inputmode="tel" id="customerPhone" name="customerPhone" onchange="lookupVehicles(this.value)">
-    <div class="hint">Add this later if you want to share a WhatsApp receipt.</div>
 
     <label for="vehicleDescription">Vehicle (optional)</label>
     <div id="vehiclePicker" class="vehicle-picker" style="display:none;"></div>
@@ -175,31 +132,20 @@
            placeholder="Plate number (optional, for fleets)">
     <input type="hidden" id="vehicleId" name="vehicleId">
 
-    <label for="charge">Amount charged</label>
-    <input type="text" inputmode="numeric" id="charge" name="charge" required>
-    <div class="quick-picks">
-        <button type="button" class="quick-pick" th:each="a : ${quickAmounts}"
-                th:text="${a}" th:attr="onclick=|setAmount('charge', '${a}')|"></button>
-    </div>
-
-    <label for="paid">Amount paid</label>
-    <input type="text" inputmode="numeric" id="paid" name="paid" placeholder="0">
-    <div class="quick-picks">
-        <button type="button" class="quick-pick" th:each="a : ${quickAmounts}"
-                th:text="${a}" th:attr="onclick=|setAmount('paid', '${a}')|"></button>
-    </div>
-
-    <label for="partsCost">Parts cost (optional)</label>
-    <input type="text" inputmode="numeric" id="partsCost" name="partsCost" placeholder="0">
+    <label>Likely parts (optional)</label>
     <div id="partsChips" class="parts-chips"></div>
     <input type="text" id="partsOther" placeholder="Other part">
     <input type="hidden" id="partsNote" name="partsNote">
-    <div class="checkbox-row">
-        <input type="checkbox" id="sharedPartsCost" name="sharedPartsCost" value="true">
-        <label for="sharedPartsCost">Shared across today's visit (not just this car)</label>
-    </div>
 
-    <button type="submit" class="submit">Save job</button>
+    <label for="amount">Quoted amount</label>
+    <input type="text" inputmode="numeric" id="amount" name="amount" required>
+    <div class="quick-picks">
+        <button type="button" class="quick-pick" th:each="a : ${quickAmounts}"
+                th:text="${a}" th:attr="onclick=|setAmount('amount', '${a}')|"></button>
+    </div>
+    <div class="hint">One total, no per-part pricing -- matches how you actually quote a job.</div>
+
+    <button type="submit" class="submit">Save quote</button>
 </form>
 
 <script>

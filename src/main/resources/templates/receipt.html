@@ -15,6 +15,9 @@
             font-size: 18px;
         }
         h1 { font-size: 1.4rem; margin: 0 0 1rem; }
+        .letterhead { margin-bottom: 1.25rem; }
+        .letterhead .business-name { font-size: 1.3rem; font-weight: 700; }
+        .letterhead .business-contact { color: #555555; font-size: 0.95rem; }
         .card {
             border: 2px solid #333333;
             border-radius: 10px;
@@ -43,6 +46,7 @@
     </style>
 </head>
 <body>
+<div th:replace="~{fragments/letterhead :: letterhead}"></div>
 <h1>Job Saved</h1>
 
 <div class="card" th:text="${receiptText}"></div>

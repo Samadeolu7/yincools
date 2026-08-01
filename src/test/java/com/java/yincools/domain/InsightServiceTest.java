@@ -39,12 +39,13 @@ class InsightServiceTest {
     void setUp() {
         ledgerService = new LedgerService(ledgerRepository, jobRepository);
         VehicleService vehicleService = new VehicleService(vehicleRepository);
-        jobService = new JobService(jobRepository, customerRepository, ledgerService, vehicleService);
+        CustomerService customerService = new CustomerService(customerRepository);
+        jobService = new JobService(jobRepository, customerService, ledgerService, vehicleService);
         insightService = new InsightService(ledgerRepository, jobRepository);
     }
 
     private Job createWalkIn(String vehicleNote, String workType, BigDecimal charge, BigDecimal partsCost, BigDecimal paid) {
-        return jobService.createJob(null, null, null, null, null, vehicleNote, workType, charge, partsCost, paid);
+        return jobService.createJob(null, null, null, null, null, vehicleNote, workType, charge, partsCost, null, paid);
     }
 
     @Test

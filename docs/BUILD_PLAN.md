@@ -106,7 +106,7 @@ class Vehicle {
     // Promoted out of Job into its own entity so repeat vehicles — especially
     // a company's fleet — have a stable identity across visits, not just a
     // re-typed string each time. Also what makes per-vehicle regas-due
-    // tracking (§10, Phase 7) possible later without a schema change.
+    // tracking (§11, Phase 7) possible later without a schema change.
     @Id @GeneratedValue Long id;
     Long customerId;
     String description;    // "Toyota Hilux"
@@ -119,7 +119,7 @@ class Job {
     // This is a READ CACHE, not a source of truth. It exists purely so
     // screens load fast without summing the ledger every time. It is only
     // ever written by LedgerService, and can be fully rebuilt from
-    // LedgerEntry at any time (that rebuild IS the balance-check job — see §11).
+    // LedgerEntry at any time (that rebuild IS the balance-check job — see §12).
     @Id @GeneratedValue Long id;
     Long customerId;               // null for an anonymous walk-in
     Long vehicleId;                // set when there's a persisted Vehicle behind this job
@@ -131,6 +131,24 @@ class Job {
     BigDecimal cachedCharge;
     BigDecimal cachedPaid;
     BigDecimal cachedBalance;    // cachedCharge - cachedPaid
+}
+
+@Entity
+class Quote {
+    // Deliberately NOT a LedgerEntry source — a quote is a proposal, not a
+    // financial fact, and §1's core rule is that the ledger only ever
+    // records real facts. This entity exists entirely outside the ledger
+    // until (if) it's accepted — see §8.
+    @Id @GeneratedValue Long id;
+    Long customerId;        // nullable — a quote can exist before a Customer does
+    Long vehicleId;         // nullable, same pattern as Job
+    String vehicleNote;     // free text fallback, same pattern as Job.vehicleNote (§7)
+    String workType;
+    String partsNote;       // built from tapped parts chips (§9) + optional free text
+    BigDecimal amount;      // single quoted total — no per-part pricing, matches
+                             // Job's level of simplicity, not an itemized invoice
+    LocalDate date;
+    Long convertedToJobId;  // null until accepted; set by "Convert to Job" (§8)
 }
 ```
 
@@ -232,6 +250,7 @@ shown in his normal flow.
 | `LedgerService` | Only thing that writes `LedgerEntry`. `record()` for new facts, `adjust()` for corrections, `netFor()` for sums. |
 | `JobService` | Dad-facing verbs: createJob, editJob, recordPayment, voidJob. Translates into LedgerService calls + refreshes the Job cache. |
 | `InsightService` | Read-only. weeklySummary(), debtorList(). Later: regasDue(), monthlyProfit() — new methods, never touches existing ones. |
+| `QuoteService` | createQuote, convertToJob (calls `JobService.createJob` with the quote's fields, never writes `LedgerEntry` itself). |
 
 ---
 
@@ -241,10 +260,13 @@ shown in his normal flow.
 |---|---|
 | New job | `JobService.createJob(...)` → `LedgerService.record(CHARGE...)`, `record(PARTS_COST...)`, `record(PAYMENT...)` |
 | Vehicle picker (within New job) | if a customer is set: auto-selects their one `Vehicle`, or list + "add new" → `VehicleService.findOrCreate(...)`. No customer set: plain text box → `Job.vehicleNote`, no entity created — see §7 |
-| Vehicle autocomplete (either path above) | static seed JSON + `VehicleService.suggestionList()` (`SELECT DISTINCT description FROM Vehicle`), merged client-side — see §8 |
+| Vehicle autocomplete (either path above) | static seed JSON + `VehicleService.suggestionList()` (`SELECT DISTINCT description FROM Vehicle`), merged client-side — see §9 |
 | "Which car?" for parts cost | optional step within New job; "shared visit" option omits `jobId`/`vehicleId` — see §7 |
 | Edit job | `JobService.editJob(...)` / `recordPayment(...)` |
 | Receipt / WhatsApp share | reads `Job` cache, formats text, `wa.me/<phone>?text=` link |
+| New quote | `QuoteService.createQuote(...)` — same vehicle picker + parts chips as New job, but writes no `LedgerEntry` — see §8 |
+| Convert quote → job | `QuoteService.convertToJob(...)` → `JobService.createJob(...)` pre-filled from the quote — see §8 |
+| Quote / letterhead share | styled preview page (business header + quote details), shared by screenshot — see §8 |
 | This week | `InsightService.weeklySummary()` |
 | Who owes me | `InsightService.debtorList()` |
 | Shop spending | `LedgerService.record(SHOP_EXPENSE...)` |
@@ -310,7 +332,65 @@ in, and every screen should be honest about that:**
 
 ---
 
-## 8. Making It Easy Enough To Actually Use
+## 8. Quotes & Letterhead Sharing
+
+A quote is Dad's pitch, not his bookkeeping. It has to feel free to send
+without it ever becoming a financial fact the ledger has to worry about
+correcting — so a `Quote` (§3) lives entirely outside `LedgerEntry` and never
+calls `LedgerService`, full stop.
+
+**Creation reuses everything already built.** New Quote uses the exact same
+vehicle picker and walk-in fallback as New Job (§7) — a quote is very often
+*for* a prospect who isn't a customer yet, so `customerId` and `vehicleId`
+stay just as optional here as they are on a job. Parts get tapped in from
+the same chip list described in §9 rather than typed. The whole form is:
+who (optional), what car (optional), what work, which parts, one total
+amount. No line-item pricing — that's more structure than a spoken-price
+trade needs, and it would be the first thing to go stale the moment he
+verbally discounts it in person.
+
+**"Convert to Job" is the actual hook, more than the sharing is.** When the
+customer agrees and the work happens, one button takes the quote's vehicle,
+work type, and amount and pre-fills New Job with them:
+
+```java
+// domain/QuoteService.java
+public Long convertToJob(Long quoteId) {
+    Quote quote = quoteRepo.findById(quoteId);
+    Long jobId = jobService.createJob(new JobRequest(
+        quote.getCustomerId(), quote.getVehicleId(), quote.getVehicleNote(),
+        quote.getWorkType(), quote.getAmount(), quote.getAmount() // default: paid in full, still editable
+    ));
+    quote.setConvertedToJobId(jobId);
+    quoteRepo.save(quote);
+    return jobId;
+}
+```
+
+Dad confirms and adjusts rather than retyping the whole job from scratch —
+that's the real time saved, not just the WhatsApp share. A quote is never
+deleted or marked "rejected"; it either has a `convertedToJobId` or it
+doesn't. No status workflow for him to manage, because it isn't earning its
+keep (§1's second rule) — a quote that never converts just sits there,
+harmlessly.
+
+**Letterhead, kept to what's actually simple.** "Looks like Dad's letterhead"
+really means a business name/phone header rendered the way his physical
+letterhead is laid out, shown at the top of both the receipt and the quote —
+one shared template partial, built once. For v1, sharing stays manual:
+he opens the styled preview page and screenshots it into WhatsApp, exactly
+the way he already shares anything else from his phone. That's zero new
+infrastructure and zero new failure modes, and it works fully offline since
+it's just a locally-rendered page (§10). Business name/phone/address live as
+plain config values (`application.yml`), not a database table — there's one
+shop, so there's nothing here that needs to be editable through a screen.
+
+A properly auto-generated branded image (so sharing is one tap instead of a
+screenshot) is a clean, purely additive upgrade for later — see §14.
+
+---
+
+## 9. Making It Easy Enough To Actually Use
 
 The ledger guarantees correctness; it doesn't guarantee Dad opens the app.
 Every extra tap between him finishing a job and the record existing is a
@@ -334,8 +414,20 @@ correct *about*.
   customer base with zero upkeep from you — a car he services often becomes a
   one-tap suggestion after the first time. Free text always still works if
   the car isn't in the list; this only ever speeds up typing, it never blocks
-  it. Because the source data is basically static, the service worker in §9
+  it. Because the source data is basically static, the service worker in §10
   caches it too, so suggestions keep working with no signal in the workshop.
+- **Tap parts in as chips instead of typing them.** Common AC parts —
+  Compressor, Condenser, Evaporator, Expansion Valve, Receiver/Drier,
+  Refrigerant/Gas, Hoses, Blower Motor, Cooling Fan, Relay — sit as tappable
+  chips wherever a parts description is needed (a `PARTS_COST` entry's note,
+  or a quote's `partsNote` in §8). Tapping several just builds a short
+  comma-joined string; there's no per-part pricing to fill in, matching the
+  single-total simplicity of Jobs and Quotes. Unlike the vehicle list, this
+  one stays **seed-only for now, plus an "Other" chip for free text** — parts
+  are usually multiple-at-once, so reliably learning new ones from free text
+  the way vehicles do would need real structure (a parts table, a join table)
+  that isn't earning its keep yet (§1's second rule). One JSON file, written
+  once, reused everywhere a parts field appears.
 - **Only require what's essential.** Work type, amount charged, amount paid —
   that's it. Customer name, phone, vehicle are optional. A half-filled record
   that exists beats a complete one he skipped because he was busy. Nudge him
@@ -359,7 +451,7 @@ correct *about*.
 
 ---
 
-## 9. Offline-First Design
+## 10. Offline-First Design
 
 Workshop connectivity here is spotty, not just occasionally down, so **losing
 a job because there was no signal is not acceptable.** Confirmed device:
@@ -419,7 +511,7 @@ intermittent signal — just as well, with far less complexity.
 
 ---
 
-## 10. Build Phases
+## 11. Build Phases
 
 **Phase 0 — Skeleton.** Spring Boot project, entities, repositories, H2 for
 local dev / Postgres on your VPS for real use.
@@ -433,37 +525,44 @@ null). This phase has no UI at all — get the math bulletproof before anyone
 touches a screen.
 
 **Phase 2 — Job entry + receipt.** New job form with the friction-reducing
-UX from §8 (quick-pick amounts, recent customers, minimal required fields,
+UX from §9 (quick-pick amounts, recent customers, minimal required fields,
 vehicle autocomplete with a small seed JSON you write once), the vehicle
 picker from §7 (auto-selects for single-vehicle customers, picker + "add new"
 for fleets, free text for walk-ins), `JobService.createJob`, receipt render,
 WhatsApp share link.
 
-**Phase 3 — Edit/correction flow.** Edit job screen, pre-filled with current
+**Phase 3 — Quotes + parts chips.** Parts seed JSON from §9 (reused by both
+this phase and job entry's `PARTS_COST` note going forward). New Quote
+screen — reuses the vehicle picker from Phase 2 as-is. `QuoteService.createQuote`,
+`convertToJob`, letterhead-styled preview page shared by screenshot (§8).
+This phase touches no `LedgerEntry` code at all — worth confirming in review,
+since that's the whole point of keeping quotes outside the ledger.
+
+**Phase 4 — Edit/correction flow.** Edit job screen, pre-filled with current
 cache values, plus the "Last entry" quick-fix card. Save always succeeds, no
 confirmation dialogs, no validation friction beyond "is this a number."
 
-**Phase 4 — Insights.** This week screen, Who owes me screen — both exact
+**Phase 5 — Insights.** This week screen, Who owes me screen — both exact
 per §7, since neither depends on per-vehicle attribution.
 
-**Phase 5 — Shop expenses screen.**
+**Phase 6 — Shop expenses screen.**
 
-**Phase 6 — PWA + offline.** Manifest + icon for home-screen install, PIN
-login with long-lived cookie, the full offline mechanism from §9 (service
+**Phase 7 — PWA + offline.** Manifest + icon for home-screen install, PIN
+login with long-lived cookie, the full offline mechanism from §10 (service
 worker, local queue, client-generated UUIDs, offline-generated receipts).
 
-**Phase 7 — Later, once real data exists (~10 months in).** Regas-due list
+**Phase 8 — Later, once real data exists (~10 months in).** Regas-due list
 (per-vehicle, made possible by promoting `Vehicle` to a real entity in Phase 1),
 monthly profit trend, busiest job type — all new `InsightService` methods,
-zero changes to Phases 0–6. Any per-vehicle cost/profit view must carry the
+zero changes to Phases 0–7. Any per-vehicle cost/profit view must carry the
 "approximate — excludes shared visit costs" caveat from §7.
 
 ---
 
-## 11. The Safety Net
+## 12. The Safety Net
 
 A scheduled job (nightly, or on-demand from an admin button) that verifies
-the offline sync and correction paths from §§7–8 never let the cache drift:
+the correction (§4) and offline sync (§10) paths never let the cache drift:
 
 1. Recomputes every `Job.cachedBalance` from scratch by summing `LedgerEntry`.
 2. Compares it to the stored cache value.
@@ -476,7 +575,7 @@ complaint surfaces three months later.
 
 ---
 
-## 12. Stack Recap
+## 13. Stack Recap
 
 - **Spring Boot + Thymeleaf**, installed as a PWA (home-screen icon, opens
   fullscreen) — no native Android learning curve, and you can ship updates
@@ -485,13 +584,24 @@ complaint surfaces three months later.
 - **PIN + long-lived cookie** auth — no email/password for Dad to forget.
 - **WhatsApp share via `wa.me` links** — zero API integration needed.
 - **Target device: Samsung A17 (Android)** — Chrome/Samsung Internet, solid
-  service worker support, no special-casing needed for the offline design in §8.
+  service worker support, no special-casing needed for the offline design in §10.
 
 ---
 
-## 13. Deliberately Not Building Yet
+## 14. Deliberately Not Building Yet
 
 Full double-entry accounting (named accounts, debits/credits), multi-user
 logins, parts inventory, tax reports, charts. The schema above is one column
 (`accountId` on `LedgerEntry`) away from real double-entry if you ever need
 it — but building that now solves a problem Dad doesn't have.
+
+**Auto-generated branded quote/receipt images.** §8's screenshot-based
+sharing is the honest v1. If the manual screenshot step ever genuinely
+bothers him, a client-side library (e.g. `html2canvas`) turning the same
+styled preview page into a one-tap-shareable PNG is a purely additive
+upgrade — no data model change, no server dependency, still works offline.
+Not worth the extra moving part until the simpler version proves itself.
+
+**Itemized quote/job pricing.** Both stay single-total by design (§3, §8).
+Per-part pricing is real added value eventually, but it's also real added
+typing for every quote — build it only if Dad specifically asks for it.

@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="letterhead" class="letterhead">
+    <div class="business-name" th:text="${businessName}"></div>
+    <div class="business-contact" th:if="${businessPhone != null and !businessPhone.isEmpty()}" th:text="${businessPhone}"></div>
+    <div class="business-contact" th:if="${businessAddress != null and !businessAddress.isEmpty()}" th:text="${businessAddress}"></div>
+</div>
+</body>
+</html>

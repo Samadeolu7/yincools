@@ -40,4 +40,12 @@ public class VehicleService {
                 .filter(StringUtils::hasText)
                 .toList();
     }
+
+    /** The vehicle's description if it has a persisted Vehicle, else the free-text fallback note, else null. */
+    public String labelFor(Long vehicleId, String fallbackNote) {
+        if (vehicleId != null) {
+            return findById(vehicleId).map(Vehicle::getDescription).orElse(null);
+        }
+        return fallbackNote;
+    }
 }

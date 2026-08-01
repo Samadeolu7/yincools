@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Quote</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 1rem;
+            background: #ffffff;
+            color: #111111;
+            font-size: 18px;
+        }
+        .letterhead { margin-bottom: 1.5rem; text-align: center; }
+        .letterhead .business-name { font-size: 1.6rem; font-weight: 700; }
+        .letterhead .business-contact { color: #555555; font-size: 0.95rem; }
+        h1 { font-size: 1.3rem; margin: 0 0 1rem; text-align: center; }
+        .card {
+            border: 2px solid #333333;
+            border-radius: 10px;
+            padding: 1.1rem;
+            line-height: 1.7;
+        }
+        .card .row { display: flex; justify-content: space-between; }
+        .card .amount {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #dddddd;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: right;
+        }
+        .converted {
+            margin-top: 1rem;
+            padding: 0.9rem;
+            border: 2px solid #0a6b3d;
+            background: #eafff2;
+            color: #0a6b3d;
+            border-radius: 10px;
+            font-weight: 600;
+            text-align: center;
+        }
+        a.button, button.button {
+            display: block;
+            width: 100%;
+            margin-top: 1rem;
+            padding: 1.1rem;
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        .convert { background: #0a6b3d; color: #ffffff; }
+        .new-quote { background: #ffffff; color: #0a6b3d; border: 2px solid #0a6b3d; }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/letterhead :: letterhead}"></div>
+<h1>Quote</h1>
+
+<div class="card">
+    <div class="row"><span>Date</span><span th:text="${quote.date}"></span></div>
+    <div class="row" th:if="${customer != null and customer.name != null and !customer.name.isEmpty()}">
+        <span>Customer</span><span th:text="${customer.name}"></span>
+    </div>
+    <div class="row" th:if="${vehicleLabel != null and !vehicleLabel.isEmpty()}">
+        <span>Vehicle</span><span th:text="${vehicleLabel}"></span>
+    </div>
+    <div class="row"><span>Work</span><span th:text="${quote.workType}"></span></div>
+    <div class="row" th:if="${quote.partsNote != null and !quote.partsNote.isEmpty()}">
+        <span>Parts</span><span th:text="${quote.partsNote}"></span>
+    </div>
+    <div class="amount" th:text="'NGN ' + ${quote.amount}"></div>
+</div>
+
+<div class="converted" th:if="${quote.convertedToJobId != null}">
+    Converted to a job already.
+</div>
+
+<form th:if="${quote.convertedToJobId == null}" method="post" th:action="@{/quotes/{id}/convert(id=${quote.id})}">
+    <button type="submit" class="button convert">Convert to Job</button>
+</form>
+
+<a th:href="@{/quotes/new}" class="button new-quote">New quote</a>
+</body>
+</html>

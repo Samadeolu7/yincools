@@ -34,10 +34,12 @@ Three layers, strict one-way dependency (`web` → `domain` → `persistence`):
 
 ```
 domain/          Plain Java. No web/HTTP concerns.
-  model/           Customer, Vehicle, Job, LedgerEntry, EntryType
+  model/           Customer, Vehicle, Job, Quote, LedgerEntry, EntryType
   LedgerService     the ONLY thing allowed to write a LedgerEntry
   JobService        Dad-facing operations (createJob, editJob, recordPayment, voidJob)
   VehicleService    findOrCreate, vehiclesFor (fleet detection), suggestionList
+  CustomerService   resolveOrCreate -- shared by JobService and QuoteService
+  QuoteService      createQuote, convertToJob -- never touches LedgerEntry
   InsightService    read-only queries (weeklySummary, debtorList)
 
 persistence/      Spring Data repositories. Dumb. No business logic.
@@ -57,6 +59,16 @@ set), a customer-level *shared visit* cost (`LedgerService.recordSharedCost`
 — jobId/vehicleId null, customerId set, logged once with no correction path
 since there's nothing scoped to correct it against), or a shop-wide
 `SHOP_EXPENSE` (all three null).
+
+**Quotes are Dad's pitch, not his bookkeeping.** A `Quote` lives entirely
+outside `LedgerEntry` -- `QuoteService` never calls `LedgerService` at all,
+only `JobService.createJobFromResolvedIdentity()` on conversion, and only
+then does the ledger find out a job exists. Converting defaults to paid in
+full (Dad confirms and adjusts from the normal Edit Job screen, same
+`adjust()` mechanism as any other correction) and is idempotent -- converting
+an already-converted quote just returns the existing job. A quote is never
+deleted or marked "rejected"; it either has a `convertedToJobId` or it
+doesn't.
 
 ## Running locally
 
@@ -153,29 +165,38 @@ to Postgres, and passes its healthcheck.
   client-side with `/api/vehicles/suggestions`), a "shared across today's
   visit" checkbox on parts cost, `JobService.createJob`, receipt render,
   WhatsApp share link (`wa.me`).
-- [x] **Phase 3 — Edit/correction flow.** Edit Job screen prefilled with
+- [x] **Phase 3 — Quotes + parts chips.** `Quote` entity/service, entirely
+  outside the ledger. New Quote screen reuses the Phase 2 vehicle picker
+  as-is. Parts chips (`static/parts-seed.json` -- seed-only, deliberately
+  *not* merged with anything dynamic like vehicles are) feed a note on both
+  a job's `PARTS_COST` entry and a quote's `partsNote`. Letterhead-styled
+  quote preview (shared `fragments/letterhead.html`, also now on the job
+  receipt) shared by screenshot. "Convert to Job" lands on the normal Edit
+  Job screen, prefilled and paid-in-full by default.
+- [x] **Phase 4 — Edit/correction flow.** Edit Job screen prefilled with
   current values (charge, parts cost, paid), saves via the same
   `adjust()` mechanism as everything else. "Last entry" card pinned to the
   top of the New Job screen with a one-tap edit link. Void action zeroes a
   job out without deleting its history. No confirmation dialogs.
-- [x] **Phase 4 — Insights.** `InsightService.weeklySummary()` (charged,
+- [x] **Phase 5 — Insights.** `InsightService.weeklySummary()` (charged,
   paid, parts cost, shop expenses, profit for the Mon–Sun week containing a
   given date) and `debtorList()` (jobs with a positive balance, highest
   first). This Week and Who Owes Me screens, linked from a small nav on the
   New Job screen.
-- [x] **Phase 5 — Shop expenses screen.** `/expenses/new` records a
+- [x] **Phase 6 — Shop expenses screen.** `/expenses/new` records a
   `SHOP_EXPENSE` ledger entry (amount + optional note) via
   `LedgerService.recordShopExpense()`; feeds straight into the weekly
   profit calculation with no separate write path.
-- [x] **Phase 6a — PIN login + long-lived cookie.** Spring Security, single
+- [x] **Phase 7a — PIN login + long-lived cookie.** Spring Security, single
   in-memory user, PIN-only login page, remember-me cookie valid ~1 year so
   Dad logs in once on his phone and never sees the login screen again.
   `app.pin` / `app.remember-me-key` come from `APP_PIN` / `APP_REMEMBER_ME_KEY`
   env vars in real deployments (dev defaults are insecure placeholders).
-- [ ] **Phase 6b — PWA + offline.** Manifest + icon for home-screen install,
+- [ ] **Phase 7b — PWA + offline.** Manifest + icon for home-screen install,
   service worker + local queue for offline job capture.
-- [ ] **Phase 7 — Later insights** (once real data exists). Regas-due list,
-  monthly profit trend, busiest job type.
+- [ ] **Phase 8 — Later insights** (once real data exists). Regas-due list
+  (per-vehicle, unlocked by Phase 1's `Vehicle` entity), monthly profit
+  trend, busiest job type.
 
 ### What exists right now
 
@@ -196,6 +217,10 @@ to Postgres, and passes its healthcheck.
 | `POST /login` | Verifies the PIN, sets a ~1 year remember-me cookie |
 | `GET /api/vehicles?phone=` | JSON: vehicles for that phone's customer (empty if none) |
 | `GET /api/vehicles/suggestions` | JSON: distinct vehicle descriptions typed before |
+| `GET /quotes/new` | New Quote form; shows open (unconverted) quotes to resume |
+| `POST /quotes` | Creates a quote (no `LedgerEntry` written), redirects to its preview |
+| `GET /quotes/{id}` | Letterhead-styled preview, screenshot-shareable; Convert to Job button if still open |
+| `POST /quotes/{id}/convert` | Creates the job (paid in full by default) and redirects to its Edit screen; idempotent |
 
 ### Known simplifications (intentional, not gaps)
 
@@ -213,10 +238,18 @@ to Postgres, and passes its healthcheck.
   as `IS NULL` with no `customerId` filter, so a jobId-keyed `adjust()` would
   net across every customer's shared costs at once. There's no described
   flow for editing one later, so each is recorded once, like a shop expense.
-- Per-vehicle cost/profit isn't built yet (Phase 7) — when it is, it must be
+- Per-vehicle cost/profit isn't built yet (Phase 8) — when it is, it must be
   visibly flagged as approximate wherever a visit shared costs across
   multiple vehicles (§7 of the build plan).
-- No offline support yet (Phase 6b).
+- Parts chips stay seed-only, never merged with previously-typed "Other"
+  text the way vehicle descriptions are — parts are usually tapped several
+  at once, so reliably learning new ones from free text would need real
+  structure (a parts table, a join table) that isn't earning its keep yet.
+- Converting a quote carries over the vehicle, work type, and single total
+  amount only — the quote's `partsNote` (informational text) isn't copied
+  to the job, matching a Job's existing level of simplicity (no itemized
+  parts on jobs either).
+- No offline support yet (Phase 7b).
 - `/h2-console` requires login in dev; the `prod` profile disables it
   outright (`spring.h2.console.enabled=false`) since prod uses Postgres and
   a raw SQL browser has no business being reachable at all once real data

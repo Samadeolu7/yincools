@@ -4,6 +4,7 @@ import com.java.yincools.domain.JobService;
 import com.java.yincools.domain.model.Customer;
 import com.java.yincools.domain.model.Job;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -30,6 +31,9 @@ public class JobController {
 
     private final JobService jobService;
 
+    @Value("${app.business.name}")
+    private String businessName;
+
     @GetMapping("/new")
     public String newJobForm(Model model) {
         model.addAttribute("workTypes", WORK_TYPES);
@@ -53,6 +57,7 @@ public class JobController {
                              @RequestParam String workType,
                              @RequestParam BigDecimal charge,
                              @RequestParam(required = false) BigDecimal partsCost,
+                             @RequestParam(required = false) String partsNote,
                              @RequestParam(required = false) BigDecimal paid) {
         boolean hasCustomer = StringUtils.hasText(customerName) || StringUtils.hasText(customerPhone);
         boolean logAsSharedCost = sharedPartsCost && hasCustomer
@@ -63,10 +68,10 @@ public class JobController {
                 hasCustomer ? vehicleDescription : null,
                 hasCustomer ? vehiclePlateNumber : null,
                 hasCustomer ? null : vehicleDescription,
-                workType, charge, logAsSharedCost ? BigDecimal.ZERO : partsCost, paid);
+                workType, charge, logAsSharedCost ? BigDecimal.ZERO : partsCost, partsNote, paid);
 
         if (logAsSharedCost) {
-            jobService.recordSharedPartsCost(job.getCustomerId(), partsCost, null);
+            jobService.recordSharedPartsCost(job.getCustomerId(), partsCost, partsNote);
         }
 
         return "redirect:/jobs/" + job.getId() + "/receipt";
@@ -116,7 +121,7 @@ public class JobController {
 
     private String buildReceiptText(Job job, Customer customer, String vehicleLabel) {
         StringBuilder sb = new StringBuilder();
-        sb.append("AC Tech Job Receipt\n");
+        sb.append(businessName).append(" Job Receipt\n");
         sb.append(job.getDate()).append("\n");
         if (customer != null && StringUtils.hasText(customer.getName())) {
             sb.append("Customer: ").append(customer.getName()).append("\n");

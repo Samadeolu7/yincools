@@ -14,6 +14,9 @@ services:
       - DB_NAME=${POSTGRES_DB}
       - DB_USER=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - APP_BUSINESS_NAME=${APP_BUSINESS_NAME:-AC Tech}
+      - APP_BUSINESS_PHONE=${APP_BUSINESS_PHONE:-}
+      - APP_BUSINESS_ADDRESS=${APP_BUSINESS_ADDRESS:-}
     depends_on:
       postgres:
         condition: service_healthy

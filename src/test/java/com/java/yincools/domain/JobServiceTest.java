@@ -37,18 +37,19 @@ class JobServiceTest {
     void setUp() {
         LedgerService ledgerService = new LedgerService(ledgerRepository, jobRepository);
         VehicleService vehicleService = new VehicleService(vehicleRepository);
-        jobService = new JobService(jobRepository, customerRepository, ledgerService, vehicleService);
+        CustomerService customerService = new CustomerService(customerRepository);
+        jobService = new JobService(jobRepository, customerService, ledgerService, vehicleService);
     }
 
     /** Walk-in: no customer, vehicle is free text on the job. */
     private Job createWalkIn(String vehicleNote, String workType, BigDecimal charge, BigDecimal partsCost, BigDecimal paid) {
-        return jobService.createJob(null, null, null, null, null, vehicleNote, workType, charge, partsCost, paid);
+        return jobService.createJob(null, null, null, null, null, vehicleNote, workType, charge, partsCost, null, paid);
     }
 
     /** Customer job with a new vehicle description (creates or reuses a Vehicle row). */
     private Job createForCustomer(String name, String phone, String vehicleDescription, String workType,
                                    BigDecimal charge, BigDecimal partsCost, BigDecimal paid) {
-        return jobService.createJob(name, phone, null, vehicleDescription, null, null, workType, charge, partsCost, paid);
+        return jobService.createJob(name, phone, null, vehicleDescription, null, null, workType, charge, partsCost, null, paid);
     }
 
     @Test
@@ -94,7 +95,7 @@ class JobServiceTest {
                 new BigDecimal("15000"), BigDecimal.ZERO, BigDecimal.ZERO);
 
         Job second = jobService.createJob("Ada", "0800000001", first.getVehicleId(), null, null, null,
-                "DIAGNOSIS", new BigDecimal("3000"), BigDecimal.ZERO, BigDecimal.ZERO);
+                "DIAGNOSIS", new BigDecimal("3000"), BigDecimal.ZERO, null, BigDecimal.ZERO);
 
         assertThat(second.getVehicleId()).isEqualTo(first.getVehicleId());
         assertThat(vehicleRepository.count()).isEqualTo(1);
@@ -203,5 +204,15 @@ class JobServiceTest {
         assertThat(ledgerRepository.findByCustomerId(job.getCustomerId())).hasSize(2);
         // the job's own parts cost is untouched by the shared entry
         assertThat(jobService.partsCostFor(job.getId())).isEqualByComparingTo("0");
+    }
+
+    @Test
+    void partsNoteFromTappedChipsLandsOnThePartsCostLedgerEntry() {
+        Job job = jobService.createJob(null, null, null, null, null, "Corolla",
+                "REGAS", new BigDecimal("10000"), new BigDecimal("4000"), "Compressor, Relay", BigDecimal.ZERO);
+
+        var entries = ledgerRepository.findByJobIdAndType(job.getId(), com.java.yincools.domain.model.EntryType.PARTS_COST);
+        assertThat(entries).hasSize(1);
+        assertThat(entries.get(0).getNote()).isEqualTo("Compressor, Relay");
     }
 }

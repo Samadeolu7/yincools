@@ -4,7 +4,6 @@ import com.java.yincools.domain.model.Customer;
 import com.java.yincools.domain.model.EntryType;
 import com.java.yincools.domain.model.Job;
 import com.java.yincools.domain.model.Vehicle;
-import com.java.yincools.persistence.CustomerRepository;
 import com.java.yincools.persistence.JobRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,7 +25,7 @@ import java.util.Optional;
 public class JobService {
 
     private final JobRepository jobRepo;
-    private final CustomerRepository customerRepo;
+    private final CustomerService customerService;
     private final LedgerService ledgerService;
     private final VehicleService vehicleService;
 
@@ -41,8 +40,8 @@ public class JobService {
     public Job createJob(String customerName, String customerPhone,
                           Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
                           String vehicleNote,
-                          String workType, BigDecimal charge, BigDecimal partsCost, BigDecimal paid) {
-        Long customerId = resolveCustomer(customerName, customerPhone);
+                          String workType, BigDecimal charge, BigDecimal partsCost, String partsNote, BigDecimal paid) {
+        Long customerId = customerService.resolveOrCreate(customerName, customerPhone);
 
         Long resolvedVehicleId = null;
         String resolvedVehicleNote = null;
@@ -57,10 +56,22 @@ public class JobService {
             resolvedVehicleNote = vehicleNote;
         }
 
+        return persistJob(customerId, resolvedVehicleId, resolvedVehicleNote, workType, charge, partsCost, partsNote, paid);
+    }
+
+    /** For QuoteService.convertToJob -- customer/vehicle are already resolved on the quote, so skip re-resolving them. */
+    @Transactional
+    public Job createJobFromResolvedIdentity(Long customerId, Long vehicleId, String vehicleNote,
+                                              String workType, BigDecimal charge, BigDecimal paid) {
+        return persistJob(customerId, vehicleId, vehicleNote, workType, charge, BigDecimal.ZERO, null, paid);
+    }
+
+    private Job persistJob(Long customerId, Long vehicleId, String vehicleNote, String workType,
+                            BigDecimal charge, BigDecimal partsCost, String partsNote, BigDecimal paid) {
         Job job = new Job();
         job.setCustomerId(customerId);
-        job.setVehicleId(resolvedVehicleId);
-        job.setVehicleNote(resolvedVehicleNote);
+        job.setVehicleId(vehicleId);
+        job.setVehicleNote(vehicleNote);
         job.setWorkType(workType);
         job.setDate(LocalDate.now());
         job.setCachedCharge(BigDecimal.ZERO);
@@ -68,9 +79,9 @@ public class JobService {
         job.setCachedBalance(BigDecimal.ZERO);
         job = jobRepo.save(job);
 
-        ledgerService.record(EntryType.CHARGE, job.getId(), resolvedVehicleId, customerId, nullToZero(charge), null);
-        ledgerService.record(EntryType.PARTS_COST, job.getId(), resolvedVehicleId, customerId, nullToZero(partsCost), null);
-        ledgerService.record(EntryType.PAYMENT, job.getId(), resolvedVehicleId, customerId, nullToZero(paid), null);
+        ledgerService.record(EntryType.CHARGE, job.getId(), vehicleId, customerId, nullToZero(charge), null);
+        ledgerService.record(EntryType.PARTS_COST, job.getId(), vehicleId, customerId, nullToZero(partsCost), partsNote);
+        ledgerService.record(EntryType.PAYMENT, job.getId(), vehicleId, customerId, nullToZero(paid), null);
 
         return jobRepo.findById(job.getId()).orElseThrow();
     }
@@ -113,11 +124,11 @@ public class JobService {
         if (job.getCustomerId() == null) {
             return Optional.empty();
         }
-        return customerRepo.findById(job.getCustomerId());
+        return customerService.findById(job.getCustomerId());
     }
 
     public Optional<Customer> findCustomerByPhone(String phone) {
-        return customerRepo.findByPhone(phone);
+        return customerService.findByPhone(phone);
     }
 
     public List<Vehicle> vehiclesFor(Long customerId) {
@@ -126,10 +137,7 @@ public class JobService {
 
     /** The vehicle's description if it has a persisted Vehicle, else the free-text walk-in note, else null. */
     public String vehicleLabelFor(Job job) {
-        if (job.getVehicleId() != null) {
-            return vehicleService.findById(job.getVehicleId()).map(Vehicle::getDescription).orElse(null);
-        }
-        return job.getVehicleNote();
+        return vehicleService.labelFor(job.getVehicleId(), job.getVehicleNote());
     }
 
     public Optional<Job> lastJob() {
@@ -147,29 +155,9 @@ public class JobService {
                 .filter(Objects::nonNull)
                 .distinct()
                 .limit(5)
-                .map(id -> customerRepo.findById(id).orElse(null))
+                .map(id -> customerService.findById(id).orElse(null))
                 .filter(Objects::nonNull)
                 .toList();
-    }
-
-    private Long resolveCustomer(String name, String phone) {
-        boolean hasName = StringUtils.hasText(name);
-        boolean hasPhone = StringUtils.hasText(phone);
-        if (!hasName && !hasPhone) {
-            return null;
-        }
-
-        if (hasPhone) {
-            Optional<Customer> existing = customerRepo.findByPhone(phone);
-            if (existing.isPresent()) {
-                return existing.get().getId();
-            }
-        }
-
-        Customer customer = new Customer();
-        customer.setName(name);
-        customer.setPhone(phone);
-        return customerRepo.save(customer).getId();
     }
 
     private BigDecimal nullToZero(BigDecimal value) {
