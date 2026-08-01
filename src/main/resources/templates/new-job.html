@@ -72,10 +72,38 @@
             cursor: pointer;
         }
         .hint { color: #555555; font-size: 0.9rem; margin-top: 0.25rem; }
+        .last-entry {
+            border: 2px solid #b8860b;
+            border-radius: 10px;
+            padding: 0.85rem;
+            margin-bottom: 1.25rem;
+            background: #fffbea;
+        }
+        .last-entry .label {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #8a6400;
+            margin-bottom: 0.35rem;
+        }
+        .last-entry a {
+            display: inline-block;
+            margin-top: 0.5rem;
+            font-weight: 700;
+            color: #0a6b3d;
+        }
     </style>
 </head>
 <body>
 <h1>New Job</h1>
+
+<div class="last-entry" th:if="${lastJob != null}">
+    <div class="label">LAST ENTRY -- tap to fix</div>
+    <div th:text="${lastJob.workType} + ' — ' + ${lastJob.vehicleDescription}"></div>
+    <div th:if="${lastJobCustomer != null and lastJobCustomer.name != null and !lastJobCustomer.name.isEmpty()}"
+         th:text="${lastJobCustomer.name}"></div>
+    <div th:text="'Charge: NGN ' + ${lastJob.cachedCharge} + '  Paid: NGN ' + ${lastJob.cachedPaid} + '  Balance: NGN ' + ${lastJob.cachedBalance}"></div>
+    <a th:href="@{/jobs/{id}/edit(id=${lastJob.id})}">Edit this entry</a>
+</div>
 
 <div th:if="${not #lists.isEmpty(recentCustomers)}">
     <label>Recent customers</label>

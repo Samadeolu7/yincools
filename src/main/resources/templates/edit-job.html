@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Edit Job</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 1rem;
+            background: #ffffff;
+            color: #111111;
+            font-size: 18px;
+        }
+        h1 { font-size: 1.4rem; margin: 0 0 1rem; }
+        label {
+            display: block;
+            font-weight: 600;
+            margin: 1.1rem 0 0.35rem;
+        }
+        input, select {
+            width: 100%;
+            padding: 0.9rem;
+            font-size: 1.1rem;
+            border: 2px solid #333333;
+            border-radius: 8px;
+        }
+        .quick-picks {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .quick-pick {
+            flex: 1 1 auto;
+            padding: 0.75rem 0.5rem;
+            font-size: 1rem;
+            border: 2px solid #333333;
+            border-radius: 8px;
+            background: #f2f2f2;
+            cursor: pointer;
+        }
+        button.submit {
+            width: 100%;
+            margin-top: 1.75rem;
+            padding: 1.1rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            background: #0a6b3d;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        button.void {
+            width: 100%;
+            margin-top: 0.75rem;
+            padding: 0.9rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #a30000;
+            background: #ffffff;
+            border: 2px solid #a30000;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<h1>Edit Job</h1>
+<p th:text="${job.vehicleDescription} + ' — ' + ${job.workType}"></p>
+
+<form method="post" th:action="@{/jobs/{id}/edit(id=${job.id})}">
+    <label for="charge">Amount charged</label>
+    <input type="text" inputmode="numeric" id="charge" name="charge" th:value="${job.cachedCharge}" required>
+    <div class="quick-picks">
+        <button type="button" class="quick-pick" th:each="a : ${quickAmounts}"
+                th:text="${a}" th:attr="onclick=|setAmount('charge', '${a}')|"></button>
+    </div>
+
+    <label for="paid">Amount paid</label>
+    <input type="text" inputmode="numeric" id="paid" name="paid" th:value="${job.cachedPaid}">
+    <div class="quick-picks">
+        <button type="button" class="quick-pick" th:each="a : ${quickAmounts}"
+                th:text="${a}" th:attr="onclick=|setAmount('paid', '${a}')|"></button>
+    </div>
+
+    <label for="partsCost">Parts cost</label>
+    <input type="text" inputmode="numeric" id="partsCost" name="partsCost" th:value="${partsCost}">
+
+    <button type="submit" class="submit">Save changes</button>
+</form>
+
+<form method="post" th:action="@{/jobs/{id}/void(id=${job.id})}">
+    <button type="submit" class="void">Void this job</button>
+</form>
+
+<script>
+    function setAmount(fieldId, value) {
+        document.getElementById(fieldId).value = value;
+    }
+</script>
+</body>
+</html>

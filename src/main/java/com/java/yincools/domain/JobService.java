@@ -86,6 +86,15 @@ public class JobService {
         return customerRepo.findById(job.getCustomerId());
     }
 
+    public Optional<Job> lastJob() {
+        return jobRepo.findTopByOrderByIdDesc();
+    }
+
+    /** Parts cost isn't cached on Job -- it's a small, infrequently-read sum, so it's read straight from the ledger. */
+    public BigDecimal partsCostFor(Long jobId) {
+        return ledgerService.netFor(EntryType.PARTS_COST, jobId);
+    }
+
     public List<Customer> recentCustomers() {
         return jobRepo.findTop20ByOrderByIdDesc().stream()
                 .map(Job::getCustomerId)

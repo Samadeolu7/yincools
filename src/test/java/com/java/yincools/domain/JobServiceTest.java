@@ -116,4 +116,24 @@ class JobServiceTest {
         assertThat(recent).extracting(Customer::getId)
                 .containsExactly(j4.getCustomerId(), j1.getCustomerId());
     }
+
+    @Test
+    void lastJobReturnsTheMostRecentlyCreatedJob() {
+        jobService.createJob(null, null, "Car A", "OTHER", BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
+        Job second = jobService.createJob(null, null, "Car B", "OTHER", BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
+
+        assertThat(jobService.lastJob()).isPresent();
+        assertThat(jobService.lastJob().get().getId()).isEqualTo(second.getId());
+    }
+
+    @Test
+    void partsCostForReflectsCorrectionsMadeThroughEditJob() {
+        Job job = jobService.createJob(null, null, "Car C", "OTHER",
+                new BigDecimal("10000"), new BigDecimal("2000"), BigDecimal.ZERO);
+        assertThat(jobService.partsCostFor(job.getId())).isEqualByComparingTo("2000");
+
+        jobService.editJob(job.getId(), new BigDecimal("10000"), new BigDecimal("2500"));
+
+        assertThat(jobService.partsCostFor(job.getId())).isEqualByComparingTo("2500");
+    }
 }

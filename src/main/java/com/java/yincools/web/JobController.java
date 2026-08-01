@@ -35,6 +35,10 @@ public class JobController {
         model.addAttribute("workTypes", WORK_TYPES);
         model.addAttribute("quickAmounts", QUICK_AMOUNTS);
         model.addAttribute("recentCustomers", jobService.recentCustomers());
+        jobService.lastJob().ifPresent(job -> {
+            model.addAttribute("lastJob", job);
+            model.addAttribute("lastJobCustomer", jobService.customerFor(job).orElse(null));
+        });
         return "new-job";
     }
 
@@ -49,6 +53,33 @@ public class JobController {
         Job job = jobService.createJob(customerName, customerPhone, vehicleDescription,
                 workType, charge, partsCost, paid);
         return "redirect:/jobs/" + job.getId() + "/receipt";
+    }
+
+    @GetMapping("/{id}/edit")
+    public String editJobForm(@PathVariable Long id, Model model) {
+        Job job = jobService.get(id);
+        model.addAttribute("job", job);
+        model.addAttribute("customer", jobService.customerFor(job).orElse(null));
+        model.addAttribute("partsCost", jobService.partsCostFor(id));
+        model.addAttribute("workTypes", WORK_TYPES);
+        model.addAttribute("quickAmounts", QUICK_AMOUNTS);
+        return "edit-job";
+    }
+
+    @PostMapping("/{id}/edit")
+    public String editJob(@PathVariable Long id,
+                           @RequestParam BigDecimal charge,
+                           @RequestParam(required = false) BigDecimal partsCost,
+                           @RequestParam(required = false) BigDecimal paid) {
+        jobService.editJob(id, charge, partsCost == null ? BigDecimal.ZERO : partsCost);
+        jobService.recordPayment(id, paid == null ? BigDecimal.ZERO : paid);
+        return "redirect:/jobs/" + id + "/receipt";
+    }
+
+    @PostMapping("/{id}/void")
+    public String voidJob(@PathVariable Long id) {
+        jobService.voidJob(id);
+        return "redirect:/jobs/new";
     }
 
     @GetMapping("/{id}/receipt")

@@ -39,6 +39,7 @@
         }
         .whatsapp { background: #25D366; color: #ffffff; }
         .new-job { background: #0a6b3d; color: #ffffff; }
+        .edit { background: #ffffff; color: #0a6b3d; border: 2px solid #0a6b3d; }
     </style>
 </head>
 <body>
@@ -49,6 +50,8 @@
 <a th:if="${whatsappLink != null}" th:href="${whatsappLink}" class="button whatsapp" target="_blank">
     Share on WhatsApp
 </a>
+
+<a th:href="@{/jobs/{id}/edit(id=${job.id})}" class="button edit">Fix this entry</a>
 
 <a th:href="@{/jobs/new}" class="button new-job">New job</a>
 </body>
