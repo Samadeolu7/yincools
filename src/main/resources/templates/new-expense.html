@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Shop Expense</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 1rem;
+            background: #ffffff;
+            color: #111111;
+            font-size: 18px;
+        }
+        h1 { font-size: 1.4rem; margin: 0 0 1rem; }
+        label {
+            display: block;
+            font-weight: 600;
+            margin: 1.1rem 0 0.35rem;
+        }
+        input {
+            width: 100%;
+            padding: 0.9rem;
+            font-size: 1.1rem;
+            border: 2px solid #333333;
+            border-radius: 8px;
+        }
+        .quick-picks {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .quick-pick {
+            flex: 1 1 auto;
+            padding: 0.75rem 0.5rem;
+            font-size: 1rem;
+            border: 2px solid #333333;
+            border-radius: 8px;
+            background: #f2f2f2;
+            cursor: pointer;
+        }
+        button.submit {
+            width: 100%;
+            margin-top: 1.75rem;
+            padding: 1.1rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            background: #0a6b3d;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .saved {
+            border: 2px solid #0a6b3d;
+            background: #eafff2;
+            color: #0a6b3d;
+            border-radius: 10px;
+            padding: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+<h1>Shop Expense</h1>
+
+<div class="saved" th:if="${param.saved != null}">Saved.</div>
+
+<form method="post" th:action="@{/expenses}">
+    <label for="amount">Amount</label>
+    <input type="text" inputmode="numeric" id="amount" name="amount" required>
+    <div class="quick-picks">
+        <button type="button" class="quick-pick" onclick="setAmount('1000')">1000</button>
+        <button type="button" class="quick-pick" onclick="setAmount('2000')">2000</button>
+        <button type="button" class="quick-pick" onclick="setAmount('5000')">5000</button>
+        <button type="button" class="quick-pick" onclick="setAmount('10000')">10000</button>
+    </div>
+
+    <label for="note">What was it for? (optional)</label>
+    <input type="text" id="note" name="note" placeholder="e.g. rent, fuel, tools">
+
+    <button type="submit" class="submit">Save expense</button>
+</form>
+
+<script>
+    function setAmount(value) {
+        document.getElementById('amount').value = value;
+    }
+</script>
+</body>
+</html>

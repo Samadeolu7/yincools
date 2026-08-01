@@ -83,7 +83,10 @@ not of code that could be mocked into passing.
   given date) and `debtorList()` (jobs with a positive balance, highest
   first). This Week and Who Owes Me screens, linked from a small nav on the
   New Job screen.
-- [ ] **Phase 5 — Shop expenses screen.**
+- [x] **Phase 5 — Shop expenses screen.** `/expenses/new` records a
+  `SHOP_EXPENSE` ledger entry (amount + optional note) via
+  `LedgerService.recordShopExpense()`; feeds straight into the weekly
+  profit calculation with no separate write path.
 - [ ] **Phase 6 — PWA + offline.** Manifest + icon for home-screen install,
   PIN login, service worker + local queue for offline job capture.
 - [ ] **Phase 7 — Later insights** (once real data exists). Regas-due list,
@@ -102,6 +105,8 @@ not of code that could be mocked into passing.
 | `GET /jobs/{id}/receipt` | Renders the receipt text + WhatsApp share link |
 | `GET /insights/week` | This week: job count, charged, paid, parts cost, shop expenses, profit |
 | `GET /insights/debtors` | Who owes me: jobs with a positive balance, highest first, tap to edit |
+| `GET /expenses/new` | Shop expense form |
+| `POST /expenses` | Records a shop expense, redirects back with a saved banner |
 
 ### Known simplifications (intentional, not gaps)
 
