@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Receipt</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 1rem;
+            background: #ffffff;
+            color: #111111;
+            font-size: 18px;
+        }
+        h1 { font-size: 1.4rem; margin: 0 0 1rem; }
+        .card {
+            border: 2px solid #333333;
+            border-radius: 10px;
+            padding: 1rem;
+            white-space: pre-wrap;
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        a.button, button.button {
+            display: block;
+            width: 100%;
+            margin-top: 1rem;
+            padding: 1.1rem;
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        .whatsapp { background: #25D366; color: #ffffff; }
+        .new-job { background: #0a6b3d; color: #ffffff; }
+    </style>
+</head>
+<body>
+<h1>Job Saved</h1>
+
+<div class="card" th:text="${receiptText}"></div>
+
+<a th:if="${whatsappLink != null}" th:href="${whatsappLink}" class="button whatsapp" target="_blank">
+    Share on WhatsApp
+</a>
+
+<a th:href="@{/jobs/new}" class="button new-job">New job</a>
+</body>
+</html>

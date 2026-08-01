@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>New Job</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 1rem;
+            background: #ffffff;
+            color: #111111;
+            font-size: 18px;
+        }
+        h1 { font-size: 1.4rem; margin: 0 0 1rem; }
+        label {
+            display: block;
+            font-weight: 600;
+            margin: 1.1rem 0 0.35rem;
+        }
+        input, select {
+            width: 100%;
+            padding: 0.9rem;
+            font-size: 1.1rem;
+            border: 2px solid #333333;
+            border-radius: 8px;
+        }
+        .quick-picks {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .quick-pick {
+            flex: 1 1 auto;
+            padding: 0.75rem 0.5rem;
+            font-size: 1rem;
+            border: 2px solid #333333;
+            border-radius: 8px;
+            background: #f2f2f2;
+            cursor: pointer;
+        }
+        .recent-customers {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.25rem;
+        }
+        .recent-customer {
+            flex: 0 0 auto;
+            padding: 0.75rem 1rem;
+            border: 2px solid #0a6b3d;
+            color: #0a6b3d;
+            border-radius: 8px;
+            background: #ffffff;
+            font-size: 1rem;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        button.submit {
+            width: 100%;
+            margin-top: 1.75rem;
+            padding: 1.1rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            background: #0a6b3d;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .hint { color: #555555; font-size: 0.9rem; margin-top: 0.25rem; }
+    </style>
+</head>
+<body>
+<h1>New Job</h1>
+
+<div th:if="${not #lists.isEmpty(recentCustomers)}">
+    <label>Recent customers</label>
+    <div class="recent-customers">
+        <button type="button" class="recent-customer"
+                th:each="c : ${recentCustomers}"
+                th:text="${c.name != null and !c.name.isEmpty()} ? ${c.name} : ${c.phone}"
+                th:attr="data-name=${c.name},data-phone=${c.phone}"
+                onclick="fillCustomer(this)"></button>
+    </div>
+</div>
+
+<form method="post" th:action="@{/jobs}">
+    <label for="workType">Work type</label>
+    <select id="workType" name="workType" required>
+        <option th:each="w : ${workTypes}" th:value="${w}" th:text="${w}"></option>
+    </select>
+
+    <label for="vehicleDescription">Vehicle (optional)</label>
+    <input type="text" id="vehicleDescription" name="vehicleDescription" placeholder="e.g. Camry 2010">
+
+    <label for="charge">Amount charged</label>
+    <input type="text" inputmode="numeric" id="charge" name="charge" required>
+    <div class="quick-picks">
+        <button type="button" class="quick-pick" th:each="a : ${quickAmounts}"
+                th:text="${a}" th:attr="onclick=|setAmount('charge', '${a}')|"></button>
+    </div>
+
+    <label for="paid">Amount paid</label>
+    <input type="text" inputmode="numeric" id="paid" name="paid" placeholder="0">
+    <div class="quick-picks">
+        <button type="button" class="quick-pick" th:each="a : ${quickAmounts}"
+                th:text="${a}" th:attr="onclick=|setAmount('paid', '${a}')|"></button>
+    </div>
+
+    <label for="partsCost">Parts cost (optional)</label>
+    <input type="text" inputmode="numeric" id="partsCost" name="partsCost" placeholder="0">
+
+    <label for="customerName">Customer name (optional)</label>
+    <input type="text" id="customerName" name="customerName">
+
+    <label for="customerPhone">Customer phone (optional)</label>
+    <input type="tel" inputmode="tel" id="customerPhone" name="customerPhone">
+    <div class="hint">Add this later if you want to share a WhatsApp receipt.</div>
+
+    <button type="submit" class="submit">Save job</button>
+</form>
+
+<script th:inline="javascript">
+    function setAmount(fieldId, value) {
+        document.getElementById(fieldId).value = value;
+    }
+    function fillCustomer(btn) {
+        document.getElementById('customerName').value = btn.dataset.name || '';
+        document.getElementById('customerPhone').value = btn.dataset.phone || '';
+    }
+</script>
+</body>
+</html>
