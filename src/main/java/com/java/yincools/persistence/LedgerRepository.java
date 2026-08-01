@@ -4,6 +4,7 @@ import com.java.yincools.domain.model.EntryType;
 import com.java.yincools.domain.model.LedgerEntry;
 import org.springframework.data.repository.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,4 +27,6 @@ public interface LedgerRepository extends Repository<LedgerEntry, Long> {
     List<LedgerEntry> findByCustomerId(Long customerId);
 
     List<LedgerEntry> findByType(EntryType type);
+
+    List<LedgerEntry> findByDateBetween(LocalDate start, LocalDate end);
 }

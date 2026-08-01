@@ -30,7 +30,7 @@ domain/          Plain Java. No web/HTTP concerns.
   model/           Customer, Job, LedgerEntry, EntryType
   LedgerService     the ONLY thing allowed to write a LedgerEntry
   JobService        Dad-facing operations (createJob, editJob, recordPayment, voidJob)
-  InsightService    read-only queries (not built yet -- Phase 4)
+  InsightService    read-only queries (weeklySummary, debtorList)
 
 persistence/      Spring Data repositories. Dumb. No business logic.
                   LedgerRepository extends the bare Repository marker
@@ -78,7 +78,11 @@ not of code that could be mocked into passing.
   `adjust()` mechanism as everything else. "Last entry" card pinned to the
   top of the New Job screen with a one-tap edit link. Void action zeroes a
   job out without deleting its history. No confirmation dialogs.
-- [ ] **Phase 4 — Insights.** This week screen, Who owes me screen.
+- [x] **Phase 4 — Insights.** `InsightService.weeklySummary()` (charged,
+  paid, parts cost, shop expenses, profit for the Mon–Sun week containing a
+  given date) and `debtorList()` (jobs with a positive balance, highest
+  first). This Week and Who Owes Me screens, linked from a small nav on the
+  New Job screen.
 - [ ] **Phase 5 — Shop expenses screen.**
 - [ ] **Phase 6 — PWA + offline.** Manifest + icon for home-screen install,
   PIN login, service worker + local queue for offline job capture.
@@ -96,6 +100,8 @@ not of code that could be mocked into passing.
 | `POST /jobs/{id}/edit` | Corrects charge, parts cost, and payment via `LedgerService.adjust()` |
 | `POST /jobs/{id}/void` | Zeroes charge/paid/parts cost for the job; ledger history is untouched |
 | `GET /jobs/{id}/receipt` | Renders the receipt text + WhatsApp share link |
+| `GET /insights/week` | This week: job count, charged, paid, parts cost, shop expenses, profit |
+| `GET /insights/debtors` | Who owes me: jobs with a positive balance, highest first, tap to edit |
 
 ### Known simplifications (intentional, not gaps)
 
@@ -105,6 +111,9 @@ not of code that could be mocked into passing.
 - WhatsApp phone numbers are normalized to `+234` (Nigeria) assuming a
   leading `0` — revisit if the business ever serves customers outside
   Nigeria.
+- "Profit" in the weekly summary is billed revenue minus costs (charged −
+  parts cost − shop expenses), not cash collected — it reflects work done
+  this week regardless of whether the customer has paid yet.
 - No auth yet (Phase 6 adds PIN + long-lived cookie).
 - No offline support yet (Phase 6).
 

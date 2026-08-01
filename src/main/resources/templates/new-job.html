@@ -91,10 +91,22 @@
             font-weight: 700;
             color: #0a6b3d;
         }
+        nav.insights {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        nav.insights a { color: #555555; }
     </style>
 </head>
 <body>
 <h1>New Job</h1>
+
+<nav class="insights">
+    <a th:href="@{/insights/week}">This week</a>
+    <a th:href="@{/insights/debtors}">Who owes me</a>
+</nav>
 
 <div class="last-entry" th:if="${lastJob != null}">
     <div class="label">LAST ENTRY -- tap to fix</div>

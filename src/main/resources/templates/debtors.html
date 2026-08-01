@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Who Owes Me</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 1rem;
+            background: #ffffff;
+            color: #111111;
+            font-size: 18px;
+        }
+        h1 { font-size: 1.4rem; margin: 0 0 1rem; }
+        .debtor {
+            display: block;
+            padding: 0.9rem;
+            margin-bottom: 0.6rem;
+            border: 2px solid #333333;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #111111;
+        }
+        .debtor .name { font-weight: 700; }
+        .debtor .job { color: #555555; font-size: 0.95rem; }
+        .debtor .balance {
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #a30000;
+            margin-top: 0.35rem;
+        }
+        .empty { color: #555555; }
+        a.button {
+            display: block;
+            width: 100%;
+            margin-top: 1.5rem;
+            padding: 1.1rem;
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 10px;
+            background: #0a6b3d;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<h1>Who Owes Me</h1>
+
+<p class="empty" th:if="${#lists.isEmpty(debtors)}">Nobody owes you anything right now.</p>
+
+<a class="debtor" th:each="d : ${debtors}" th:href="@{/jobs/{id}/edit(id=${d.job().id})}">
+    <div class="name" th:text="${d.customerLabel()} != null ? ${d.customerLabel()} : 'Unnamed customer'"></div>
+    <div class="job" th:text="${d.job().workType} + ' — ' + ${d.job().vehicleDescription}"></div>
+    <div class="balance" th:text="'NGN ' + ${d.job().cachedBalance}"></div>
+</a>
+
+<a th:href="@{/jobs/new}" class="button">Back to New Job</a>
+</body>
+</html>
