@@ -21,15 +21,23 @@ number anyone sees (balance owed, weekly total, profit) is a **sum over that
 table**, never a stored value someone has to keep in sync. See
 `LedgerService.adjust()` for the one method that implements this.
 
+> **Second rule: record what's actually known — never a guess dressed up as
+> precision, and never structure Dad doesn't need.** A walk-in's car is a
+> free-text note, not a forced `Vehicle` row nobody will ever search for
+> again. A shared parts cost across a fleet's visit is logged against the
+> customer, not split across cars with fake precision. See `docs/BUILD_PLAN.md`
+> §7 for the full reasoning.
+
 ## Architecture
 
 Three layers, strict one-way dependency (`web` → `domain` → `persistence`):
 
 ```
 domain/          Plain Java. No web/HTTP concerns.
-  model/           Customer, Job, LedgerEntry, EntryType
+  model/           Customer, Vehicle, Job, LedgerEntry, EntryType
   LedgerService     the ONLY thing allowed to write a LedgerEntry
   JobService        Dad-facing operations (createJob, editJob, recordPayment, voidJob)
+  VehicleService    findOrCreate, vehiclesFor (fleet detection), suggestionList
   InsightService    read-only queries (weeklySummary, debtorList)
 
 persistence/      Spring Data repositories. Dumb. No business logic.
@@ -39,6 +47,16 @@ persistence/      Spring Data repositories. Dumb. No business logic.
 
 web/              Thymeleaf controllers + templates. Talk only to domain/ services.
 ```
+
+**Vehicles, in three shapes, matching what's actually known:** a `Job` can
+reference a persisted `Vehicle` (customer with 1+ cars — auto-selected if
+just one, a tap-to-pick chip list if more), or a free-text `vehicleNote`
+(walk-in with no customer — never becomes a `Vehicle` row), or neither. A
+`PARTS_COST` can likewise be fully attributed (jobId+vehicleId+customerId
+set), a customer-level *shared visit* cost (`LedgerService.recordSharedCost`
+— jobId/vehicleId null, customerId set, logged once with no correction path
+since there's nothing scoped to correct it against), or a shop-wide
+`SHOP_EXPENSE` (all three null).
 
 ## Running locally
 
@@ -69,12 +87,19 @@ not of code that could be mocked into passing.
 
 - [x] **Phase 0 — Skeleton.** Spring Boot project, `domain`/`persistence`/`web`
   packages, H2 for local dev.
-- [x] **Phase 1 — Ledger core.** `LedgerService.record()` / `adjust()` /
-  `netFor()` / `recordShopExpense()`. Unit-tested with repeated corrections
-  to the same job, asserting the net is right after every single one.
+- [x] **Phase 1 — Ledger core.** `Vehicle` entity alongside `Customer`/`Job`/
+  `LedgerEntry`. `LedgerService.record()` / `adjust()` / `netFor()` /
+  `recordShopExpense()` / `recordSharedCost()`. Unit-tested with repeated
+  corrections to the same job (net right after every one), plus the
+  shared-cost case (a `PARTS_COST` with `customerId` set but `jobId`/
+  `vehicleId` null, and proof it doesn't net across different customers).
 - [x] **Phase 2 — Job entry + receipt.** New Job form (quick-pick amounts,
-  recent customers, minimal required fields), `JobService.createJob`,
-  receipt render, WhatsApp share link (`wa.me`).
+  recent customers, minimal required fields), vehicle picker (auto-select
+  for a single-vehicle customer, tap-to-pick chips for a fleet, free text
+  for walk-ins), vehicle autocomplete (`static/vehicle-seed.json` merged
+  client-side with `/api/vehicles/suggestions`), a "shared across today's
+  visit" checkbox on parts cost, `JobService.createJob`, receipt render,
+  WhatsApp share link (`wa.me`).
 - [x] **Phase 3 — Edit/correction flow.** Edit Job screen prefilled with
   current values (charge, parts cost, paid), saves via the same
   `adjust()` mechanism as everything else. "Last entry" card pinned to the
@@ -116,6 +141,8 @@ not of code that could be mocked into passing.
 | `POST /expenses` | Records a shop expense, redirects back with a saved banner |
 | `GET /login` | PIN entry screen; everything else requires auth |
 | `POST /login` | Verifies the PIN, sets a ~1 year remember-me cookie |
+| `GET /api/vehicles?phone=` | JSON: vehicles for that phone's customer (empty if none) |
+| `GET /api/vehicles/suggestions` | JSON: distinct vehicle descriptions typed before |
 
 ### Known simplifications (intentional, not gaps)
 
@@ -128,6 +155,14 @@ not of code that could be mocked into passing.
 - "Profit" in the weekly summary is billed revenue minus costs (charged −
   parts cost − shop expenses), not cash collected — it reflects work done
   this week regardless of whether the customer has paid yet.
+- A shared visit cost (`recordSharedCost`) is a plain append, never a
+  correction target: with `jobId` null, Spring Data renders that parameter
+  as `IS NULL` with no `customerId` filter, so a jobId-keyed `adjust()` would
+  net across every customer's shared costs at once. There's no described
+  flow for editing one later, so each is recorded once, like a shop expense.
+- Per-vehicle cost/profit isn't built yet (Phase 7) — when it is, it must be
+  visibly flagged as approximate wherever a visit shared costs across
+  multiple vehicles (§7 of the build plan).
 - No offline support yet (Phase 6b).
 - `/h2-console` requires login like everything else (rather than being
   publicly reachable) -- fine for now, but plan to disable it entirely via

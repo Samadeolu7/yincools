@@ -27,7 +27,7 @@ public class LedgerService {
     private final JobRepository jobRepo;
 
     @Transactional
-    public void adjust(EntryType type, Long jobId, Long customerId, BigDecimal newTotal, String note) {
+    public void adjust(EntryType type, Long jobId, Long vehicleId, Long customerId, BigDecimal newTotal, String note) {
         BigDecimal currentNet = netFor(type, jobId);
         BigDecimal delta = newTotal.subtract(currentNet);
 
@@ -39,6 +39,7 @@ public class LedgerService {
         entry.setType(type);
         entry.setSignedAmount(delta);
         entry.setJobId(jobId);
+        entry.setVehicleId(vehicleId);
         entry.setCustomerId(customerId);
         entry.setDate(LocalDate.now());
         entry.setNote(note);
@@ -50,8 +51,8 @@ public class LedgerService {
     }
 
     /** Recording a brand new fact is mathematically identical to adjusting from a net of zero. */
-    public void record(EntryType type, Long jobId, Long customerId, BigDecimal amount, String note) {
-        adjust(type, jobId, customerId, amount, note);
+    public void record(EntryType type, Long jobId, Long vehicleId, Long customerId, BigDecimal amount, String note) {
+        adjust(type, jobId, vehicleId, customerId, amount, note);
     }
 
     @Transactional
@@ -60,7 +61,35 @@ public class LedgerService {
         entry.setType(EntryType.SHOP_EXPENSE);
         entry.setSignedAmount(amount);
         entry.setJobId(null);
+        entry.setVehicleId(null);
         entry.setCustomerId(null);
+        entry.setDate(LocalDate.now());
+        entry.setNote(note);
+        entry.setCorrection(false);
+        entry.setCreatedAt(Instant.now());
+
+        ledgerRepo.save(entry);
+    }
+
+    /**
+     * A PARTS_COST known to belong to a customer's visit but not to any one
+     * car -- e.g. a shared gas can across a fleet's jobs today. This is a
+     * plain append, not a correction target: jobId is null, and a
+     * jobId-keyed net (see adjust()) can't safely scope a correction to one
+     * customer when jobId is null -- Spring Data renders a null parameter as
+     * "IS NULL" with no customerId filter, so it would net across every
+     * customer's shared costs at once. There's no described flow for editing
+     * a shared cost later, so each one is just recorded once, like a shop
+     * expense.
+     */
+    @Transactional
+    public void recordSharedCost(Long customerId, BigDecimal amount, String note) {
+        LedgerEntry entry = new LedgerEntry();
+        entry.setType(EntryType.PARTS_COST);
+        entry.setSignedAmount(amount);
+        entry.setJobId(null);
+        entry.setVehicleId(null);
+        entry.setCustomerId(customerId);
         entry.setDate(LocalDate.now());
         entry.setNote(note);
         entry.setCorrection(false);

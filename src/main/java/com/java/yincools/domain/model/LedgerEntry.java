@@ -34,8 +34,13 @@ public class LedgerEntry {
 
     private BigDecimal signedAmount;
 
+    /** Null for SHOP_EXPENSE, and for costs shared across a visit rather than tied to one job. */
     private Long jobId;
 
+    /** Null wherever jobId is null, for the same reason. */
+    private Long vehicleId;
+
+    /** Null for SHOP_EXPENSE only. */
     private Long customerId;
 
     private LocalDate date;

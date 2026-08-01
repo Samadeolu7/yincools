@@ -27,7 +27,11 @@ public class Job {
 
     private Long customerId;
 
-    private String vehicleDescription;
+    /** Set when there's a persisted Vehicle behind this job. */
+    private Long vehicleId;
+
+    /** Free text for a walk-in with no customer -- never becomes a Vehicle row. */
+    private String vehicleNote;
 
     private String workType;
 

@@ -42,13 +42,13 @@
             background: #f2f2f2;
             cursor: pointer;
         }
-        .recent-customers {
+        .recent-customers, .vehicle-picker {
             display: flex;
             gap: 0.5rem;
             overflow-x: auto;
             padding-bottom: 0.25rem;
         }
-        .recent-customer {
+        .recent-customer, .vehicle-chip {
             flex: 0 0 auto;
             padding: 0.75rem 1rem;
             border: 2px solid #0a6b3d;
@@ -59,6 +59,26 @@
             white-space: nowrap;
             cursor: pointer;
         }
+        .vehicle-chip.selected {
+            background: #0a6b3d;
+            color: #ffffff;
+        }
+        .plate {
+            width: 100%;
+            padding: 0.9rem;
+            font-size: 1.1rem;
+            border: 2px solid #333333;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-top: 0.75rem;
+        }
+        .checkbox-row input { width: auto; }
+        .checkbox-row label { margin: 0; font-weight: 500; }
         button.submit {
             width: 100%;
             margin-top: 1.75rem;
@@ -111,7 +131,7 @@
 
 <div class="last-entry" th:if="${lastJob != null}">
     <div class="label">LAST ENTRY -- tap to fix</div>
-    <div th:text="${lastJob.workType} + ' — ' + ${lastJob.vehicleDescription}"></div>
+    <div th:text="${lastJob.workType} + ' — ' + ${lastJobVehicleLabel}"></div>
     <div th:if="${lastJobCustomer != null and lastJobCustomer.name != null and !lastJobCustomer.name.isEmpty()}"
          th:text="${lastJobCustomer.name}"></div>
     <div th:text="'Charge: NGN ' + ${lastJob.cachedCharge} + '  Paid: NGN ' + ${lastJob.cachedPaid} + '  Balance: NGN ' + ${lastJob.cachedBalance}"></div>
@@ -135,8 +155,21 @@
         <option th:each="w : ${workTypes}" th:value="${w}" th:text="${w}"></option>
     </select>
 
+    <label for="customerName">Customer name (optional)</label>
+    <input type="text" id="customerName" name="customerName">
+
+    <label for="customerPhone">Customer phone (optional)</label>
+    <input type="tel" inputmode="tel" id="customerPhone" name="customerPhone" onchange="lookupVehicles(this.value)">
+    <div class="hint">Add this later if you want to share a WhatsApp receipt.</div>
+
     <label for="vehicleDescription">Vehicle (optional)</label>
-    <input type="text" id="vehicleDescription" name="vehicleDescription" placeholder="e.g. Camry 2010">
+    <div id="vehiclePicker" class="vehicle-picker" style="display:none;"></div>
+    <input type="text" id="vehicleDescription" name="vehicleDescription" list="vehicle-suggestions"
+           placeholder="e.g. Camry 2010" oninput="clearVehicleSelection()">
+    <datalist id="vehicle-suggestions"></datalist>
+    <input type="text" id="vehiclePlateNumber" name="vehiclePlateNumber" class="plate"
+           placeholder="Plate number (optional, for fleets)">
+    <input type="hidden" id="vehicleId" name="vehicleId">
 
     <label for="charge">Amount charged</label>
     <input type="text" inputmode="numeric" id="charge" name="charge" required>
@@ -154,13 +187,10 @@
 
     <label for="partsCost">Parts cost (optional)</label>
     <input type="text" inputmode="numeric" id="partsCost" name="partsCost" placeholder="0">
-
-    <label for="customerName">Customer name (optional)</label>
-    <input type="text" id="customerName" name="customerName">
-
-    <label for="customerPhone">Customer phone (optional)</label>
-    <input type="tel" inputmode="tel" id="customerPhone" name="customerPhone">
-    <div class="hint">Add this later if you want to share a WhatsApp receipt.</div>
+    <div class="checkbox-row">
+        <input type="checkbox" id="sharedPartsCost" name="sharedPartsCost" value="true">
+        <label for="sharedPartsCost">Shared across today's visit (not just this car)</label>
+    </div>
 
     <button type="submit" class="submit">Save job</button>
 </form>
@@ -169,10 +199,77 @@
     function setAmount(fieldId, value) {
         document.getElementById(fieldId).value = value;
     }
+
     function fillCustomer(btn) {
         document.getElementById('customerName').value = btn.dataset.name || '';
         document.getElementById('customerPhone').value = btn.dataset.phone || '';
+        lookupVehicles(btn.dataset.phone || '');
     }
+
+    function clearVehicleSelection() {
+        document.getElementById('vehicleId').value = '';
+        setVehiclePickerSelection(null);
+    }
+
+    function setVehiclePickerSelection(vehicleId) {
+        document.querySelectorAll('#vehiclePicker .vehicle-chip').forEach(function (chip) {
+            chip.classList.toggle('selected', chip.dataset.id === String(vehicleId));
+        });
+    }
+
+    function pickVehicle(id, description) {
+        document.getElementById('vehicleId').value = id;
+        document.getElementById('vehicleDescription').value = description;
+        setVehiclePickerSelection(id);
+    }
+
+    function lookupVehicles(phone) {
+        var picker = document.getElementById('vehiclePicker');
+        document.getElementById('vehicleId').value = '';
+        picker.innerHTML = '';
+        picker.style.display = 'none';
+        if (!phone) return;
+
+        fetch('/api/vehicles?phone=' + encodeURIComponent(phone))
+            .then(function (r) { return r.ok ? r.json() : []; })
+            .then(function (vehicles) {
+                if (!vehicles.length) return;
+
+                if (vehicles.length === 1) {
+                    pickVehicle(vehicles[0].id, vehicles[0].description);
+                    return;
+                }
+
+                vehicles.forEach(function (v) {
+                    var chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.className = 'vehicle-chip';
+                    chip.textContent = v.plateNumber ? v.description + ' (' + v.plateNumber + ')' : v.description;
+                    chip.dataset.id = v.id;
+                    chip.onclick = function () { pickVehicle(v.id, v.description); };
+                    picker.appendChild(chip);
+                });
+                picker.style.display = 'flex';
+            })
+            .catch(function () { /* offline or lookup failed -- free text still works */ });
+    }
+
+    function loadVehicleSuggestions() {
+        var datalist = document.getElementById('vehicle-suggestions');
+        Promise.all([
+            fetch('/vehicle-seed.json').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; }),
+            fetch('/api/vehicles/suggestions').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
+        ]).then(function (results) {
+            var merged = Array.from(new Set(results[0].concat(results[1])));
+            merged.forEach(function (description) {
+                var option = document.createElement('option');
+                option.value = description;
+                datalist.appendChild(option);
+            });
+        });
+    }
+
+    loadVehicleSuggestions();
 </script>
 </body>
 </html>

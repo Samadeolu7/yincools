@@ -3,6 +3,7 @@ package com.java.yincools.domain;
 import com.java.yincools.domain.model.Customer;
 import com.java.yincools.domain.model.EntryType;
 import com.java.yincools.domain.model.Job;
+import com.java.yincools.domain.model.Vehicle;
 import com.java.yincools.persistence.CustomerRepository;
 import com.java.yincools.persistence.JobRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,15 +28,39 @@ public class JobService {
     private final JobRepository jobRepo;
     private final CustomerRepository customerRepo;
     private final LedgerService ledgerService;
+    private final VehicleService vehicleService;
 
+    /**
+     * vehicleId picks an existing vehicle for the resolved customer;
+     * newVehicleDescription/newVehiclePlateNumber create one instead (used
+     * once, then it's an existing pick next time). Neither is used for a
+     * walk-in with no customer -- vehicleNote is the whole vehicle field
+     * there, free text, never becomes a Vehicle row.
+     */
     @Transactional
-    public Job createJob(String customerName, String customerPhone, String vehicleDescription,
+    public Job createJob(String customerName, String customerPhone,
+                          Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
+                          String vehicleNote,
                           String workType, BigDecimal charge, BigDecimal partsCost, BigDecimal paid) {
         Long customerId = resolveCustomer(customerName, customerPhone);
 
+        Long resolvedVehicleId = null;
+        String resolvedVehicleNote = null;
+
+        if (customerId != null) {
+            if (vehicleId != null) {
+                resolvedVehicleId = vehicleId;
+            } else if (StringUtils.hasText(newVehicleDescription)) {
+                resolvedVehicleId = vehicleService.findOrCreate(customerId, newVehicleDescription, newVehiclePlateNumber).getId();
+            }
+        } else {
+            resolvedVehicleNote = vehicleNote;
+        }
+
         Job job = new Job();
         job.setCustomerId(customerId);
-        job.setVehicleDescription(vehicleDescription);
+        job.setVehicleId(resolvedVehicleId);
+        job.setVehicleNote(resolvedVehicleNote);
         job.setWorkType(workType);
         job.setDate(LocalDate.now());
         job.setCachedCharge(BigDecimal.ZERO);
@@ -43,9 +68,9 @@ public class JobService {
         job.setCachedBalance(BigDecimal.ZERO);
         job = jobRepo.save(job);
 
-        ledgerService.record(EntryType.CHARGE, job.getId(), customerId, nullToZero(charge), null);
-        ledgerService.record(EntryType.PARTS_COST, job.getId(), customerId, nullToZero(partsCost), null);
-        ledgerService.record(EntryType.PAYMENT, job.getId(), customerId, nullToZero(paid), null);
+        ledgerService.record(EntryType.CHARGE, job.getId(), resolvedVehicleId, customerId, nullToZero(charge), null);
+        ledgerService.record(EntryType.PARTS_COST, job.getId(), resolvedVehicleId, customerId, nullToZero(partsCost), null);
+        ledgerService.record(EntryType.PAYMENT, job.getId(), resolvedVehicleId, customerId, nullToZero(paid), null);
 
         return jobRepo.findById(job.getId()).orElseThrow();
     }
@@ -54,24 +79,29 @@ public class JobService {
     public void editJob(Long jobId, BigDecimal newCharge, BigDecimal newPartsCost) {
         Job job = jobRepo.findById(jobId)
                 .orElseThrow(() -> new IllegalArgumentException("No job with id " + jobId));
-        ledgerService.adjust(EntryType.CHARGE, jobId, job.getCustomerId(), newCharge, null);
-        ledgerService.adjust(EntryType.PARTS_COST, jobId, job.getCustomerId(), newPartsCost, null);
+        ledgerService.adjust(EntryType.CHARGE, jobId, job.getVehicleId(), job.getCustomerId(), newCharge, null);
+        ledgerService.adjust(EntryType.PARTS_COST, jobId, job.getVehicleId(), job.getCustomerId(), newPartsCost, null);
     }
 
     @Transactional
     public void recordPayment(Long jobId, BigDecimal amountPaidTotal) {
         Job job = jobRepo.findById(jobId)
                 .orElseThrow(() -> new IllegalArgumentException("No job with id " + jobId));
-        ledgerService.adjust(EntryType.PAYMENT, jobId, job.getCustomerId(), amountPaidTotal, null);
+        ledgerService.adjust(EntryType.PAYMENT, jobId, job.getVehicleId(), job.getCustomerId(), amountPaidTotal, null);
     }
 
     @Transactional
     public void voidJob(Long jobId) {
         Job job = jobRepo.findById(jobId)
                 .orElseThrow(() -> new IllegalArgumentException("No job with id " + jobId));
-        ledgerService.adjust(EntryType.CHARGE, jobId, job.getCustomerId(), BigDecimal.ZERO, "voided");
-        ledgerService.adjust(EntryType.PAYMENT, jobId, job.getCustomerId(), BigDecimal.ZERO, "voided");
-        ledgerService.adjust(EntryType.PARTS_COST, jobId, job.getCustomerId(), BigDecimal.ZERO, "voided");
+        ledgerService.adjust(EntryType.CHARGE, jobId, job.getVehicleId(), job.getCustomerId(), BigDecimal.ZERO, "voided");
+        ledgerService.adjust(EntryType.PAYMENT, jobId, job.getVehicleId(), job.getCustomerId(), BigDecimal.ZERO, "voided");
+        ledgerService.adjust(EntryType.PARTS_COST, jobId, job.getVehicleId(), job.getCustomerId(), BigDecimal.ZERO, "voided");
+    }
+
+    /** Logs a parts cost tied to a customer's visit but not to any one car (§7's "shared visit" case). */
+    public void recordSharedPartsCost(Long customerId, BigDecimal amount, String note) {
+        ledgerService.recordSharedCost(customerId, amount, note);
     }
 
     public Job get(Long jobId) {
@@ -84,6 +114,22 @@ public class JobService {
             return Optional.empty();
         }
         return customerRepo.findById(job.getCustomerId());
+    }
+
+    public Optional<Customer> findCustomerByPhone(String phone) {
+        return customerRepo.findByPhone(phone);
+    }
+
+    public List<Vehicle> vehiclesFor(Long customerId) {
+        return vehicleService.vehiclesFor(customerId);
+    }
+
+    /** The vehicle's description if it has a persisted Vehicle, else the free-text walk-in note, else null. */
+    public String vehicleLabelFor(Job job) {
+        if (job.getVehicleId() != null) {
+            return vehicleService.findById(job.getVehicleId()).map(Vehicle::getDescription).orElse(null);
+        }
+        return job.getVehicleNote();
     }
 
     public Optional<Job> lastJob() {

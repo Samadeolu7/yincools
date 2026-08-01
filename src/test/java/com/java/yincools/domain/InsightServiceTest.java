@@ -5,6 +5,7 @@ import com.java.yincools.domain.model.Job;
 import com.java.yincools.persistence.CustomerRepository;
 import com.java.yincools.persistence.JobRepository;
 import com.java.yincools.persistence.LedgerRepository;
+import com.java.yincools.persistence.VehicleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ class InsightServiceTest {
     @Autowired
     private CustomerRepository customerRepository;
 
+    @Autowired
+    private VehicleRepository vehicleRepository;
+
     private LedgerService ledgerService;
     private JobService jobService;
     private InsightService insightService;
@@ -34,8 +38,13 @@ class InsightServiceTest {
     @BeforeEach
     void setUp() {
         ledgerService = new LedgerService(ledgerRepository, jobRepository);
-        jobService = new JobService(jobRepository, customerRepository, ledgerService);
+        VehicleService vehicleService = new VehicleService(vehicleRepository);
+        jobService = new JobService(jobRepository, customerRepository, ledgerService, vehicleService);
         insightService = new InsightService(ledgerRepository, jobRepository);
+    }
+
+    private Job createWalkIn(String vehicleNote, String workType, BigDecimal charge, BigDecimal partsCost, BigDecimal paid) {
+        return jobService.createJob(null, null, null, null, null, vehicleNote, workType, charge, partsCost, paid);
     }
 
     @Test
@@ -45,13 +54,13 @@ class InsightServiceTest {
         LocalDate lastWeekSunday = monday.minusDays(1);
 
         // in-week job
-        Job inWeek = jobService.createJob(null, null, "Car A", "REGAS",
+        Job inWeek = createWalkIn("Car A", "REGAS",
                 new BigDecimal("15000"), new BigDecimal("3000"), new BigDecimal("15000"));
         backdateJob(inWeek, monday.plusDays(2));
         backdateEntries(inWeek.getId(), monday.plusDays(2));
 
         // out-of-week job (should not count)
-        Job outOfWeek = jobService.createJob(null, null, "Car B", "REGAS",
+        Job outOfWeek = createWalkIn("Car B", "REGAS",
                 new BigDecimal("99999"), new BigDecimal("1"), new BigDecimal("1"));
         backdateJob(outOfWeek, lastWeekSunday);
         backdateEntries(outOfWeek.getId(), lastWeekSunday);
@@ -74,11 +83,11 @@ class InsightServiceTest {
 
     @Test
     void debtorListReturnsOnlyJobsWithPositiveBalanceOrderedHighestFirst() {
-        Job paidInFull = jobService.createJob(null, null, "Car A", "REGAS",
+        Job paidInFull = createWalkIn("Car A", "REGAS",
                 new BigDecimal("10000"), BigDecimal.ZERO, new BigDecimal("10000"));
-        Job smallDebt = jobService.createJob(null, null, "Car B", "REGAS",
+        Job smallDebt = createWalkIn("Car B", "REGAS",
                 new BigDecimal("10000"), BigDecimal.ZERO, new BigDecimal("7000"));
-        Job bigDebt = jobService.createJob(null, null, "Car C", "REGAS",
+        Job bigDebt = createWalkIn("Car C", "REGAS",
                 new BigDecimal("20000"), BigDecimal.ZERO, new BigDecimal("0"));
 
         var debtors = insightService.debtorList();

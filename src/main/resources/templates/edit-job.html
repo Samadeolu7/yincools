@@ -70,7 +70,7 @@
 </head>
 <body>
 <h1>Edit Job</h1>
-<p th:text="${job.vehicleDescription} + ' — ' + ${job.workType}"></p>
+<p th:text="${vehicleLabel} + ' — ' + ${job.workType}"></p>
 
 <form method="post" th:action="@{/jobs/{id}/edit(id=${job.id})}">
     <label for="charge">Amount charged</label>

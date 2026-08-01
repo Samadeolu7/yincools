@@ -41,19 +41,19 @@ class LedgerServiceTest {
     void repeatedCorrectionsToChargeAlwaysLeaveNetEqualToLastStatedTotal() {
         Long jobId = newJob();
 
-        ledgerService.record(EntryType.CHARGE, jobId, null, new BigDecimal("15000"), "initial entry");
+        ledgerService.record(EntryType.CHARGE, jobId, null, null, new BigDecimal("15000"), "initial entry");
         assertNetEquals("15000", EntryType.CHARGE, jobId);
         assertCachedChargeEquals("15000", jobId);
 
-        ledgerService.adjust(EntryType.CHARGE, jobId, null, new BigDecimal("12000"), "corrected amount");
+        ledgerService.adjust(EntryType.CHARGE, jobId, null, null, new BigDecimal("12000"), "corrected amount");
         assertNetEquals("12000", EntryType.CHARGE, jobId);
         assertCachedChargeEquals("12000", jobId);
 
-        ledgerService.adjust(EntryType.CHARGE, jobId, null, new BigDecimal("20000"), "corrected again");
+        ledgerService.adjust(EntryType.CHARGE, jobId, null, null, new BigDecimal("20000"), "corrected again");
         assertNetEquals("20000", EntryType.CHARGE, jobId);
         assertCachedChargeEquals("20000", jobId);
 
-        ledgerService.adjust(EntryType.CHARGE, jobId, null, new BigDecimal("18500"), "one more correction");
+        ledgerService.adjust(EntryType.CHARGE, jobId, null, null, new BigDecimal("18500"), "one more correction");
         assertNetEquals("18500", EntryType.CHARGE, jobId);
         assertCachedChargeEquals("18500", jobId);
 
@@ -65,7 +65,7 @@ class LedgerServiceTest {
     void firstEntryForAJobIsNotFlaggedAsACorrection() {
         Long jobId = newJob();
 
-        ledgerService.record(EntryType.CHARGE, jobId, null, new BigDecimal("15000"), "initial entry");
+        ledgerService.record(EntryType.CHARGE, jobId, null, null, new BigDecimal("15000"), "initial entry");
 
         var entries = ledgerRepository.findByJobIdAndType(jobId, EntryType.CHARGE);
         assertThat(entries).hasSize(1);
@@ -76,8 +76,8 @@ class LedgerServiceTest {
     void subsequentAdjustmentsAreFlaggedAsCorrections() {
         Long jobId = newJob();
 
-        ledgerService.record(EntryType.CHARGE, jobId, null, new BigDecimal("15000"), "initial entry");
-        ledgerService.adjust(EntryType.CHARGE, jobId, null, new BigDecimal("12000"), "corrected amount");
+        ledgerService.record(EntryType.CHARGE, jobId, null, null, new BigDecimal("15000"), "initial entry");
+        ledgerService.adjust(EntryType.CHARGE, jobId, null, null, new BigDecimal("12000"), "corrected amount");
 
         var entries = ledgerRepository.findByJobIdAndType(jobId, EntryType.CHARGE);
         assertThat(entries).hasSize(2);
@@ -88,8 +88,8 @@ class LedgerServiceTest {
     void adjustingToTheSameTotalIsANoOp() {
         Long jobId = newJob();
 
-        ledgerService.record(EntryType.CHARGE, jobId, null, new BigDecimal("15000"), "initial entry");
-        ledgerService.adjust(EntryType.CHARGE, jobId, null, new BigDecimal("15000"), "no real change");
+        ledgerService.record(EntryType.CHARGE, jobId, null, null, new BigDecimal("15000"), "initial entry");
+        ledgerService.adjust(EntryType.CHARGE, jobId, null, null, new BigDecimal("15000"), "no real change");
 
         assertThat(ledgerRepository.findByJobIdAndType(jobId, EntryType.CHARGE)).hasSize(1);
     }
@@ -98,15 +98,15 @@ class LedgerServiceTest {
     void balanceReflectsChargeAndPaymentAcrossCorrections() {
         Long jobId = newJob();
 
-        ledgerService.record(EntryType.CHARGE, jobId, null, new BigDecimal("20000"), null);
-        ledgerService.record(EntryType.PAYMENT, jobId, null, new BigDecimal("5000"), null);
+        ledgerService.record(EntryType.CHARGE, jobId, null, null, new BigDecimal("20000"), null);
+        ledgerService.record(EntryType.PAYMENT, jobId, null, null, new BigDecimal("5000"), null);
         assertCachedBalanceEquals("15000", jobId);
 
         // dad mis-typed the payment; corrects it to the real total paid so far
-        ledgerService.adjust(EntryType.PAYMENT, jobId, null, new BigDecimal("20000"), "full payment");
+        ledgerService.adjust(EntryType.PAYMENT, jobId, null, null, new BigDecimal("20000"), "full payment");
         assertCachedBalanceEquals("0", jobId);
 
-        ledgerService.adjust(EntryType.CHARGE, jobId, null, new BigDecimal("18000"), "job was smaller than quoted");
+        ledgerService.adjust(EntryType.CHARGE, jobId, null, null, new BigDecimal("18000"), "job was smaller than quoted");
         assertCachedBalanceEquals("-2000", jobId);
     }
 
@@ -114,8 +114,8 @@ class LedgerServiceTest {
     void partsCostAndChargeAreIndependentLedgersForTheSameJob() {
         Long jobId = newJob();
 
-        ledgerService.record(EntryType.CHARGE, jobId, null, new BigDecimal("15000"), null);
-        ledgerService.record(EntryType.PARTS_COST, jobId, null, new BigDecimal("4000"), null);
+        ledgerService.record(EntryType.CHARGE, jobId, null, null, new BigDecimal("15000"), null);
+        ledgerService.record(EntryType.PARTS_COST, jobId, null, null, new BigDecimal("4000"), null);
 
         assertNetEquals("15000", EntryType.CHARGE, jobId);
         assertNetEquals("4000", EntryType.PARTS_COST, jobId);
@@ -124,7 +124,7 @@ class LedgerServiceTest {
     @Test
     void shopExpenseHasNoJobOrCustomerAndDoesNotTouchAnyJobCache() {
         Long jobId = newJob();
-        ledgerService.record(EntryType.CHARGE, jobId, null, new BigDecimal("15000"), null);
+        ledgerService.record(EntryType.CHARGE, jobId, null, null, new BigDecimal("15000"), null);
 
         ledgerService.recordShopExpense(new BigDecimal("3000"), "rent");
 
@@ -135,6 +135,31 @@ class LedgerServiceTest {
 
         // unrelated job's cache is untouched
         assertCachedChargeEquals("15000", jobId);
+    }
+
+    @Test
+    void sharedPartsCostHasNoJobOrVehicleButIsTiedToACustomer() {
+        Long customerId = 42L;
+
+        ledgerService.recordSharedCost(customerId, new BigDecimal("6000"), "shared gas can");
+
+        var entries = ledgerRepository.findByCustomerId(customerId);
+        assertThat(entries).hasSize(1);
+        assertThat(entries.get(0).getType()).isEqualTo(EntryType.PARTS_COST);
+        assertThat(entries.get(0).getJobId()).isNull();
+        assertThat(entries.get(0).getVehicleId()).isNull();
+        assertThat(entries.get(0).getSignedAmount()).isEqualByComparingTo("6000");
+    }
+
+    @Test
+    void sharedPartsCostForDifferentCustomersDoesNotNetAgainstEachOther() {
+        ledgerService.recordSharedCost(1L, new BigDecimal("6000"), "shared gas can");
+        ledgerService.recordSharedCost(2L, new BigDecimal("2500"), "shared gas can");
+
+        assertThat(ledgerRepository.findByCustomerId(1L)).hasSize(1)
+                .allSatisfy(e -> assertThat(e.getSignedAmount()).isEqualByComparingTo("6000"));
+        assertThat(ledgerRepository.findByCustomerId(2L)).hasSize(1)
+                .allSatisfy(e -> assertThat(e.getSignedAmount()).isEqualByComparingTo("2500"));
     }
 
     private void assertNetEquals(String expected, EntryType type, Long jobId) {

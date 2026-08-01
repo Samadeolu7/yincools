@@ -27,7 +27,7 @@ public class InsightController {
     @GetMapping("/insights/debtors")
     public String debtors(Model model) {
         List<DebtorRow> debtors = insightService.debtorList().stream()
-                .map(job -> new DebtorRow(job, customerLabel(job)))
+                .map(job -> new DebtorRow(job, customerLabel(job), jobService.vehicleLabelFor(job)))
                 .toList();
         model.addAttribute("debtors", debtors);
         return "debtors";
@@ -39,6 +39,6 @@ public class InsightController {
                 .orElse(null);
     }
 
-    public record DebtorRow(Job job, String customerLabel) {
+    public record DebtorRow(Job job, String customerLabel, String vehicleLabel) {
     }
 }

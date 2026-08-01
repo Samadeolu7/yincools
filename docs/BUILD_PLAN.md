@@ -30,6 +30,17 @@ This one rule is what makes the system:
   regas-due list) is a new *read-only query* against the same table. The write
   path never changes, so old features can't break when you add new ones.
 
+> **Second rule: record what's actually known — never a guess dressed up as
+> precision, and never structure Dad doesn't need.**
+
+This governs every judgment call in this doc, not just money. A shared parts
+cost recorded against a customer instead of a car (§7) is honest about what's
+known. A one-off walk-in typed as free text instead of forced through a
+"create customer, create vehicle" flow (§7) is honest about what's *worth*
+knowing — persisting a structured record for someone Dad will never see again
+buys nothing and costs him a slower form. Estimates and shortcuts are fine.
+Fake precision and unearned ceremony are not.
+
 ---
 
 ## 2. Architecture
@@ -71,8 +82,9 @@ class LedgerEntry {
     EntryType type;
 
     BigDecimal signedAmount;   // usually positive; corrections may be negative
-    Long jobId;                // null for SHOP_EXPENSE
-    Long customerId;           // null for SHOP_EXPENSE
+    Long jobId;                // null for SHOP_EXPENSE, and for costs shared across a visit
+    Long vehicleId;            // null wherever jobId is null, for the same reason
+    Long customerId;           // null for SHOP_EXPENSE only
     LocalDate date;
     String note;               // optional, human-readable, e.g. "corrected amount"
     boolean isCorrection;      // true if this row adjusts an earlier fact
@@ -84,6 +96,22 @@ class Customer {
     @Id @GeneratedValue Long id;
     String name;
     String phone;
+    // No "individual vs company" flag needed — a customer with one Vehicle
+    // behaves like an individual, one with several behaves like a fleet.
+    // The UI infers which to show, Dad never has to categorize anyone.
+}
+
+@Entity
+class Vehicle {
+    // Promoted out of Job into its own entity so repeat vehicles — especially
+    // a company's fleet — have a stable identity across visits, not just a
+    // re-typed string each time. Also what makes per-vehicle regas-due
+    // tracking (§10, Phase 7) possible later without a schema change.
+    @Id @GeneratedValue Long id;
+    Long customerId;
+    String description;    // "Toyota Hilux"
+    String plateNumber;    // optional, but the real disambiguator for fleets
+                            // where "Toyota Hilux" alone isn't unique
 }
 
 @Entity
@@ -91,11 +119,13 @@ class Job {
     // This is a READ CACHE, not a source of truth. It exists purely so
     // screens load fast without summing the ledger every time. It is only
     // ever written by LedgerService, and can be fully rebuilt from
-    // LedgerEntry at any time (that rebuild IS the balance-check job — see §8).
+    // LedgerEntry at any time (that rebuild IS the balance-check job — see §11).
     @Id @GeneratedValue Long id;
-    Long customerId;
-    String vehicleDescription;   // "Camry 2010"
-    String workType;             // REGAS, COMPRESSOR, CONDENSER, FAN, DIAGNOSIS, OTHER
+    Long customerId;               // null for an anonymous walk-in
+    Long vehicleId;                // set when there's a persisted Vehicle behind this job
+    String vehicleNote;            // set instead of vehicleId for a one-off walk-in —
+                                    // free text, never becomes a Vehicle row (see §7)
+    String workType;               // REGAS, COMPRESSOR, CONDENSER, FAN, DIAGNOSIS, OTHER
     LocalDate date;
 
     BigDecimal cachedCharge;
@@ -105,7 +135,7 @@ class Job {
 ```
 
 `ShopExpense` doesn't need its own table — it's just a `LedgerEntry` of type
-`SHOP_EXPENSE` with `jobId = null`.
+`SHOP_EXPENSE` with `jobId = null` and `customerId = null`.
 
 ---
 
@@ -210,6 +240,9 @@ shown in his normal flow.
 | Screen | Calls |
 |---|---|
 | New job | `JobService.createJob(...)` → `LedgerService.record(CHARGE...)`, `record(PARTS_COST...)`, `record(PAYMENT...)` |
+| Vehicle picker (within New job) | if a customer is set: auto-selects their one `Vehicle`, or list + "add new" → `VehicleService.findOrCreate(...)`. No customer set: plain text box → `Job.vehicleNote`, no entity created — see §7 |
+| Vehicle autocomplete (either path above) | static seed JSON + `VehicleService.suggestionList()` (`SELECT DISTINCT description FROM Vehicle`), merged client-side — see §8 |
+| "Which car?" for parts cost | optional step within New job; "shared visit" option omits `jobId`/`vehicleId` — see §7 |
 | Edit job | `JobService.editJob(...)` / `recordPayment(...)` |
 | Receipt / WhatsApp share | reads `Job` cache, formats text, `wa.me/<phone>?text=` link |
 | This week | `InsightService.weeklySummary()` |
@@ -218,7 +251,66 @@ shown in his normal flow.
 
 ---
 
-## 7. Making It Easy Enough To Actually Use
+## 7. Matching Structure to What Dad Actually Knows
+
+Not every customer is one person with one car, and not every job has a
+customer at all. Some customers are companies with several vehicles serviced
+in one visit off a shared gas can. Some are strangers who'll never come back.
+Both are the same underlying problem: **don't force one data shape onto
+every job** — let the shape match what's actually known and worth keeping.
+
+**Vehicles belong to customers, jobs belong to vehicles — when that
+structure earns its keep.** A `Job` can reference a `Vehicle`, and a
+`Vehicle` belongs to a `Customer` (§3). For a one-car individual this is
+invisible — they have exactly one `Vehicle`, so the picker auto-selects it
+and costs Dad zero extra taps. For a fleet customer, a small vehicle picker
+appears under the customer field: pick an existing plate or add a new one
+inline. Charges and payments are always tied to one job for one vehicle —
+those numbers are precise, because that's how he actually bills.
+
+**Walk-ins skip the structure entirely.** If Dad doesn't pick or create a
+customer, the vehicle field is just a plain text box — "Blue Corolla" — saved
+directly on the `Job` as `vehicleNote`. No `Customer` row, no `Vehicle` row,
+nothing to search through later, nothing wasted building it. This isn't a
+compromise; it's correct. A structured `Vehicle` record only pays for itself
+if there's a reason to find it again — a repeat customer, a fleet, a future
+regas reminder. For a stranger he'll bill once and never see again, that
+reason doesn't exist, so the extra ceremony would be pure friction with
+nothing behind it. Same field on the New Job screen either way — which path
+it takes underneath depends entirely on whether a customer is behind it.
+
+**Costs can be attached at three levels of honesty, not forced to one:**
+
+| What Dad knows | jobId | vehicleId | customerId | Meaning |
+|---|---|---|---|---|
+| Exactly which car | set | set | set | fully attributed |
+| Which company, not which car | null | null | set | shared across today's visit |
+| Neither — general shop cost | null | null | null | `SHOP_EXPENSE`, unrelated to any customer |
+
+The middle row is the new piece: when logging a `PARTS_COST`, there's a
+"Which car?" picker with a **"Not sure — shared across today's visit"**
+option that logs it against the customer only. No forced even split, no
+fake precision.
+
+**What this means for insights — precision degrades gracefully as you zoom
+in, and every screen should be honest about that:**
+
+- **Shop-wide profit** (`InsightService.weeklySummary`) — always exact. It
+  sums every entry regardless of attribution, so shared costs are fully
+  counted, just not assigned to one car.
+- **Per-company running total** — always exact for the same reason, filtered
+  to `customerId`. A fleet customer's total cost and profit is trustworthy.
+- **Per-vehicle cost/profit** (future insight, once built) — an
+  *underestimate* whenever that vehicle shared a visit with others, because
+  shared entries don't count toward any single `vehicleId`. This screen
+  should visibly flag itself as approximate (e.g. "excludes shared visit
+  costs") rather than show a confident, wrong number. This is a UI honesty
+  rule, not a math problem — the underlying data isn't wrong, it's just
+  incomplete at that zoom level, and the screen needs to say so.
+
+---
+
+## 8. Making It Easy Enough To Actually Use
 
 The ledger guarantees correctness; it doesn't guarantee Dad opens the app.
 Every extra tap between him finishing a job and the record existing is a
@@ -233,6 +325,17 @@ correct *about*.
   a re-typed phone number. Prefill vehicle from the customer's last job.
   Notes field stays plain text so the phone's built-in mic/voice-to-text
   works with zero build effort.
+- **Autocomplete the vehicle field, on both paths from §7.** As he types,
+  suggest matches from a small **static seed list** of common Lagos makes/models
+  (Toyota Corolla, Camry, Hilux; Honda Accord, CR-V; Lexus RX; etc.) — bundled
+  as a plain JSON file, not a database table, so there's no admin screen to
+  build or maintain. That list is **merged with every distinct vehicle
+  description he's already typed before**, so it grows to match his actual
+  customer base with zero upkeep from you — a car he services often becomes a
+  one-tap suggestion after the first time. Free text always still works if
+  the car isn't in the list; this only ever speeds up typing, it never blocks
+  it. Because the source data is basically static, the service worker in §9
+  caches it too, so suggestions keep working with no signal in the workshop.
 - **Only require what's essential.** Work type, amount charged, amount paid —
   that's it. Customer name, phone, vehicle are optional. A half-filled record
   that exists beats a complete one he skipped because he was busy. Nudge him
@@ -256,7 +359,7 @@ correct *about*.
 
 ---
 
-## 8. Offline-First Design
+## 9. Offline-First Design
 
 Workshop connectivity here is spotty, not just occasionally down, so **losing
 a job because there was no signal is not acceptable.** Confirmed device:
@@ -316,39 +419,48 @@ intermittent signal — just as well, with far less complexity.
 
 ---
 
-## 9. Build Phases
+## 10. Build Phases
 
 **Phase 0 — Skeleton.** Spring Boot project, entities, repositories, H2 for
 local dev / Postgres on your VPS for real use.
 
 **Phase 1 — Ledger core (build this first, alone, and test it hard).**
-`LedgerService.record()`, `adjust()`, `netFor()`. Write unit tests that create
-a job, correct it three times, and assert the net is always right. This phase
-has no UI at all — get the math bulletproof before anyone touches a screen.
+`Vehicle` entity alongside `Customer`/`Job`/`LedgerEntry`. `LedgerService.record()`,
+`adjust()`, `netFor()`. Write unit tests that create a job, correct it three
+times, and assert the net is always right — plus one test for the shared-cost
+case from §7 (a `PARTS_COST` entry with `customerId` set but `jobId`/`vehicleId`
+null). This phase has no UI at all — get the math bulletproof before anyone
+touches a screen.
 
 **Phase 2 — Job entry + receipt.** New job form with the friction-reducing
-UX from §7 (quick-pick amounts, recent customers, minimal required fields),
-`JobService.createJob`, receipt render, WhatsApp share link.
+UX from §8 (quick-pick amounts, recent customers, minimal required fields,
+vehicle autocomplete with a small seed JSON you write once), the vehicle
+picker from §7 (auto-selects for single-vehicle customers, picker + "add new"
+for fleets, free text for walk-ins), `JobService.createJob`, receipt render,
+WhatsApp share link.
 
 **Phase 3 — Edit/correction flow.** Edit job screen, pre-filled with current
 cache values, plus the "Last entry" quick-fix card. Save always succeeds, no
 confirmation dialogs, no validation friction beyond "is this a number."
 
-**Phase 4 — Insights.** This week screen, Who owes me screen.
+**Phase 4 — Insights.** This week screen, Who owes me screen — both exact
+per §7, since neither depends on per-vehicle attribution.
 
 **Phase 5 — Shop expenses screen.**
 
 **Phase 6 — PWA + offline.** Manifest + icon for home-screen install, PIN
-login with long-lived cookie, the full offline mechanism from §8 (service
+login with long-lived cookie, the full offline mechanism from §9 (service
 worker, local queue, client-generated UUIDs, offline-generated receipts).
 
-**Phase 7 — Later, once real data exists (~10 months in).** Regas-due list,
+**Phase 7 — Later, once real data exists (~10 months in).** Regas-due list
+(per-vehicle, made possible by promoting `Vehicle` to a real entity in Phase 1),
 monthly profit trend, busiest job type — all new `InsightService` methods,
-zero changes to Phases 0–6.
+zero changes to Phases 0–6. Any per-vehicle cost/profit view must carry the
+"approximate — excludes shared visit costs" caveat from §7.
 
 ---
 
-## 10. The Safety Net
+## 11. The Safety Net
 
 A scheduled job (nightly, or on-demand from an admin button) that verifies
 the offline sync and correction paths from §§7–8 never let the cache drift:
@@ -364,7 +476,7 @@ complaint surfaces three months later.
 
 ---
 
-## 11. Stack Recap
+## 12. Stack Recap
 
 - **Spring Boot + Thymeleaf**, installed as a PWA (home-screen icon, opens
   fullscreen) — no native Android learning curve, and you can ship updates
@@ -377,7 +489,7 @@ complaint surfaces three months later.
 
 ---
 
-## 12. Deliberately Not Building Yet
+## 13. Deliberately Not Building Yet
 
 Full double-entry accounting (named accounts, debits/credits), multi-user
 logins, parts inventory, tax reports, charts. The schema above is one column

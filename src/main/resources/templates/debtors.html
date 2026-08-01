@@ -56,7 +56,7 @@
 
 <a class="debtor" th:each="d : ${debtors}" th:href="@{/jobs/{id}/edit(id=${d.job().id})}">
     <div class="name" th:text="${d.customerLabel()} != null ? ${d.customerLabel()} : 'Unnamed customer'"></div>
-    <div class="job" th:text="${d.job().workType} + ' — ' + ${d.job().vehicleDescription}"></div>
+    <div class="job" th:text="${d.job().workType} + ' — ' + ${d.vehicleLabel()}"></div>
     <div class="balance" th:text="'NGN ' + ${d.job().cachedBalance}"></div>
 </a>
 
