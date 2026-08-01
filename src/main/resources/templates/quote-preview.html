@@ -3,24 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/css/tokens.css">
     <title>Quote</title>
     <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 0;
-            padding: 1rem;
-            background: #ffffff;
-            color: #111111;
-            font-size: 18px;
+        .letterhead {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            text-align: center;
         }
-        .letterhead { margin-bottom: 1.5rem; text-align: center; }
+        .letterhead-logo { height: 64px; width: auto; margin-bottom: 0.5rem; }
         .letterhead .business-name { font-size: 1.6rem; font-weight: 700; }
-        .letterhead .business-contact { color: #555555; font-size: 0.95rem; }
+        .letterhead .business-contact { color: var(--color-ink-secondary); font-size: 0.95rem; }
         h1 { font-size: 1.3rem; margin: 0 0 1rem; text-align: center; }
         .card {
-            border: 2px solid #333333;
-            border-radius: 10px;
+            border: 2px solid var(--color-ink);
+            border-radius: var(--radius);
             padding: 1.1rem;
             line-height: 1.7;
         }
@@ -28,7 +27,7 @@
         .card .amount {
             margin-top: 0.75rem;
             padding-top: 0.75rem;
-            border-top: 1px solid #dddddd;
+            border-top: 1px solid var(--color-border-subtle);
             font-size: 1.3rem;
             font-weight: 700;
             text-align: right;
@@ -36,10 +35,10 @@
         .converted {
             margin-top: 1rem;
             padding: 0.9rem;
-            border: 2px solid #0a6b3d;
-            background: #eafff2;
-            color: #0a6b3d;
-            border-radius: 10px;
+            border: 2px solid var(--color-ink);
+            background: var(--color-surface-muted);
+            color: var(--color-ink);
+            border-radius: var(--radius);
             font-weight: 600;
             text-align: center;
         }
@@ -52,12 +51,12 @@
             font-weight: 700;
             text-align: center;
             text-decoration: none;
-            border-radius: 10px;
+            border-radius: var(--radius);
             border: none;
             cursor: pointer;
         }
-        .convert { background: #0a6b3d; color: #ffffff; }
-        .new-quote { background: #ffffff; color: #0a6b3d; border: 2px solid #0a6b3d; }
+        .convert { background: var(--color-primary); color: var(--color-surface); }
+        .new-quote { background: var(--color-surface); color: var(--color-primary); border: 2px solid var(--color-primary); }
     </style>
 </head>
 <body>

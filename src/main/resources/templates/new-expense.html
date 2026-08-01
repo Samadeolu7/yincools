@@ -3,17 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/css/tokens.css">
     <title>Shop Expense</title>
     <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 0;
-            padding: 1rem;
-            background: #ffffff;
-            color: #111111;
-            font-size: 18px;
-        }
         h1 { font-size: 1.4rem; margin: 0 0 1rem; }
         label {
             display: block;
@@ -24,8 +16,8 @@
             width: 100%;
             padding: 0.9rem;
             font-size: 1.1rem;
-            border: 2px solid #333333;
-            border-radius: 8px;
+            border: 2px solid var(--color-ink);
+            border-radius: var(--radius-sm);
         }
         .quick-picks {
             display: flex;
@@ -37,9 +29,9 @@
             flex: 1 1 auto;
             padding: 0.75rem 0.5rem;
             font-size: 1rem;
-            border: 2px solid #333333;
-            border-radius: 8px;
-            background: #f2f2f2;
+            border: 2px solid var(--color-ink);
+            border-radius: var(--radius-sm);
+            background: var(--color-surface-muted);
             cursor: pointer;
         }
         button.submit {
@@ -48,17 +40,17 @@
             padding: 1.1rem;
             font-size: 1.2rem;
             font-weight: 700;
-            color: #ffffff;
-            background: #0a6b3d;
+            color: var(--color-surface);
+            background: var(--color-primary);
             border: none;
-            border-radius: 10px;
+            border-radius: var(--radius);
             cursor: pointer;
         }
         .saved {
-            border: 2px solid #0a6b3d;
-            background: #eafff2;
-            color: #0a6b3d;
-            border-radius: 10px;
+            border: 2px solid var(--color-ink);
+            background: var(--color-surface-muted);
+            color: var(--color-ink);
+            border-radius: var(--radius);
             padding: 0.8rem;
             font-weight: 600;
             margin-bottom: 1rem;

@@ -1,0 +1,42 @@
+/*
+ * Design tokens, pulled directly from the Yincools mark (black frame on
+ * white, red accent) rather than a palette invented from scratch --
+ * consistency with real-world signage/letterhead matters more than picking
+ * colors in isolation. Red is an accent (buttons, active states, "needs
+ * attention"), never a surface -- a large red background reads as a
+ * warning banner, and the mark itself only ever uses red as an accent
+ * against black and white. Neutrals are tints of --color-ink so nothing
+ * feels like it's from a different palette.
+ */
+:root {
+    --color-primary: #DD2B1C;
+    --color-ink: #151616;
+    --color-ink-secondary: #5c5d5d;
+    --color-border-subtle: #dddddd;
+    --color-surface: #ffffff;
+    --color-surface-muted: #f2f2f2;
+
+    --radius: 10px;
+    --radius-sm: 8px;
+
+    --space-xs: 0.35rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+
+    --font-sans: system-ui, -apple-system, sans-serif;
+    --font-mono: ui-monospace, Consolas, monospace;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: 1rem;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-size: 18px;
+}

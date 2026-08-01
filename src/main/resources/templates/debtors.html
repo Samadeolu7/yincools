@@ -3,37 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/css/tokens.css">
     <title>Who Owes Me</title>
     <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 0;
-            padding: 1rem;
-            background: #ffffff;
-            color: #111111;
-            font-size: 18px;
-        }
         h1 { font-size: 1.4rem; margin: 0 0 1rem; }
         .debtor {
             display: block;
             padding: 0.9rem;
             margin-bottom: 0.6rem;
-            border: 2px solid #333333;
-            border-radius: 10px;
+            border: 2px solid var(--color-ink);
+            border-radius: var(--radius);
             text-decoration: none;
-            color: #111111;
+            color: var(--color-ink);
         }
         .debtor .name { font-weight: 700; }
-        .debtor .job { color: #555555; font-size: 0.95rem; }
+        .debtor .job { color: var(--color-ink-secondary); font-size: 0.95rem; }
         .debtor .balance {
-            font-family: ui-monospace, Consolas, monospace;
+            font-family: var(--font-mono);
             font-size: 1.15rem;
             font-weight: 700;
-            color: #a30000;
+            color: var(--color-primary);
             margin-top: 0.35rem;
         }
-        .empty { color: #555555; }
+        .empty {
+            text-align: center;
+            color: var(--color-ink-secondary);
+            border: 2px dashed var(--color-border-subtle);
+            border-radius: var(--radius);
+            padding: 2rem 1rem;
+        }
         a.button {
             display: block;
             width: 100%;
@@ -43,9 +41,9 @@
             font-weight: 700;
             text-align: center;
             text-decoration: none;
-            border-radius: 10px;
-            background: #0a6b3d;
-            color: #ffffff;
+            border-radius: var(--radius);
+            background: var(--color-primary);
+            color: var(--color-surface);
         }
     </style>
 </head>

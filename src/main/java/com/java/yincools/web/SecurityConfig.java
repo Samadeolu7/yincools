@@ -30,7 +30,15 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http, @Value("${app.remember-me-key}") String rememberMeKey) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/actuator/health").permitAll()
+                        .requestMatchers(
+                                "/login", "/actuator/health",
+                                // Static assets -- not per-user data, and the login page itself
+                                // (rendered before authentication) needs the logo/tokens/manifest.
+                                "/css/**", "/images/**", "/manifest.webmanifest",
+                                "/icon-192.png", "/icon-512.png", "/sw.js",
+                                "/vehicle-picker.js", "/parts-chips.js", "/offline-queue.js",
+                                "/vehicle-seed.json", "/parts-seed.json"
+                        ).permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")

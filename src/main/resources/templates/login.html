@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <title>AC Tech Tracker</title>
+    <meta name="theme-color" content="#DD2B1C">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/icon-192.png">
+    <link rel="stylesheet" href="/css/tokens.css">
+    <title>Yincools</title>
     <style>
-        * { box-sizing: border-box; }
         body {
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 0;
             padding: 1.5rem;
-            background: #ffffff;
-            color: #111111;
-            font-size: 18px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             min-height: 100vh;
         }
-        h1 { font-size: 1.6rem; text-align: center; margin: 0 0 2rem; }
+        .brand { text-align: center; margin-bottom: 2rem; }
+        .brand img { height: 84px; width: auto; }
+        .brand h1 { font-size: 1.4rem; margin: 0.75rem 0 0; }
         label {
             display: block;
             font-weight: 600;
@@ -30,8 +30,8 @@
             font-size: 1.5rem;
             text-align: center;
             letter-spacing: 0.5rem;
-            border: 2px solid #333333;
-            border-radius: 8px;
+            border: 2px solid var(--color-ink);
+            border-radius: var(--radius-sm);
         }
         button.submit {
             width: 100%;
@@ -39,17 +39,17 @@
             padding: 1.1rem;
             font-size: 1.2rem;
             font-weight: 700;
-            color: #ffffff;
-            background: #0a6b3d;
+            color: var(--color-surface);
+            background: var(--color-primary);
             border: none;
-            border-radius: 10px;
+            border-radius: var(--radius);
             cursor: pointer;
         }
         .error {
-            border: 2px solid #a30000;
+            border: 2px solid var(--color-primary);
             background: #fff0f0;
-            color: #a30000;
-            border-radius: 10px;
+            color: var(--color-primary);
+            border-radius: var(--radius);
             padding: 0.8rem;
             font-weight: 600;
             margin-bottom: 1rem;
@@ -58,7 +58,10 @@
     </style>
 </head>
 <body>
-<h1>AC Tech Tracker</h1>
+<div class="brand">
+    <img src="/images/yincools-logo.png" alt="Yincools">
+    <h1>Yincools</h1>
+</div>
 
 <div class="error" th:if="${param.error != null}">Wrong PIN, try again.</div>
 

@@ -3,27 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/css/tokens.css">
     <title>Receipt</title>
     <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 0;
-            padding: 1rem;
-            background: #ffffff;
-            color: #111111;
-            font-size: 18px;
-        }
         h1 { font-size: 1.4rem; margin: 0 0 1rem; }
-        .letterhead { margin-bottom: 1.25rem; }
+        .letterhead {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .letterhead-logo { height: 48px; width: auto; }
         .letterhead .business-name { font-size: 1.3rem; font-weight: 700; }
-        .letterhead .business-contact { color: #555555; font-size: 0.95rem; }
+        .letterhead .business-contact { color: var(--color-ink-secondary); font-size: 0.95rem; }
         .card {
-            border: 2px solid #333333;
-            border-radius: 10px;
+            border: 2px solid var(--color-ink);
+            border-radius: var(--radius);
             padding: 1rem;
             white-space: pre-wrap;
-            font-family: ui-monospace, Consolas, monospace;
+            font-family: var(--font-mono);
             font-size: 1rem;
             line-height: 1.5;
         }
@@ -36,13 +34,13 @@
             font-weight: 700;
             text-align: center;
             text-decoration: none;
-            border-radius: 10px;
+            border-radius: var(--radius);
             border: none;
             cursor: pointer;
         }
-        .whatsapp { background: #25D366; color: #ffffff; }
-        .new-job { background: #0a6b3d; color: #ffffff; }
-        .edit { background: #ffffff; color: #0a6b3d; border: 2px solid #0a6b3d; }
+        .whatsapp { background: #25D366; color: var(--color-surface); }
+        .new-job { background: var(--color-primary); color: var(--color-surface); }
+        .edit { background: var(--color-surface); color: var(--color-primary); border: 2px solid var(--color-primary); }
     </style>
 </head>
 <body>

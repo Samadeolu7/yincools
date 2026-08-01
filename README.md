@@ -1,9 +1,9 @@
-# AC Tech Tracker
+# Yincools
 
-A mobile-friendly (PWA) job & money tracker for a car-AC repair business,
-built in Java/Spring Boot. The user (Dad) only ever sees simple forms, while
-the system underneath keeps a provably correct financial record forever —
-including when he changes his mind about a number.
+A mobile-friendly (PWA) job & money tracker for Yincools, a car-AC repair
+business, built in Java/Spring Boot. The user (Dad) only ever sees simple
+forms, while the system underneath keeps a provably correct financial record
+forever — including when he changes his mind about a number.
 
 The full design rationale lives in [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md)
 (the original build plan). This README tracks what's actually been built,
@@ -49,6 +49,26 @@ persistence/      Spring Data repositories. Dumb. No business logic.
 
 web/              Thymeleaf controllers + templates. Talk only to domain/ services.
 ```
+
+## Visual Identity
+
+Design tokens (`static/css/tokens.css`) are pulled directly from the real
+Yincools mark, not a palette invented from scratch:
+
+| Token | Hex | Role |
+|---|---|---|
+| `--color-primary` | `#DD2B1C` | brand red — buttons, active states, the debtor list's "needs attention" |
+| `--color-ink` | `#151616` | near-black — body text, borders |
+| `--color-surface` | `#FFFFFF` | background |
+
+Red is used as an accent only, never a surface — a large red background
+reads as a warning banner, and the mark itself only ever uses red as an
+accent against black and white. Every screen links the same stylesheet, so
+a color change happens in one file, not a screen-by-screen hunt. The
+home-screen icon (`icon-192.png` / `icon-512.png`) and the letterhead
+(`fragments/letterhead.html`, used by both the receipt and the quote
+preview) are generated from the actual logo file
+(`static/square_yincools_logo.png`), not a placeholder.
 
 **Vehicles, in three shapes, matching what's actually known:** a `Job` can
 reference a persisted `Vehicle` (customer with 1+ cars — auto-selected if
@@ -192,8 +212,9 @@ to Postgres, and passes its healthcheck.
   Dad logs in once on his phone and never sees the login screen again.
   `app.pin` / `app.remember-me-key` come from `APP_PIN` / `APP_REMEMBER_ME_KEY`
   env vars in real deployments (dev defaults are insecure placeholders).
-- [x] **Phase 7b — PWA + offline.** `manifest.webmanifest` + generated icons
-  (installable, `start_url=/jobs/new`). `sw.js` precaches New Job's static
+- [x] **Phase 7b — PWA + offline.** `manifest.webmanifest` + icons generated
+  from the real Yincools mark (installable, `start_url=/jobs/new`, named
+  "Yincools" — not a generic default PWA name/icon). `sw.js` precaches New Job's static
   assets and keeps a network-first/cache-fallback copy of the page shell
   itself. New Job's submit is intercepted by `offline-queue.js`: tries the
   JSON `/api/jobs` endpoint with a timeout, and on failure queues the job in
@@ -280,9 +301,15 @@ to Postgres, and passes its healthcheck.
   customers, last entry) would go stale sitting in a cache. The offline
   submission path doesn't depend on that token anyway (see the CSRF point
   above), so a stale cached copy of the page still submits correctly.
-- Manifest/icon links and the offline scripts are only on the New Job page
-  -- it's the landing page after login, so it's the one Dad would actually
-  add to his home screen from. Other screens don't carry them.
+- Manifest/icon links, `tokens.css`, and the offline scripts are only on
+  New Job and the login page -- the landing/entry screens, so those are
+  the ones that matter for "add to home screen" and first impression.
+  Other screens carry `tokens.css` for consistent colors but not the
+  manifest/offline scripts.
+- `SecurityConfig` permits static assets (`/css/**`, `/images/**`,
+  `/manifest.webmanifest`, icons, the JS/JSON files) without login --
+  they're not per-user data, and the login page itself (rendered before
+  authentication) needs the logo and tokens to look right.
 
 ---
 

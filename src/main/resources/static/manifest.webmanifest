@@ -1,11 +1,11 @@
 {
-  "name": "AC Tech Tracker",
-  "short_name": "AC Tech",
+  "name": "Yincools",
+  "short_name": "Yincools",
   "start_url": "/jobs/new",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0a6b3d",
+  "theme_color": "#DD2B1C",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }

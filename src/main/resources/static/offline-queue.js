@@ -93,7 +93,7 @@
 
     function buildReceiptText(payload) {
         var lines = [];
-        lines.push((window.YINCOOLS_BUSINESS_NAME || 'AC Tech') + ' Job Receipt');
+        lines.push((window.YINCOOLS_BUSINESS_NAME || 'Yincools') + ' Job Receipt');
         lines.push(new Date().toISOString().slice(0, 10));
         if (payload.customerName) lines.push('Customer: ' + payload.customerName);
         if (payload.vehicleDescription) lines.push('Vehicle: ' + payload.vehicleDescription);

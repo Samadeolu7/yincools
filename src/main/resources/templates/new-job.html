@@ -3,20 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <meta name="theme-color" content="#0a6b3d">
+    <meta name="theme-color" content="#DD2B1C">
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" href="/icon-192.png">
+    <link rel="stylesheet" href="/css/tokens.css">
     <title>New Job</title>
     <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 0;
-            padding: 1rem;
-            background: #ffffff;
-            color: #111111;
-            font-size: 18px;
-        }
         h1 { font-size: 1.4rem; margin: 0 0 1rem; }
         label {
             display: block;
@@ -27,8 +19,8 @@
             width: 100%;
             padding: 0.9rem;
             font-size: 1.1rem;
-            border: 2px solid #333333;
-            border-radius: 8px;
+            border: 2px solid var(--color-ink);
+            border-radius: var(--radius-sm);
         }
         .quick-picks {
             display: flex;
@@ -40,9 +32,9 @@
             flex: 1 1 auto;
             padding: 0.75rem 0.5rem;
             font-size: 1rem;
-            border: 2px solid #333333;
-            border-radius: 8px;
-            background: #f2f2f2;
+            border: 2px solid var(--color-ink);
+            border-radius: var(--radius-sm);
+            background: var(--color-surface-muted);
             cursor: pointer;
         }
         .recent-customers, .vehicle-picker, .parts-chips {
@@ -55,24 +47,24 @@
         .recent-customer, .vehicle-chip, .part-chip {
             flex: 0 0 auto;
             padding: 0.75rem 1rem;
-            border: 2px solid #0a6b3d;
-            color: #0a6b3d;
-            border-radius: 8px;
-            background: #ffffff;
+            border: 2px solid var(--color-primary);
+            color: var(--color-primary);
+            border-radius: var(--radius-sm);
+            background: var(--color-surface);
             font-size: 1rem;
             white-space: nowrap;
             cursor: pointer;
         }
         .vehicle-chip.selected, .part-chip.selected {
-            background: #0a6b3d;
-            color: #ffffff;
+            background: var(--color-primary);
+            color: var(--color-surface);
         }
         .plate {
             width: 100%;
             padding: 0.9rem;
             font-size: 1.1rem;
-            border: 2px solid #333333;
-            border-radius: 8px;
+            border: 2px solid var(--color-ink);
+            border-radius: var(--radius-sm);
             margin-top: 0.5rem;
         }
         .checkbox-row {
@@ -89,16 +81,16 @@
             padding: 1.1rem;
             font-size: 1.2rem;
             font-weight: 700;
-            color: #ffffff;
-            background: #0a6b3d;
+            color: var(--color-surface);
+            background: var(--color-primary);
             border: none;
-            border-radius: 10px;
+            border-radius: var(--radius);
             cursor: pointer;
         }
-        .hint { color: #555555; font-size: 0.9rem; margin-top: 0.25rem; }
+        .hint { color: var(--color-ink-secondary); font-size: 0.9rem; margin-top: 0.25rem; }
         .last-entry {
             border: 2px solid #b8860b;
-            border-radius: 10px;
+            border-radius: var(--radius);
             padding: 0.85rem;
             margin-bottom: 1.25rem;
             background: #fffbea;
@@ -113,7 +105,7 @@
             display: inline-block;
             margin-top: 0.5rem;
             font-weight: 700;
-            color: #0a6b3d;
+            color: var(--color-primary);
         }
         nav.insights {
             display: flex;
@@ -122,15 +114,15 @@
             font-size: 0.9rem;
             flex-wrap: wrap;
         }
-        nav.insights a { color: #555555; }
+        nav.insights a { color: var(--color-ink-secondary); }
         #partsOther { margin-top: 0.5rem; display: none; }
         #unsyncedBadge {
             display: none;
             margin-bottom: 1rem;
             padding: 0.5rem 0.8rem;
-            border-radius: 8px;
-            background: #f2f2f2;
-            color: #555555;
+            border-radius: var(--radius-sm);
+            background: var(--color-surface-muted);
+            color: var(--color-ink-secondary);
             font-size: 0.85rem;
             font-weight: 600;
         }
@@ -139,7 +131,7 @@
             margin-bottom: 1.25rem;
             padding: 0.9rem;
             border: 2px solid #b8860b;
-            border-radius: 10px;
+            border-radius: var(--radius);
             background: #fffbea;
         }
         #offlineSavedBanner .label {
@@ -150,14 +142,14 @@
         }
         #offlineSavedBanner pre {
             white-space: pre-wrap;
-            font-family: ui-monospace, Consolas, monospace;
+            font-family: var(--font-mono);
             font-size: 0.95rem;
             margin: 0 0 0.5rem;
         }
         #offlineSavedBanner .wa-link {
             display: inline-block;
             font-weight: 700;
-            color: #0a6b3d;
+            color: var(--color-primary);
         }
     </style>
 </head>
@@ -247,7 +239,7 @@
     function setAmount(fieldId, value) {
         document.getElementById(fieldId).value = value;
     }
-    window.YINCOOLS_BUSINESS_NAME = /*[[${businessName}]]*/ 'AC Tech';
+    window.YINCOOLS_BUSINESS_NAME = /*[[${businessName}]]*/ 'Yincools';
 </script>
 <script src="/vehicle-picker.js"></script>
 <script src="/parts-chips.js"></script>

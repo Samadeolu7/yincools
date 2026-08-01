@@ -106,7 +106,7 @@ class Vehicle {
     // Promoted out of Job into its own entity so repeat vehicles — especially
     // a company's fleet — have a stable identity across visits, not just a
     // re-typed string each time. Also what makes per-vehicle regas-due
-    // tracking (§11, Phase 7) possible later without a schema change.
+    // tracking (§12, Phase 8) possible later without a schema change.
     @Id @GeneratedValue Long id;
     Long customerId;
     String description;    // "Toyota Hilux"
@@ -119,7 +119,7 @@ class Job {
     // This is a READ CACHE, not a source of truth. It exists purely so
     // screens load fast without summing the ledger every time. It is only
     // ever written by LedgerService, and can be fully rebuilt from
-    // LedgerEntry at any time (that rebuild IS the balance-check job — see §12).
+    // LedgerEntry at any time (that rebuild IS the balance-check job — see §13).
     @Id @GeneratedValue Long id;
     Long customerId;               // null for an anonymous walk-in
     Long vehicleId;                // set when there's a persisted Vehicle behind this job
@@ -375,18 +375,21 @@ keep (§1's second rule) — a quote that never converts just sits there,
 harmlessly.
 
 **Letterhead, kept to what's actually simple.** "Looks like Dad's letterhead"
-really means a business name/phone header rendered the way his physical
-letterhead is laid out, shown at the top of both the receipt and the quote —
-one shared template partial, built once. For v1, sharing stays manual:
-he opens the styled preview page and screenshots it into WhatsApp, exactly
-the way he already shares anything else from his phone. That's zero new
-infrastructure and zero new failure modes, and it works fully offline since
-it's just a locally-rendered page (§10). Business name/phone/address live as
-plain config values (`application.yml`), not a database table — there's one
-shop, so there's nothing here that needs to be editable through a screen.
+really means the actual Yincools logo plus phone/address, rendered the way
+his physical letterhead is laid out, shown at the top of both the receipt
+and the quote — one shared template partial, built once. The logo file
+itself becomes a static asset (`static/images/yincools-logo.png`) placed in
+that partial — no need to redraw or recreate it, just drop it in. For v1,
+sharing stays manual: he opens the styled preview page and screenshots it
+into WhatsApp, exactly the way he already shares anything else from his
+phone. That's zero new infrastructure and zero new failure modes, and it
+works fully offline since it's just a locally-rendered page (§10). Business
+name/phone/address live as plain config values (`application.yml`), not a
+database table — there's one shop, so there's nothing here that needs to be
+editable through a screen.
 
 A properly auto-generated branded image (so sharing is one tap instead of a
-screenshot) is a clean, purely additive upgrade for later — see §14.
+screenshot) is a clean, purely additive upgrade for later — see §15.
 
 ---
 
@@ -511,10 +514,83 @@ intermittent signal — just as well, with far less complexity.
 
 ---
 
-## 11. Build Phases
+## 11. Visual Identity & Craft
+
+Every other section in this doc protects Dad's time and money. This one
+protects a different thing entirely: the pride of pointing at his phone and
+saying "my son built this." That's worth designing for on purpose, not as
+an afterthought once the ledger works.
+
+**This is not the letterhead from §8.** The letterhead represents *his
+business* to *his customers* on a shared document. This section is about
+what *the app itself* looks like to *him* — and to whoever he shows his
+home screen to. Related goal, different surface, both worth getting right.
+
+**Where the leverage actually is, in order:**
+
+1. **The home-screen icon.** This is the single highest-leverage piece of
+   visual work in the whole project, because it's the one thing visible
+   before the app is even opened — sitting right next to WhatsApp and
+   Instagram on his phone. A generic default PWA icon reads as "a website
+   someone saved." A deliberately designed one reads as "an app." Get this
+   custom-made even if nothing else gets extra polish. Should draw from the
+   Yincools mark directly — the black frame on white, red accent — so it
+   reads as *his* app, not a generic tool.
+2. **A design system, built once, reused everywhere, pulled straight from
+   the actual Yincools logo — not a separate palette invented from scratch.**
+   Consistency with his real-world branding (signage, letterhead) matters
+   more than picking colors in isolation, and using the logo's own colors is
+   simplicity's dividend, not extra work — nothing to invent, nothing to
+   get his sign-off on separately. Extracted directly from the logo file:
+
+   | Token | Hex | Role |
+   |---|---|---|
+   | `--color-primary` | `#DD2B1C` | brand red — buttons, header, active states, icon |
+   | `--color-ink` | `#151616` | near-black from the logo — body text, borders |
+   | `--color-surface` | `#FFFFFF` | background |
+
+   **Use the red as an accent, not a surface color.** It's vivid enough
+   that a large red background would read as a warning banner, not a brand
+   moment, and red carries "delete/danger" connotations in most UI
+   conventions — the logo itself only ever uses it as an accent against
+   black and white, so this matches its actual usage, not just its hex
+   values. One neat side effect: the debtor list in §6 already highlights
+   who owes money, so brand red doing double duty there as "needs
+   attention" isn't a coincidence worth avoiding — it's free reinforcement.
+   Derive supporting neutrals (borders, secondary text, disabled states) as
+   tints of `--color-ink` rather than introducing an unrelated gray family,
+   so nothing feels like it's from a different palette. One type choice, a
+   consistent spacing scale, consistent corner radius — all as CSS custom
+   properties set up in Phase 0. Every screen from Phase 2 onward just uses
+   the tokens instead of a screen-by-screen decision. This is the same
+   "build the reusable thing once" instinct as the parts list (§9) or the
+   letterhead partial (§8), just applied to how things look instead of what
+   they store — it doesn't fight §1's simplicity principle, it's the same
+   principle.
+3. **A name for the app.** Even a small one. It gives him a specific noun
+   to say instead of "the thing my son made" — "open Autocool" reads
+   completely differently to a friend than a description of a tool.
+4. **Small crafted moments, not gimmicks.** A save confirmation that feels
+   deliberate rather than instant and silent. An empty state on "Who owes
+   me" that isn't a bare blank table. These cost very little once the design
+   system from #2 exists, and they're what separates "functional" from
+   "someone cared about this."
+
+**What this doesn't mean:** animation-heavy transitions, a custom
+illustration library, or redesigning per screen. The craft is in the
+restraint of a consistent, deliberate system applied everywhere — not in
+piling on visual features. That restraint is also what keeps this cheap:
+it's mostly CSS variables and one good icon, not a second engineering effort
+bolted onto the first.
+
+---
+
+## 12. Build Phases
 
 **Phase 0 — Skeleton.** Spring Boot project, entities, repositories, H2 for
-local dev / Postgres on your VPS for real use.
+local dev / Postgres on your VPS for real use. Also set up the design tokens
+from §11 (colors, spacing, type as CSS custom properties) — cheap to do now,
+before any screen exists to redo later.
 
 **Phase 1 — Ledger core (build this first, alone, and test it hard).**
 `Vehicle` entity alongside `Customer`/`Job`/`LedgerEntry`. `LedgerService.record()`,
@@ -547,9 +623,10 @@ per §7, since neither depends on per-vehicle attribution.
 
 **Phase 6 — Shop expenses screen.**
 
-**Phase 7 — PWA + offline.** Manifest + icon for home-screen install, PIN
-login with long-lived cookie, the full offline mechanism from §10 (service
-worker, local queue, client-generated UUIDs, offline-generated receipts).
+**Phase 7 — PWA + offline.** Manifest + a properly designed icon (§11 — this
+one's worth real care, not a placeholder) for home-screen install, PIN login
+with long-lived cookie, the full offline mechanism from §10 (service worker,
+local queue, client-generated UUIDs, offline-generated receipts).
 
 **Phase 8 — Later, once real data exists (~10 months in).** Regas-due list
 (per-vehicle, made possible by promoting `Vehicle` to a real entity in Phase 1),
@@ -559,7 +636,7 @@ zero changes to Phases 0–7. Any per-vehicle cost/profit view must carry the
 
 ---
 
-## 12. The Safety Net
+## 13. The Safety Net
 
 A scheduled job (nightly, or on-demand from an admin button) that verifies
 the correction (§4) and offline sync (§10) paths never let the cache drift:
@@ -575,7 +652,7 @@ complaint surfaces three months later.
 
 ---
 
-## 13. Stack Recap
+## 14. Stack Recap
 
 - **Spring Boot + Thymeleaf**, installed as a PWA (home-screen icon, opens
   fullscreen) — no native Android learning curve, and you can ship updates
@@ -588,7 +665,7 @@ complaint surfaces three months later.
 
 ---
 
-## 14. Deliberately Not Building Yet
+## 15. Deliberately Not Building Yet
 
 Full double-entry accounting (named accounts, debits/credits), multi-user
 logins, parts inventory, tax reports, charts. The schema above is one column
