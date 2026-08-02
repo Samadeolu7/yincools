@@ -25,50 +25,60 @@
     </style>
 </head>
 <body>
-<div th:replace="~{fragments/letterhead :: header}"></div>
-<h1>Quote</h1>
+<div id="shareableQuote">
+    <div th:replace="~{fragments/letterhead :: header}"></div>
+    <h1>Quote</h1>
 
-<div class="card">
-    <div class="row"><span>Date</span><span th:text="${quote.date}"></span></div>
-    <div class="row" th:if="${customer != null and customer.name != null and !customer.name.isEmpty()}">
-        <span>Customer</span><span th:text="${customer.name}"></span>
-    </div>
-    <div class="row" th:if="${vehicleLabel != null and !vehicleLabel.isEmpty()}">
-        <span>Vehicle</span><span th:text="${vehicleLabel}"></span>
-    </div>
-    <div class="row"><span>Work</span><span th:text="${quote.workType}"></span></div>
+    <div class="card">
+        <div class="row"><span>Date</span><span th:text="${quote.date}"></span></div>
+        <div class="row" th:if="${customer != null and customer.name != null and !customer.name.isEmpty()}">
+            <span>Customer</span><span th:text="${customer.name}"></span>
+        </div>
+        <div class="row" th:if="${vehicleLabel != null and !vehicleLabel.isEmpty()}">
+            <span>Vehicle</span><span th:text="${vehicleLabel}"></span>
+        </div>
+        <div class="row"><span>Work</span><span th:text="${quote.workType}"></span></div>
 
-    <table class="parts-table">
-        <thead>
-            <tr><th>Part</th><th>Amount</th></tr>
-        </thead>
-        <tbody>
-            <tr class="row-view" th:each="item : ${items}">
-                <td th:text="${item.partName}"></td>
-                <td style="text-align:right" th:text="'NGN ' + ${item.amount}"></td>
-            </tr>
-        </tbody>
-        <tfoot>
-            <tr class="total-row"><td>Total</td><td th:text="'NGN ' + ${total}"></td></tr>
-        </tfoot>
-    </table>
+        <table class="parts-table">
+            <thead>
+                <tr><th>Part</th><th>Amount</th></tr>
+            </thead>
+            <tbody>
+                <tr class="row-view" th:each="item : ${items}">
+                    <td th:text="${item.partName}"></td>
+                    <td style="text-align:right" th:text="'NGN ' + ${item.amount}"></td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr class="total-row"><td>Total</td><td th:text="'NGN ' + ${total}"></td></tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div th:replace="~{fragments/letterhead :: footer}"></div>
 </div>
-
-<div th:replace="~{fragments/letterhead :: footer}"></div>
 
 <div class="converted" th:if="${quote.convertedToJobId != null}">
     Converted to a job already.
 </div>
 
-<a th:if="${whatsappLink != null}" th:href="${whatsappLink}" class="btn whatsapp" target="_blank">
+<button type="button" id="shareQuoteBtn" class="btn btn-primary" style="display:none;"
+        data-share-title="Quote" th:attr="data-share-text=${quoteText}">
+    Share Quote
+</button>
+
+<a th:if="${whatsappLink != null}" th:href="${whatsappLink}" class="btn whatsapp fallback-share" target="_blank">
     Share on WhatsApp
 </a>
-<a th:href="${mailtoLink}" class="btn email-share">Share by Email</a>
+<a th:href="${mailtoLink}" class="btn email-share fallback-share">Share by Email</a>
 
 <form th:if="${quote.convertedToJobId == null}" method="post" th:action="@{/quotes/{id}/convert(id=${quote.id})}">
     <button type="submit" class="btn btn-primary">Convert to Job</button>
 </form>
 
 <a th:href="@{/quotes/new}" class="btn btn-outline">New quote</a>
+
+<script src="/vendor/html2canvas.min.js"></script>
+<script src="/quote-share.js"></script>
 </body>
 </html>

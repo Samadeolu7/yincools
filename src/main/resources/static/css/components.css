@@ -178,7 +178,9 @@ select {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    padding-bottom: 1rem;
     margin-bottom: 1.25rem;
+    border-bottom: 2px solid var(--color-ink);
 }
 .letterhead-logo { height: 56px; width: auto; margin-bottom: 0.5rem; }
 .letterhead-wordmark {

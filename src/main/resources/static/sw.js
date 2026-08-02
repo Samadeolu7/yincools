@@ -14,7 +14,7 @@
  * /api/jobs JSON endpoint (see SecurityConfig, JobApiController).
  */
 
-const CACHE_NAME = 'yincools-v3';
+const CACHE_NAME = 'yincools-v4';
 const NEW_JOB_PATH = '/jobs/new';
 
 const PRECACHE_URLS = [

@@ -85,6 +85,7 @@ public class QuoteController {
         model.addAttribute("total", total);
         model.addAttribute("customer", customer);
         model.addAttribute("vehicleLabel", vehicleLabel);
+        model.addAttribute("quoteText", quoteText);
         model.addAttribute("whatsappLink", whatsAppLink(customer, quoteText));
         model.addAttribute("mailtoLink", mailtoLink(businessName + " Quote", quoteText));
         return "quote-preview";

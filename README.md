@@ -240,12 +240,22 @@ to Postgres, and passes its healthcheck.
   (`/api/parts/suggestions`, merged client-side with the static
   `parts-seed.json` seed, same pattern as vehicles), shared by both the
   quote table and New Job's parts chips. Letterhead-styled quote preview
-  (shared `fragments/letterhead.html`, also on the job receipt) — sharable
-  by WhatsApp (`wa.me` link, same phone-normalization as the job receipt)
-  and by email (`mailto:` link, prefilled subject/body), or by screenshot
-  if neither fits. "Convert to Job" lands on the normal Edit Job screen,
-  charged the quote's total but starting at zero paid -- a quote is an
-  estimate, not an assumption that it was paid in full.
+  (shared `fragments/letterhead.html`, also on the job receipt), with a
+  one-tap "Share Quote" that renders the actual styled preview to a PNG
+  (`html2canvas`, vendored in `static/vendor/` -- no CDN dependency) and
+  hands it straight to the OS's native share sheet (`navigator.share`),
+  so whatever lands in WhatsApp or email looks like the real letterhead
+  instead of a plain-text summary, and Dad never has to screenshot it
+  himself. This also sidesteps the old limit where a WhatsApp button only
+  existed if a customer phone had been entered -- the native share sheet
+  lets him pick the contact himself either way. It's progressive
+  enhancement over the original text-only `wa.me`/`mailto:` links
+  (`quote-share.js`): those are always rendered first and stay as the
+  fallback on any browser that can't share files (most desktops), and are
+  only hidden once the richer path is confirmed to work. "Convert to Job"
+  lands on the normal Edit Job screen, charged the quote's total but
+  starting at zero paid -- a quote is an estimate, not an assumption that
+  it was paid in full.
 - [x] **Phase 4 — Edit/correction flow.** Edit Job screen prefilled with
   current values (charge, parts cost, paid), saves via the same
   `adjust()` mechanism as everything else. "Last entry" card pinned to the
@@ -306,7 +316,7 @@ to Postgres, and passes its healthcheck.
 | `GET /api/vehicles/suggestions` | JSON: distinct vehicle descriptions typed before |
 | `GET /quotes/new` | New Quote form; shows open (unconverted) quotes to resume |
 | `POST /quotes` | Creates a quote (no `LedgerEntry` written), redirects to its preview |
-| `GET /quotes/{id}` | Letterhead-styled preview with WhatsApp + email share links; Convert to Job button if still open |
+| `GET /quotes/{id}` | Letterhead-styled preview with a one-tap image share (native share sheet) plus WhatsApp/email text fallbacks; Convert to Job button if still open |
 | `POST /quotes/{id}/convert` | Creates the job (charged the quote total, zero paid) and redirects to its Edit screen; idempotent |
 | `POST /api/jobs` | JSON, CSRF-exempt: idempotent-by-`clientId` job creation for the offline queue |
 | `GET /api/parts/suggestions` | JSON: distinct part names ever used on a quote |
@@ -314,6 +324,12 @@ to Postgres, and passes its healthcheck.
 
 ### Known simplifications (intentional, not gaps)
 
+- `sw.js`'s `CACHE_NAME` **must be bumped** whenever a precached file
+  (`tokens.css`, `components.css`, any file in `PRECACHE_URLS`) changes --
+  it's a cache-first strategy keyed on that name, so an unbumped version
+  means every phone that already installed the PWA keeps serving the old
+  file forever. This bit us once already (a CSS redesign that shipped
+  correctly to the server but never reached an already-installed phone).
 - Parts cost isn't cached on `Job` (only charge/paid/balance are, per the
   original schema) — it's read straight from the ledger via
   `JobService.partsCostFor()` on the rare screens that need it.
