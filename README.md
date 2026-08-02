@@ -280,7 +280,17 @@ to Postgres, and passes its healthcheck.
   the logo image and re-laying-out the footer text on every tap.
   "Convert to Job" lands on the normal Edit Job screen, charged the
   quote's total but starting at zero paid -- a quote is an estimate, not
-  an assumption that it was paid in full.
+  an assumption that it was paid in full. A quote is editable at any
+  time, including after it's already become a job (`QuoteService.editQuote`,
+  reusing the same itemized-table form) -- Dad often only learns the real
+  part price after the work is under way, and there was never a real
+  reason to freeze the quote once converted. Editing the items only ever
+  changes the quote's own record; editing them on an already-converted
+  quote also pushes the new total onto that job's `CHARGE` ledger entry
+  (`JobService.updateCharge`), so the two can't silently disagree about
+  the price -- parts cost and paid stay untouched, since the quote never
+  described those. The quote preview links straight to the resulting job
+  once converted instead of a dead end.
 - [x] **Phase 4 — Edit/correction flow.** Edit Job screen prefilled with
   current values (charge, parts cost, paid), saves via the same
   `adjust()` mechanism as everything else. "Last entry" card pinned to the
@@ -351,6 +361,8 @@ to Postgres, and passes its healthcheck.
 | `POST /quotes` | Creates a quote (no `LedgerEntry` written), redirects to its preview |
 | `GET /quotes/{id}` | Professional quotation-document preview with a one-tap image share (native share sheet) plus WhatsApp/email text fallbacks; Convert to Job button if still open |
 | `POST /quotes/{id}/convert` | Creates the job (charged the quote total, zero paid) and redirects to its Edit screen; idempotent |
+| `GET /quotes/{id}/edit` | Edit Quote form, prefilled with current customer/vehicle/work type/items |
+| `POST /quotes/{id}/edit` | Replaces the quote's items; if already converted, also pushes the new total onto the job's charge |
 | `POST /api/jobs` | JSON, CSRF-exempt: idempotent-by-`clientId` job creation for the offline queue |
 | `POST /api/quotes` | JSON, CSRF-exempt: idempotent-by-`clientId` quote creation for the offline queue |
 | `GET /api/parts/suggestions` | JSON: distinct part names ever used on a quote |

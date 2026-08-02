@@ -20,6 +20,12 @@
         }
         .whatsapp { background: #25D366; color: var(--color-surface); }
         .email-share { background: var(--color-ink); color: var(--color-surface); }
+        .converted a {
+            display: block;
+            margin-top: 0.4rem;
+            color: var(--color-primary);
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -30,6 +36,7 @@
 
 <div class="converted" th:if="${quote.convertedToJobId != null}">
     Converted to a job already.
+    <a th:href="@{/jobs/{id}/edit(id=${quote.convertedToJobId})}">View / edit that job</a>
 </div>
 
 <div id="shareableQuote" class="quote-doc">
@@ -133,6 +140,8 @@
 <form th:if="${quote.convertedToJobId == null}" method="post" th:action="@{/quotes/{id}/convert(id=${quote.id})}">
     <button type="submit" class="btn btn-primary">Convert to Job</button>
 </form>
+
+<a th:href="@{/quotes/{id}/edit(id=${quote.id})}" class="btn btn-ink-outline">Edit Quote</a>
 
 <a th:href="@{/quotes/new}" class="btn btn-outline">New quote</a>
 

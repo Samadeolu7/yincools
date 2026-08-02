@@ -58,18 +58,69 @@ public class QuoteService {
         quote.setDate(LocalDate.now());
         quote = quoteRepo.save(quote);
 
+        saveItems(quote.getId(), items);
+
+        return quote;
+    }
+
+    /**
+     * A quote is editable at any time, including after it's already become
+     * a job -- there was never a real reason to freeze it, and Dad often
+     * only learns the real part price (or realizes he under/over-quoted)
+     * after the work is under way. Customer/vehicle/work type only ever
+     * change the quote's own record. The items/total are different: if this
+     * quote already has a job, its whole reason for existing was to become
+     * that job's charge, so a changed total pushes straight onto the job's
+     * CHARGE ledger entry (JobService.updateCharge) rather than leaving the
+     * two silently disagreeing about the price.
+     */
+    @Transactional
+    public Quote editQuote(Long quoteId, String customerName, String customerPhone,
+                            Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
+                            String vehicleNote, String workType, List<QuotePartLine> items) {
+        Quote quote = get(quoteId);
+
+        Long customerId = customerService.resolveOrCreate(customerName, customerPhone);
+        Long resolvedVehicleId = null;
+        String resolvedVehicleNote = null;
+
+        if (customerId != null) {
+            if (vehicleId != null) {
+                resolvedVehicleId = vehicleId;
+            } else if (StringUtils.hasText(newVehicleDescription)) {
+                resolvedVehicleId = vehicleService.findOrCreate(customerId, newVehicleDescription, newVehiclePlateNumber).getId();
+            }
+        } else {
+            resolvedVehicleNote = vehicleNote;
+        }
+
+        quote.setCustomerId(customerId);
+        quote.setVehicleId(resolvedVehicleId);
+        quote.setVehicleNote(resolvedVehicleNote);
+        quote.setWorkType(workType);
+        quoteRepo.save(quote);
+
+        quoteItemRepo.deleteAll(quoteItemRepo.findByQuoteId(quoteId));
+        saveItems(quoteId, items);
+
+        if (quote.getConvertedToJobId() != null) {
+            jobService.updateCharge(quote.getConvertedToJobId(), totalFor(quoteId));
+        }
+
+        return quote;
+    }
+
+    private void saveItems(Long quoteId, List<QuotePartLine> items) {
         for (QuotePartLine line : items) {
             if (!StringUtils.hasText(line.partName()) || line.amount() == null) {
                 continue;
             }
             QuoteItem item = new QuoteItem();
-            item.setQuoteId(quote.getId());
+            item.setQuoteId(quoteId);
             item.setPartName(line.partName());
             item.setAmount(line.amount());
             quoteItemRepo.save(item);
         }
-
-        return quote;
     }
 
     /**

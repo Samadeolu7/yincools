@@ -98,6 +98,53 @@ public class QuoteController {
         return "redirect:/jobs/" + job.getId() + "/edit";
     }
 
+    /**
+     * A quote is editable at any time -- including after it's already
+     * become a job (see QuoteService.editQuote). Same form as New Quote,
+     * just prefilled with the current customer/vehicle/work type/items.
+     */
+    @GetMapping("/{id}/edit")
+    public String editQuoteForm(@PathVariable Long id, Model model) throws Exception {
+        Quote quote = quoteService.get(id);
+        Customer customer = quote.getCustomerId() != null ? customerService.findById(quote.getCustomerId()).orElse(null) : null;
+        String vehiclePlateNumber = quote.getVehicleId() != null
+                ? vehicleService.findById(quote.getVehicleId()).map(v -> v.getPlateNumber()).orElse(null)
+                : null;
+        List<QuotePartLine> lines = quoteService.itemsFor(id).stream()
+                .map(item -> new QuotePartLine(item.getPartName(), item.getAmount()))
+                .toList();
+
+        model.addAttribute("quote", quote);
+        model.addAttribute("workTypes", WORK_TYPES);
+        model.addAttribute("customer", customer);
+        model.addAttribute("vehicleLabel", vehicleService.labelFor(quote.getVehicleId(), quote.getVehicleNote()));
+        model.addAttribute("vehiclePlateNumber", vehiclePlateNumber);
+        model.addAttribute("itemsJson", objectMapper.writeValueAsString(lines));
+        return "edit-quote";
+    }
+
+    @PostMapping("/{id}/edit")
+    public String editQuote(@PathVariable Long id,
+                             @RequestParam(required = false) String customerName,
+                             @RequestParam(required = false) String customerPhone,
+                             @RequestParam(required = false) Long vehicleId,
+                             @RequestParam(required = false) String vehicleDescription,
+                             @RequestParam(required = false) String vehiclePlateNumber,
+                             @RequestParam String workType,
+                             @RequestParam(required = false) String partsJson) throws Exception {
+        boolean hasCustomer = StringUtils.hasText(customerName) || StringUtils.hasText(customerPhone);
+        List<QuotePartLine> items = parsePartsJson(partsJson);
+
+        quoteService.editQuote(id, customerName, customerPhone,
+                vehicleId,
+                hasCustomer ? vehicleDescription : null,
+                hasCustomer ? vehiclePlateNumber : null,
+                hasCustomer ? null : vehicleDescription,
+                workType, items);
+
+        return "redirect:/quotes/" + id;
+    }
+
     private String buildQuoteText(Quote quote, Customer customer, String vehicleLabel, List<QuoteItem> items, BigDecimal total) {
         StringBuilder sb = new StringBuilder();
         sb.append(businessName).append(" Quote\n");

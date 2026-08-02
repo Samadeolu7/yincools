@@ -18,6 +18,13 @@
  * span), #partsJson (hidden input), a <form id="newQuoteForm"> wrapping
  * all of this, and a <datalist id="parts-suggestions"> for row
  * autocomplete.
+ *
+ * Shared by both New Quote and Edit Quote. Edit Quote additionally
+ * provides #quoteEditData with a data-items attribute (a JSON array of
+ * {partName, amount}, HTML-escaped by Thymeleaf's th:attr so it round-
+ * trips safely through getAttribute() even if a part name contains
+ * quotes or angle brackets) -- when present, those become prefilled rows
+ * instead of the two-empty-row starting state.
  */
 (function () {
     function currency(n) {
@@ -59,12 +66,18 @@
         }
     }
 
-    function addRow() {
+    function escapeAttr(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function addRow(partName, amount) {
         var tbody = document.getElementById('partsTableBody');
         var row = document.createElement('tr');
         row.innerHTML =
-            '<td><input type="text" class="part-name" list="parts-suggestions" placeholder="e.g. Compressor"></td>' +
-            '<td><input type="text" inputmode="numeric" class="part-amount" placeholder="0"></td>' +
+            '<td><input type="text" class="part-name" list="parts-suggestions" placeholder="e.g. Compressor" value="' +
+                (partName ? escapeAttr(partName) : '') + '"></td>' +
+            '<td><input type="text" inputmode="numeric" class="part-amount" placeholder="0" value="' +
+                (amount != null ? escapeAttr(amount) : '') + '"></td>' +
             '<td class="remove-cell"><button type="button" class="remove-row" aria-label="Remove">&times;</button></td>';
         tbody.appendChild(row);
 
@@ -78,6 +91,16 @@
             row.remove();
             recompute();
         });
+    }
+
+    function loadExistingItems() {
+        var dataEl = document.getElementById('quoteEditData');
+        if (!dataEl) return [];
+        try {
+            return JSON.parse(dataEl.getAttribute('data-items') || '[]');
+        } catch (e) {
+            return [];
+        }
     }
 
     function loadPartSuggestions() {
@@ -98,8 +121,16 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         loadPartSuggestions();
-        addRow(); // start with two empty rows
-        addRow();
+
+        var existing = loadExistingItems();
+        if (existing.length) {
+            existing.forEach(function (item) { addRow(item.partName, item.amount); });
+            addRow(); // one spare empty row after the prefilled ones
+        } else {
+            addRow(); // start with two empty rows
+            addRow();
+        }
+        recompute(); // reflect prefilled rows in the total immediately, not just after the next keystroke
 
         var form = document.getElementById('newQuoteForm');
         if (form) form.addEventListener('submit', recompute);

@@ -148,6 +148,49 @@ class QuoteServiceTest {
     }
 
     @Test
+    void editQuoteReplacesItemsAndRecomputesTotal() {
+        Quote quote = quoteService.createQuote(null, null, null, null, null, "Corolla",
+                "REGAS", lines("Compressor", 20000));
+
+        quoteService.editQuote(quote.getId(), null, null, null, null, null, "Corolla",
+                "REGAS", List.of(
+                        new QuotePartLine("Compressor", new BigDecimal("22000")),
+                        new QuotePartLine("Gas", new BigDecimal("5000"))));
+
+        assertThat(quoteService.itemsFor(quote.getId())).hasSize(2);
+        assertThat(quoteService.totalFor(quote.getId())).isEqualByComparingTo("27000");
+    }
+
+    @Test
+    void editingAnUnconvertedQuoteStillWritesNoLedgerEntries() {
+        Quote quote = quoteService.createQuote(null, null, null, null, null, "Corolla",
+                "REGAS", lines("Compressor", 20000));
+
+        quoteService.editQuote(quote.getId(), null, null, null, null, null, "Corolla",
+                "REGAS", lines("Compressor", 25000));
+
+        assertThat(ledgerRepository.findByType(EntryType.CHARGE)).isEmpty();
+    }
+
+    @Test
+    void editingAConvertedQuotePushesTheNewTotalOntoTheJobsCharge() {
+        Quote quote = quoteService.createQuote("Ada", "0800000001", null, "Toyota Hilux", null, null,
+                "COMPRESSOR", lines("Compressor", 30000));
+        Job job = quoteService.convertToJob(quote.getId());
+
+        // Turns out the supplier charged more than expected -- Dad edits the
+        // quote after the fact, and the job's charge should follow it.
+        quoteService.editQuote(quote.getId(), "Ada", "0800000001", null, "Toyota Hilux", null, null,
+                "COMPRESSOR", lines("Compressor", 35000));
+
+        Job updated = jobRepository.findById(job.getId()).orElseThrow();
+        assertThat(updated.getCachedCharge()).isEqualByComparingTo("35000");
+        // Paid is untouched by a quote edit -- it's a separate fact about
+        // the job, not something the quote ever described.
+        assertThat(updated.getCachedPaid()).isEqualByComparingTo("0");
+    }
+
+    @Test
     void partSuggestionsReturnsDistinctNamesEverUsed() {
         quoteService.createQuote(null, null, null, null, null, "Car A", "OTHER",
                 List.of(new QuotePartLine("Compressor", new BigDecimal("1000")),

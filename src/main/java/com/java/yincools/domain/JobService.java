@@ -130,6 +130,19 @@ public class JobService {
         ledgerService.adjust(EntryType.PARTS_COST, jobId, job.getVehicleId(), job.getCustomerId(), newPartsCost, null);
     }
 
+    /**
+     * Updates just the charge -- used when a converted quote's total
+     * changes after the fact (QuoteService.editQuote). Deliberately
+     * narrower than editJob: parts cost and paid are untouched, since an
+     * edited quote only ever describes the charge, never those.
+     */
+    @Transactional
+    public void updateCharge(Long jobId, BigDecimal newCharge) {
+        Job job = jobRepo.findById(jobId)
+                .orElseThrow(() -> new IllegalArgumentException("No job with id " + jobId));
+        ledgerService.adjust(EntryType.CHARGE, jobId, job.getVehicleId(), job.getCustomerId(), newCharge, null);
+    }
+
     @Transactional
     public void recordPayment(Long jobId, BigDecimal amountPaidTotal) {
         Job job = jobRepo.findById(jobId)

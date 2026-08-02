@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <title>Edit Quote</title>
+    <style>
+        h1 { font-size: 1.4rem; margin: 0 0 1rem; }
+        .plate { margin-top: 0.5rem; }
+        .synced-note {
+            margin-bottom: 1rem;
+            padding: 0.7rem 0.9rem;
+            border-radius: var(--radius-sm);
+            background: var(--color-surface-muted);
+            color: var(--color-ink-secondary);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+<h1>Edit Quote</h1>
+
+<div class="synced-note" th:if="${quote.convertedToJobId != null}">
+    Already converted to a job -- changing the total here updates that job's charge too.
+</div>
+
+<!-- Prefill data for quote-items.js, kept out of raw JS to avoid any
+     escaping issues with user-typed part names; th:attr HTML-escapes the
+     value, and the browser decodes it back on getAttribute(). -->
+<div id="quoteEditData" style="display:none" th:attr="data-items=${itemsJson}"></div>
+
+<form method="post" th:action="@{/quotes/{id}/edit(id=${quote.id})}" id="newQuoteForm">
+    <label for="workType">Work type</label>
+    <select id="workType" name="workType" required>
+        <option th:each="w : ${workTypes}" th:value="${w}" th:text="${w}"
+                th:selected="${w == quote.workType}"></option>
+    </select>
+
+    <label for="customerName">Customer name (optional)</label>
+    <input type="text" id="customerName" name="customerName" th:value="${customer != null} ? ${customer.name} : ''">
+
+    <label for="customerPhone">Customer phone (optional)</label>
+    <input type="tel" inputmode="tel" id="customerPhone" name="customerPhone" onchange="lookupVehicles(this.value)"
+           th:value="${customer != null} ? ${customer.phone} : ''">
+
+    <label for="vehicleDescription">Vehicle (optional)</label>
+    <div id="vehiclePicker" class="chip-row" style="display:none;"></div>
+    <input type="text" id="vehicleDescription" name="vehicleDescription" list="vehicle-suggestions"
+           placeholder="e.g. Camry 2010" oninput="clearVehicleSelection()" th:value="${vehicleLabel}">
+    <datalist id="vehicle-suggestions"></datalist>
+    <input type="text" id="vehiclePlateNumber" name="vehiclePlateNumber" class="plate"
+           placeholder="Plate number (optional, for fleets)" th:value="${vehiclePlateNumber}">
+    <input type="hidden" id="vehicleId" name="vehicleId" th:value="${quote.vehicleId}">
+
+    <label>Parts &amp; charges</label>
+    <table class="parts-table">
+        <thead>
+            <tr><th>Part</th><th>Amount</th><th></th></tr>
+        </thead>
+        <tbody id="partsTableBody"></tbody>
+        <tfoot>
+            <tr class="total-row"><td>Total</td><td colspan="2" id="quoteTotal">NGN 0</td></tr>
+        </tfoot>
+    </table>
+    <datalist id="parts-suggestions"></datalist>
+    <input type="hidden" id="partsJson" name="partsJson">
+    <div class="hint">Fill a row and another appears -- leave the last one blank. Names you type here become suggestions next time.</div>
+
+    <button type="submit" class="btn btn-primary">Save changes</button>
+</form>
+
+<a th:href="@{/quotes/{id}(id=${quote.id})}" class="btn btn-outline">Cancel</a>
+
+<script src="/vehicle-picker.js"></script>
+<script src="/quote-items.js"></script>
+</body>
+</html>
