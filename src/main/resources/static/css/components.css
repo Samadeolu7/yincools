@@ -140,7 +140,7 @@ select {
     padding: 0.4rem 0.3rem 0.4rem 0;
     border-bottom: 1px solid var(--color-border-subtle);
 }
-.parts-table td:last-child { padding-right: 0; width: 2.2rem; }
+.parts-table td.remove-cell { padding-right: 0; width: 2.2rem; }
 .parts-table input[type="text"] {
     padding: 0.6rem;
     font-size: 1rem;
@@ -165,6 +165,59 @@ select {
 }
 .parts-table .total-row td:first-child { text-align: left; }
 .parts-table .total-row td:last-child { text-align: right; }
+
+/*
+ * Letterhead header/footer -- matches the real physical shop letterhead
+ * (logo, two-tone wordmark with the "AUTO NIG." banner, tagline up top;
+ * address/whatsapp/tel/email/bankers at the bottom). Shared by receipt.html
+ * and quote-preview.html so both documents look like the real letterhead
+ * when screenshotted or shared.
+ */
+.letterhead-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 1.25rem;
+}
+.letterhead-logo { height: 56px; width: auto; margin-bottom: 0.5rem; }
+.letterhead-wordmark {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.letterhead-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+.letterhead-suffix {
+    background: var(--color-ink);
+    color: var(--color-surface);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm);
+}
+.letterhead-tagline {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--color-ink-secondary);
+    margin-top: 0.2rem;
+}
+.letterhead-footer {
+    margin-top: 1.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border-subtle);
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--color-ink-secondary);
+    line-height: 1.5;
+}
+.letterhead-contact span:not(:last-child)::after { content: " \00b7 "; }
 
 /*
  * Persistent bottom nav for the occasional screens (This Week, Who Owes

@@ -64,9 +64,18 @@ Yincools mark, not a palette invented from scratch:
 Red is used as an accent only, never a surface — a large red background
 reads as a warning banner, and the mark itself only ever uses red as an
 accent against black and white. The home-screen icon (`icon-192.png` /
-`icon-512.png`) and the letterhead (`fragments/letterhead.html`, used by
-both the receipt and the quote preview) are generated from the actual logo
-file (`static/square_yincools_logo.png`), not a placeholder.
+`icon-512.png`) is generated from the actual logo file
+(`static/square_yincools_logo.png`), not a placeholder.
+
+The letterhead (`fragments/letterhead.html`) is two fragments — `header`
+(logo, two-tone wordmark with the "AUTO NIG." banner, tagline) and `footer`
+(head office address, WhatsApp/tel/email, bankers) — matching the real
+physical shop letterhead line for line, not an invented layout. Both the
+receipt and the quote preview use them. Every detail (suffix, tagline,
+address, contact numbers, bankers) is config (`app.business.*` /
+`APP_BUSINESS_*` env vars in `application.properties`), defaulting to the
+real published business details since there's one shop and none of it is
+secret.
 
 **Two-layer CSS, on purpose.** `tokens.css` holds only values (colors,
 spacing, radius); `static/css/components.css` builds the actual reusable
@@ -232,8 +241,10 @@ to Postgres, and passes its healthcheck.
   (`/api/parts/suggestions`, merged client-side with the static
   `parts-seed.json` seed, same pattern as vehicles), shared by both the
   quote table and New Job's parts chips. Letterhead-styled quote preview
-  (shared `fragments/letterhead.html`, also now on the job receipt) shared
-  by screenshot. "Convert to Job" lands on the normal Edit Job screen,
+  (shared `fragments/letterhead.html`, also on the job receipt) — sharable
+  by WhatsApp (`wa.me` link, same phone-normalization as the job receipt)
+  and by email (`mailto:` link, prefilled subject/body), or by screenshot
+  if neither fits. "Convert to Job" lands on the normal Edit Job screen,
   charged the quote's total but starting at zero paid -- a quote is an
   estimate, not an assumption that it was paid in full.
 - [x] **Phase 4 — Edit/correction flow.** Edit Job screen prefilled with
@@ -297,7 +308,7 @@ to Postgres, and passes its healthcheck.
 | `GET /api/vehicles/suggestions` | JSON: distinct vehicle descriptions typed before |
 | `GET /quotes/new` | New Quote form; shows open (unconverted) quotes to resume |
 | `POST /quotes` | Creates a quote (no `LedgerEntry` written), redirects to its preview |
-| `GET /quotes/{id}` | Letterhead-styled preview, screenshot-shareable; Convert to Job button if still open |
+| `GET /quotes/{id}` | Letterhead-styled preview with WhatsApp + email share links; Convert to Job button if still open |
 | `POST /quotes/{id}/convert` | Creates the job (charged the quote total, zero paid) and redirects to its Edit screen; idempotent |
 | `POST /api/jobs` | JSON, CSRF-exempt: idempotent-by-`clientId` job creation for the offline queue |
 | `GET /api/parts/suggestions` | JSON: distinct part names ever used on a quote |

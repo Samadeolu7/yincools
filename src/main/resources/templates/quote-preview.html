@@ -7,16 +7,6 @@
     <link rel="stylesheet" href="/css/components.css">
     <title>Quote</title>
     <style>
-        .letterhead {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-        .letterhead-logo { height: 64px; width: auto; margin-bottom: 0.5rem; }
-        .letterhead .business-name { font-size: 1.6rem; font-weight: 700; }
-        .letterhead .business-contact { color: var(--color-ink-secondary); font-size: 0.95rem; }
         h1 { font-size: 1.3rem; margin: 0 0 1rem; text-align: center; }
         .card { line-height: 1.7; }
         .card .row { display: flex; justify-content: space-between; margin-bottom: 0.3rem; }
@@ -30,10 +20,12 @@
             font-weight: 600;
             text-align: center;
         }
+        .whatsapp { background: #25D366; color: var(--color-surface); }
+        .email-share { background: var(--color-ink); color: var(--color-surface); }
     </style>
 </head>
 <body>
-<div th:replace="~{fragments/letterhead :: letterhead}"></div>
+<div th:replace="~{fragments/letterhead :: header}"></div>
 <h1>Quote</h1>
 
 <div class="card">
@@ -62,9 +54,16 @@
     </table>
 </div>
 
+<div th:replace="~{fragments/letterhead :: footer}"></div>
+
 <div class="converted" th:if="${quote.convertedToJobId != null}">
     Converted to a job already.
 </div>
+
+<a th:if="${whatsappLink != null}" th:href="${whatsappLink}" class="btn whatsapp" target="_blank">
+    Share on WhatsApp
+</a>
+<a th:href="${mailtoLink}" class="btn email-share">Share by Email</a>
 
 <form th:if="${quote.convertedToJobId == null}" method="post" th:action="@{/quotes/{id}/convert(id=${quote.id})}">
     <button type="submit" class="btn btn-primary">Convert to Job</button>

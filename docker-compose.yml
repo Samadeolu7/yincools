@@ -14,9 +14,14 @@ services:
       - DB_NAME=${POSTGRES_DB}
       - DB_USER=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
-      - APP_BUSINESS_NAME=${APP_BUSINESS_NAME:-AC Tech}
-      - APP_BUSINESS_PHONE=${APP_BUSINESS_PHONE:-}
-      - APP_BUSINESS_ADDRESS=${APP_BUSINESS_ADDRESS:-}
+      - APP_BUSINESS_NAME=${APP_BUSINESS_NAME:-Yincools}
+      - APP_BUSINESS_SUFFIX=${APP_BUSINESS_SUFFIX:-AUTO NIG.}
+      - APP_BUSINESS_TAGLINE=${APP_BUSINESS_TAGLINE:-Specialist in Car-Condition & any Automobile Works}
+      - APP_BUSINESS_ADDRESS=${APP_BUSINESS_ADDRESS:-73, Mercy Eneli Street, (Owolarafe Motors) Off Alhaji Masha, Surulere, Lagos.}
+      - APP_BUSINESS_WHATSAPP=${APP_BUSINESS_WHATSAPP:-081 4404 9067}
+      - APP_BUSINESS_TEL=${APP_BUSINESS_TEL:-0802 333 2171}
+      - APP_BUSINESS_EMAIL=${APP_BUSINESS_EMAIL:-yincoolsautotech@gmail.com}
+      - APP_BUSINESS_BANKERS=${APP_BUSINESS_BANKERS:-Eco Bank Plc, Adeniran Ogunsanya Str, Surulere, Lagos|U.B.A. Bode Thomas Str, Surulere, Lagos}
     depends_on:
       postgres:
         condition: service_healthy

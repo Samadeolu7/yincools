@@ -6,10 +6,12 @@ import com.java.yincools.domain.CustomerService;
 import com.java.yincools.domain.QuotePartLine;
 import com.java.yincools.domain.QuoteService;
 import com.java.yincools.domain.VehicleService;
+import com.java.yincools.domain.model.Customer;
 import com.java.yincools.domain.model.Job;
 import com.java.yincools.domain.model.Quote;
 import com.java.yincools.domain.model.QuoteItem;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -20,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Controller
@@ -34,6 +38,9 @@ public class QuoteController {
     private final CustomerService customerService;
     private final VehicleService vehicleService;
     private final ObjectMapper objectMapper;
+
+    @Value("${app.business.name}")
+    private String businessName;
 
     @GetMapping("/new")
     public String newQuoteForm(Model model) {
@@ -68,11 +75,18 @@ public class QuoteController {
     public String preview(@PathVariable Long id, Model model) {
         Quote quote = quoteService.get(id);
         List<QuoteItem> items = quoteService.itemsFor(id);
+        BigDecimal total = quoteService.totalFor(id);
+        Customer customer = quote.getCustomerId() != null ? customerService.findById(quote.getCustomerId()).orElse(null) : null;
+        String vehicleLabel = vehicleService.labelFor(quote.getVehicleId(), quote.getVehicleNote());
+        String quoteText = buildQuoteText(quote, customer, vehicleLabel, items, total);
+
         model.addAttribute("quote", quote);
         model.addAttribute("items", items);
-        model.addAttribute("total", quoteService.totalFor(id));
-        model.addAttribute("customer", quote.getCustomerId() != null ? customerService.findById(quote.getCustomerId()).orElse(null) : null);
-        model.addAttribute("vehicleLabel", vehicleService.labelFor(quote.getVehicleId(), quote.getVehicleNote()));
+        model.addAttribute("total", total);
+        model.addAttribute("customer", customer);
+        model.addAttribute("vehicleLabel", vehicleLabel);
+        model.addAttribute("whatsappLink", whatsAppLink(customer, quoteText));
+        model.addAttribute("mailtoLink", mailtoLink(businessName + " Quote", quoteText));
         return "quote-preview";
     }
 
@@ -80,6 +94,42 @@ public class QuoteController {
     public String convert(@PathVariable Long id) {
         Job job = quoteService.convertToJob(id);
         return "redirect:/jobs/" + job.getId() + "/edit";
+    }
+
+    private String buildQuoteText(Quote quote, Customer customer, String vehicleLabel, List<QuoteItem> items, BigDecimal total) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(businessName).append(" Quote\n");
+        sb.append(quote.getDate()).append("\n");
+        if (customer != null && StringUtils.hasText(customer.getName())) {
+            sb.append("Customer: ").append(customer.getName()).append("\n");
+        }
+        if (StringUtils.hasText(vehicleLabel)) {
+            sb.append("Vehicle: ").append(vehicleLabel).append("\n");
+        }
+        sb.append("Work: ").append(quote.getWorkType()).append("\n\n");
+        for (QuoteItem item : items) {
+            sb.append(item.getPartName()).append(": NGN ").append(item.getAmount()).append("\n");
+        }
+        sb.append("\nTotal: NGN ").append(total).append("\n");
+        return sb.toString();
+    }
+
+    private String whatsAppLink(Customer customer, String text) {
+        if (customer == null || !StringUtils.hasText(customer.getPhone())) {
+            return null;
+        }
+        String digits = customer.getPhone().replaceAll("[^0-9]", "");
+        if (digits.startsWith("0")) {
+            digits = "234" + digits.substring(1);
+        }
+        String encoded = URLEncoder.encode(text, StandardCharsets.UTF_8);
+        return "https://wa.me/" + digits + "?text=" + encoded;
+    }
+
+    private String mailtoLink(String subject, String body) {
+        String encodedSubject = URLEncoder.encode(subject, StandardCharsets.UTF_8).replace("+", "%20");
+        String encodedBody = URLEncoder.encode(body, StandardCharsets.UTF_8).replace("+", "%20");
+        return "mailto:?subject=" + encodedSubject + "&body=" + encodedBody;
     }
 
     private List<QuotePartLine> parsePartsJson(String partsJson) throws Exception {

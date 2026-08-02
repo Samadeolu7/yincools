@@ -1,12 +1,24 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="letterhead" class="letterhead">
+<div th:fragment="header" class="letterhead-header">
     <img src="/images/yincools-logo.png" alt="" class="letterhead-logo">
-    <div class="letterhead-text">
-        <div class="business-name" th:text="${businessName}"></div>
-        <div class="business-contact" th:if="${businessPhone != null and !businessPhone.isEmpty()}" th:text="${businessPhone}"></div>
-        <div class="business-contact" th:if="${businessAddress != null and !businessAddress.isEmpty()}" th:text="${businessAddress}"></div>
+    <div class="letterhead-wordmark">
+        <span class="letterhead-name" th:text="${businessName}"></span>
+        <span class="letterhead-suffix" th:if="${businessSuffix != null and !businessSuffix.isEmpty()}" th:text="${businessSuffix}"></span>
+    </div>
+    <div class="letterhead-tagline" th:if="${businessTagline != null and !businessTagline.isEmpty()}" th:text="${businessTagline}"></div>
+</div>
+<div th:fragment="footer" class="letterhead-footer">
+    <div class="letterhead-address" th:if="${businessAddress != null and !businessAddress.isEmpty()}"
+         th:text="'Head Office: ' + ${businessAddress}"></div>
+    <div class="letterhead-contact">
+        <span th:if="${businessWhatsapp != null and !businessWhatsapp.isEmpty()}" th:text="'Whatsapp: ' + ${businessWhatsapp}"></span>
+        <span th:if="${businessTel != null and !businessTel.isEmpty()}" th:text="'Tel: ' + ${businessTel}"></span>
+        <span th:if="${businessEmail != null and !businessEmail.isEmpty()}" th:text="'E-mail: ' + ${businessEmail}"></span>
+    </div>
+    <div class="letterhead-bankers" th:if="${not #lists.isEmpty(businessBankers)}">
+        <span>Bankers: </span><span th:text="${#strings.listJoin(businessBankers, '; ')}"></span>
     </div>
 </div>
 </body>

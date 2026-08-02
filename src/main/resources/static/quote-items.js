@@ -65,7 +65,7 @@
         row.innerHTML =
             '<td><input type="text" class="part-name" list="parts-suggestions" placeholder="e.g. Compressor"></td>' +
             '<td><input type="text" inputmode="numeric" class="part-amount" placeholder="0"></td>' +
-            '<td><button type="button" class="remove-row" aria-label="Remove">&times;</button></td>';
+            '<td class="remove-cell"><button type="button" class="remove-row" aria-label="Remove">&times;</button></td>';
         tbody.appendChild(row);
 
         function onInput() {
