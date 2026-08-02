@@ -252,10 +252,18 @@ to Postgres, and passes its healthcheck.
   enhancement over the original text-only `wa.me`/`mailto:` links
   (`quote-share.js`): those are always rendered first and stay as the
   fallback on any browser that can't share files (most desktops), and are
-  only hidden once the richer path is confirmed to work. "Convert to Job"
-  lands on the normal Edit Job screen, charged the quote's total but
-  starting at zero paid -- a quote is an estimate, not an assumption that
-  it was paid in full.
+  only hidden once the richer path is confirmed to work. The header/
+  footer (logo, wordmark, tagline, address/contact/bankers) are the same
+  bytes on every single quote -- only the card in the middle changes --
+  so `quote-share.js` rasterizes them once and caches the result in
+  `localStorage` (keyed off a hash of their own markup, so it
+  self-invalidates if the letterhead or business config ever changes);
+  every share after the first only asks `html2canvas` to redo the small
+  card and composites it onto the cached chrome, instead of re-decoding
+  the logo image and re-laying-out the footer text on every tap.
+  "Convert to Job" lands on the normal Edit Job screen, charged the
+  quote's total but starting at zero paid -- a quote is an estimate, not
+  an assumption that it was paid in full.
 - [x] **Phase 4 — Edit/correction flow.** Edit Job screen prefilled with
   current values (charge, parts cost, paid), saves via the same
   `adjust()` mechanism as everything else. "Last entry" card pinned to the

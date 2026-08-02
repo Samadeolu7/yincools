@@ -26,10 +26,12 @@
 </head>
 <body>
 <div id="shareableQuote">
-    <div th:replace="~{fragments/letterhead :: header}"></div>
-    <h1>Quote</h1>
+    <div id="letterheadChromeTop">
+        <div th:replace="~{fragments/letterhead :: header}"></div>
+        <h1>Quote</h1>
+    </div>
 
-    <div class="card">
+    <div class="card" id="quoteCard">
         <div class="row"><span>Date</span><span th:text="${quote.date}"></span></div>
         <div class="row" th:if="${customer != null and customer.name != null and !customer.name.isEmpty()}">
             <span>Customer</span><span th:text="${customer.name}"></span>
@@ -55,7 +57,9 @@
         </table>
     </div>
 
-    <div th:replace="~{fragments/letterhead :: footer}"></div>
+    <div id="letterheadChromeBottom">
+        <div th:replace="~{fragments/letterhead :: footer}"></div>
+    </div>
 </div>
 
 <div class="converted" th:if="${quote.convertedToJobId != null}">

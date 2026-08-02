@@ -7,17 +7,32 @@
  * where a WhatsApp link only worked if a customer phone had been entered --
  * the native sheet lets Dad pick the contact/app himself.
  *
+ * The letterhead header/footer (logo, wordmark, tagline, address/contact/
+ * bankers) are byte-for-byte identical on every quote -- only the card in
+ * the middle (#quoteCard) actually changes. Re-rasterizing the logo image
+ * and footer text on every single share is wasted work, so the header/
+ * footer are rendered once with html2canvas and cached in localStorage as
+ * plain PNGs; every share after that just draws those cached images and
+ * only asks html2canvas to do fresh work on the small #quoteCard. The
+ * cache key is a hash of the header+footer HTML itself, not a manually
+ * bumped version number, so it self-invalidates if the business config
+ * (or the letterhead's own markup) ever changes -- no separate step to
+ * remember.
+ *
  * Progressive enhancement only: the server always renders working
  * WhatsApp/email text-share links (.fallback-share) first. This script
  * only reveals the "Share Quote" button and hides those once it's
  * confirmed the browser can actually share files -- so a browser that
  * can't do any of this (most desktops) sees exactly what it saw before.
  *
- * Expects: #shareableQuote (the element to render), #shareQuoteBtn (the
- * button, data-share-title / data-share-text attributes for the caption),
- * html2canvas already loaded, and .fallback-share on the links to hide.
+ * Expects: #letterheadChromeTop / #quoteCard / #letterheadChromeBottom
+ * (the three stacked regions to compose), #shareQuoteBtn (data-share-title
+ * / data-share-text for the caption), html2canvas already loaded, and
+ * .fallback-share on the links to hide.
  */
 (function () {
+    var CACHE_KEY = 'yincools-letterhead-chrome-cache';
+
     function supportsFileShare() {
         if (!navigator.canShare || !navigator.share) return false;
         try {
@@ -28,10 +43,94 @@
         }
     }
 
+    function hashString(str) {
+        var hash = 5381;
+        for (var i = 0; i < str.length; i++) {
+            hash = ((hash << 5) + hash) + str.charCodeAt(i);
+            hash |= 0;
+        }
+        return hash.toString(36);
+    }
+
+    function loadImage(src) {
+        return new Promise(function (resolve, reject) {
+            var img = new Image();
+            img.onload = function () { resolve(img); };
+            img.onerror = reject;
+            img.src = src;
+        });
+    }
+
+    function renderToDataUrl(el) {
+        return html2canvas(el, { backgroundColor: '#ffffff', scale: 2 })
+            .then(function (canvas) { return canvas.toDataURL('image/png'); });
+    }
+
+    /** Cached header/footer PNGs, re-rendered only when their markup changes. */
+    function getChromeImages(topEl, bottomEl) {
+        var key = hashString(topEl.outerHTML + '|' + bottomEl.outerHTML);
+        var cached = null;
+        try {
+            var raw = localStorage.getItem(CACHE_KEY);
+            cached = raw ? JSON.parse(raw) : null;
+        } catch (e) {
+            cached = null;
+        }
+
+        if (cached && cached.key === key) {
+            return Promise.all([loadImage(cached.top), loadImage(cached.bottom)]);
+        }
+
+        return Promise.all([renderToDataUrl(topEl), renderToDataUrl(bottomEl)])
+            .then(function (urls) {
+                try {
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({ key: key, top: urls[0], bottom: urls[1] }));
+                } catch (e) {
+                    // Storage full/unavailable (e.g. private browsing) -- fine,
+                    // it just re-renders the chrome next time too.
+                }
+                return Promise.all([loadImage(urls[0]), loadImage(urls[1])]);
+            });
+    }
+
+    function composite(topImg, cardCanvas, bottomImg) {
+        var width = Math.max(topImg.width, cardCanvas.width, bottomImg.width);
+        var height = topImg.height + cardCanvas.height + bottomImg.height;
+        var canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(topImg, 0, 0);
+        ctx.drawImage(cardCanvas, 0, topImg.height);
+        ctx.drawImage(bottomImg, 0, topImg.height + cardCanvas.height);
+        return canvas;
+    }
+
+    function captureQuote() {
+        var topEl = document.getElementById('letterheadChromeTop');
+        var cardEl = document.getElementById('quoteCard');
+        var bottomEl = document.getElementById('letterheadChromeBottom');
+        var wholeEl = document.getElementById('shareableQuote');
+
+        return getChromeImages(topEl, bottomEl)
+            .then(function (images) {
+                return html2canvas(cardEl, { backgroundColor: '#ffffff', scale: 2 })
+                    .then(function (cardCanvas) { return composite(images[0], cardCanvas, images[1]); });
+            })
+            .catch(function () {
+                // Cached-chrome path failed for any reason -- fall back to
+                // capturing the whole thing fresh, same as before this
+                // optimization existed. Slower, but never worse than
+                // sharing nothing.
+                return html2canvas(wholeEl, { backgroundColor: '#ffffff', scale: 2 });
+            });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         var shareBtn = document.getElementById('shareQuoteBtn');
-        var target = document.getElementById('shareableQuote');
-        if (!shareBtn || !target || typeof html2canvas === 'undefined' || !supportsFileShare()) {
+        if (!shareBtn || typeof html2canvas === 'undefined' || !supportsFileShare()) {
             return;
         }
 
@@ -46,7 +145,7 @@
             shareBtn.disabled = true;
             shareBtn.textContent = 'Preparing...';
 
-            html2canvas(target, { backgroundColor: '#ffffff', scale: 2 })
+            captureQuote()
                 .then(function (canvas) {
                     return new Promise(function (resolve) {
                         canvas.toBlob(resolve, 'image/png');
