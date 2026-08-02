@@ -1,11 +1,11 @@
 /*
- * Shared by New Job's parts cost and New Quote's parts note -- tappable
- * chips from a static seed list (deliberately not merged with anything
- * dynamic, unlike vehicles: parts are usually multiple-at-once, so learning
- * new ones reliably from free text would need real structure that isn't
- * earning its keep yet). Plus an "Other" chip for free text. Builds a
- * comma-joined value into a hidden input. Expects element ids: partsChips
- * (container), partsNote (hidden input), partsOther (free-text input).
+ * New Job's parts cost: tappable chips, seed list merged with every
+ * distinct part name a quote has ever used (see /api/parts/suggestions --
+ * the "database of parts" that grows from usage, same pattern as
+ * vehicle-picker.js's vehicle suggestions). Plus an "Other" chip for free
+ * text. Builds a comma-joined value into a hidden input. Expects element
+ * ids: partsChips (container), partsNote (hidden input), partsOther
+ * (free-text input).
  */
 
 (function () {
@@ -46,26 +46,28 @@
         var container = document.getElementById('partsChips');
         if (!container) return;
 
-        fetch('/parts-seed.json')
-            .then(function (r) { return r.ok ? r.json() : []; })
-            .catch(function () { return []; })
-            .then(function (parts) {
-                parts.forEach(function (part) {
-                    var chip = document.createElement('button');
-                    chip.type = 'button';
-                    chip.className = 'part-chip';
-                    chip.textContent = part;
-                    chip.onclick = function () { toggleChip(chip, part); };
-                    container.appendChild(chip);
-                });
+        Promise.all([
+            fetch('/parts-seed.json').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; }),
+            fetch('/api/parts/suggestions').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
+        ]).then(function (results) {
+            var parts = Array.from(new Set(results[0].concat(results[1])));
 
-                var otherChip = document.createElement('button');
-                otherChip.type = 'button';
-                otherChip.className = 'part-chip';
-                otherChip.textContent = 'Other';
-                otherChip.onclick = function () { toggleOther(otherChip); };
-                container.appendChild(otherChip);
+            parts.forEach(function (part) {
+                var chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'part-chip';
+                chip.textContent = part;
+                chip.onclick = function () { toggleChip(chip, part); };
+                container.appendChild(chip);
             });
+
+            var otherChip = document.createElement('button');
+            otherChip.type = 'button';
+            otherChip.className = 'part-chip';
+            otherChip.textContent = 'Other';
+            otherChip.onclick = function () { toggleOther(otherChip); };
+            container.appendChild(otherChip);
+        });
 
         document.getElementById('partsOther').addEventListener('input', updatePartsNote);
     }

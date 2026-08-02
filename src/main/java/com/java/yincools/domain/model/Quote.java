@@ -7,13 +7,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
  * Deliberately NOT a LedgerEntry source -- a quote is a proposal, not a
  * financial fact, and the ledger only ever records real facts. This entity
  * lives entirely outside the ledger until (if) it's accepted and converted.
+ *
+ * The quoted total is never stored here -- it's always the sum of this
+ * quote's QuoteItem rows (see QuoteService.totalFor()), so there's nothing
+ * to keep in sync as items are added.
  */
 @Entity
 @Getter
@@ -35,12 +38,6 @@ public class Quote {
     private String vehicleNote;
 
     private String workType;
-
-    /** Built from tapped parts chips plus optional free text. */
-    private String partsNote;
-
-    /** Single quoted total -- no per-part pricing. */
-    private BigDecimal amount;
 
     private LocalDate date;
 

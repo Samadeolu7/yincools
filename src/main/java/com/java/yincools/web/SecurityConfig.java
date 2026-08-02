@@ -36,7 +36,7 @@ public class SecurityConfig {
                                 // (rendered before authentication) needs the logo/tokens/manifest.
                                 "/css/**", "/images/**", "/manifest.webmanifest",
                                 "/icon-192.png", "/icon-512.png", "/sw.js",
-                                "/vehicle-picker.js", "/parts-chips.js", "/offline-queue.js",
+                                "/vehicle-picker.js", "/parts-chips.js", "/offline-queue.js", "/quote-items.js",
                                 "/vehicle-seed.json", "/parts-seed.json"
                         ).permitAll()
                         .anyRequest().authenticated())

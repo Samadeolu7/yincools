@@ -104,12 +104,26 @@ since there's nothing scoped to correct it against), or a shop-wide
 **Quotes are Dad's pitch, not his bookkeeping.** A `Quote` lives entirely
 outside `LedgerEntry` -- `QuoteService` never calls `LedgerService` at all,
 only `JobService.createJobFromResolvedIdentity()` on conversion, and only
-then does the ledger find out a job exists. Converting defaults to paid in
-full (Dad confirms and adjusts from the normal Edit Job screen, same
-`adjust()` mechanism as any other correction) and is idempotent -- converting
-an already-converted quote just returns the existing job. A quote is never
-deleted or marked "rejected"; it either has a `convertedToJobId` or it
-doesn't.
+then does the ledger find out a job exists. A quote is itemized (`QuoteItem`
+rows: part name + amount, "table format" per Dad's request) rather than a
+single total -- the total is never stored, it's always the sum of a quote's
+items (`QuoteService.totalFor()`), so there's nothing to keep in sync as
+rows are added. Converting charges the job the quote's total but starts it
+at **zero paid** -- a quote is an estimate shown before the customer decides
+what they'll actually pay, so assuming "paid in full" would be presenting a
+guess as a fact. Dad fills in what was actually paid from the normal Edit
+Job screen, same `adjust()` mechanism as any other correction. Conversion is
+idempotent -- converting an already-converted quote just returns the
+existing job. A quote is never deleted or marked "rejected"; it either has a
+`convertedToJobId` or it doesn't.
+
+**Parts have a real, growing "database" now, same pattern as vehicles.**
+Every part name ever typed on a quote (`QuoteItem.partName`) is a future
+suggestion -- `/api/parts/suggestions` returns the distinct list, merged
+client-side with the static seed (`parts-seed.json`), same merge pattern as
+`/api/vehicles/suggestions`. This single source powers both the itemized
+quote table's autocomplete and New Job's parts chips, so a part learned in
+one place shows up in the other.
 
 ## Running locally
 
@@ -208,12 +222,16 @@ to Postgres, and passes its healthcheck.
   WhatsApp share link (`wa.me`).
 - [x] **Phase 3 — Quotes + parts chips.** `Quote` entity/service, entirely
   outside the ledger. New Quote screen reuses the Phase 2 vehicle picker
-  as-is. Parts chips (`static/parts-seed.json` -- seed-only, deliberately
-  *not* merged with anything dynamic like vehicles are) feed a note on both
-  a job's `PARTS_COST` entry and a quote's `partsNote`. Letterhead-styled
-  quote preview (shared `fragments/letterhead.html`, also now on the job
-  receipt) shared by screenshot. "Convert to Job" lands on the normal Edit
-  Job screen, prefilled and paid-in-full by default.
+  as-is. Quotes are itemized (`QuoteItem` part-name/amount rows, total
+  computed by summing them) rather than a single amount -- an editable
+  table, not a rigid form. Part names are a real, growing suggestion list
+  (`/api/parts/suggestions`, merged client-side with the static
+  `parts-seed.json` seed, same pattern as vehicles), shared by both the
+  quote table and New Job's parts chips. Letterhead-styled quote preview
+  (shared `fragments/letterhead.html`, also now on the job receipt) shared
+  by screenshot. "Convert to Job" lands on the normal Edit Job screen,
+  charged the quote's total but starting at zero paid -- a quote is an
+  estimate, not an assumption that it was paid in full.
 - [x] **Phase 4 — Edit/correction flow.** Edit Job screen prefilled with
   current values (charge, parts cost, paid), saves via the same
   `adjust()` mechanism as everything else. "Last entry" card pinned to the
@@ -276,8 +294,9 @@ to Postgres, and passes its healthcheck.
 | `GET /quotes/new` | New Quote form; shows open (unconverted) quotes to resume |
 | `POST /quotes` | Creates a quote (no `LedgerEntry` written), redirects to its preview |
 | `GET /quotes/{id}` | Letterhead-styled preview, screenshot-shareable; Convert to Job button if still open |
-| `POST /quotes/{id}/convert` | Creates the job (paid in full by default) and redirects to its Edit screen; idempotent |
+| `POST /quotes/{id}/convert` | Creates the job (charged the quote total, zero paid) and redirects to its Edit screen; idempotent |
 | `POST /api/jobs` | JSON, CSRF-exempt: idempotent-by-`clientId` job creation for the offline queue |
+| `GET /api/parts/suggestions` | JSON: distinct part names ever used on a quote |
 | `GET /manifest.webmanifest`, `/sw.js` | PWA manifest and service worker |
 
 ### Known simplifications (intentional, not gaps)
@@ -299,14 +318,15 @@ to Postgres, and passes its healthcheck.
 - Per-vehicle cost/profit isn't built yet (Phase 8) — when it is, it must be
   visibly flagged as approximate wherever a visit shared costs across
   multiple vehicles (§7 of the build plan).
-- Parts chips stay seed-only, never merged with previously-typed "Other"
-  text the way vehicle descriptions are — parts are usually tapped several
-  at once, so reliably learning new ones from free text would need real
-  structure (a parts table, a join table) that isn't earning its keep yet.
-- Converting a quote carries over the vehicle, work type, and single total
-  amount only — the quote's `partsNote` (informational text) isn't copied
-  to the job, matching a Job's existing level of simplicity (no itemized
-  parts on jobs either).
+- Converting a quote carries over the vehicle, work type, and computed
+  total only — the itemized part/amount breakdown isn't copied to the job
+  as line items, since `Job`'s `PARTS_COST` is still a single amount (per
+  §3 of the build plan). The quote's total becomes the job's `CHARGE`; Dad
+  can still log his own parts cost separately on the job if he wants to
+  track it, unrelated to the customer-facing quote breakdown.
+- `QuoteItem` rows are the source of the parts suggestion list
+  (`/api/parts/suggestions`) — there's no separate "Part" catalog entity,
+  since every quote line already records a clean part name.
 - `/h2-console` requires login in dev; the `prod` profile disables it
   outright (`spring.h2.console.enabled=false`) since prod uses Postgres and
   a raw SQL browser has no business being reachable at all once real data

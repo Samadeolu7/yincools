@@ -118,6 +118,55 @@ select {
 .checkbox-row label { margin: 0; font-weight: 500; }
 
 /*
+ * Itemized part/amount table -- New Quote's editable version and the
+ * read-only version on the quote preview share this. Compact input
+ * padding inside cells so a phone-width table stays usable; the "database
+ * of parts" (quote-items.js / PartsApiController) feeds the part-name
+ * autocomplete either way.
+ */
+.parts-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+}
+.parts-table th {
+    text-align: left;
+    font-size: 0.85rem;
+    color: var(--color-ink-secondary);
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--color-ink);
+}
+.parts-table td {
+    padding: 0.4rem 0.3rem 0.4rem 0;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+.parts-table td:last-child { padding-right: 0; width: 2.2rem; }
+.parts-table input[type="text"] {
+    padding: 0.6rem;
+    font-size: 1rem;
+}
+.parts-table .part-amount { text-align: right; }
+.parts-table .remove-row {
+    width: 2.2rem;
+    height: 2.2rem;
+    border: none;
+    background: transparent;
+    color: var(--color-ink-secondary);
+    font-size: 1.3rem;
+    cursor: pointer;
+}
+.parts-table .row-view td { border-bottom: 1px solid var(--color-border-subtle); padding: 0.5rem 0; }
+.parts-table .total-row td {
+    border-bottom: none;
+    border-top: 2px solid var(--color-ink);
+    padding-top: 0.6rem;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+.parts-table .total-row td:first-child { text-align: left; }
+.parts-table .total-row td:last-child { text-align: right; }
+
+/*
  * Persistent bottom nav for the occasional screens (This Week, Who Owes
  * Me, Shop Expense, New Quote) -- deliberately NOT on New Job/Receipt/Edit
  * Job, which stay exactly as lean as before since that's the 15-20x/day

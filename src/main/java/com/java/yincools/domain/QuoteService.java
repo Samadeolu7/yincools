@@ -2,6 +2,8 @@ package com.java.yincools.domain;
 
 import com.java.yincools.domain.model.Job;
 import com.java.yincools.domain.model.Quote;
+import com.java.yincools.domain.model.QuoteItem;
+import com.java.yincools.persistence.QuoteItemRepository;
 import com.java.yincools.persistence.QuoteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,15 +23,17 @@ import java.util.List;
 public class QuoteService {
 
     private final QuoteRepository quoteRepo;
+    private final QuoteItemRepository quoteItemRepo;
     private final CustomerService customerService;
     private final VehicleService vehicleService;
     private final JobService jobService;
 
     /** Same vehicle resolution as JobService.createJob -- a quote is very often for a prospect who isn't a customer yet. */
+    @Transactional
     public Quote createQuote(String customerName, String customerPhone,
                               Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
                               String vehicleNote,
-                              String workType, String partsNote, BigDecimal amount) {
+                              String workType, List<QuotePartLine> items) {
         Long customerId = customerService.resolveOrCreate(customerName, customerPhone);
 
         Long resolvedVehicleId = null;
@@ -50,17 +54,30 @@ public class QuoteService {
         quote.setVehicleId(resolvedVehicleId);
         quote.setVehicleNote(resolvedVehicleNote);
         quote.setWorkType(workType);
-        quote.setPartsNote(partsNote);
-        quote.setAmount(amount);
         quote.setDate(LocalDate.now());
-        return quoteRepo.save(quote);
+        quote = quoteRepo.save(quote);
+
+        for (QuotePartLine line : items) {
+            if (!StringUtils.hasText(line.partName()) || line.amount() == null) {
+                continue;
+            }
+            QuoteItem item = new QuoteItem();
+            item.setQuoteId(quote.getId());
+            item.setPartName(line.partName());
+            item.setAmount(line.amount());
+            quoteItemRepo.save(item);
+        }
+
+        return quote;
     }
 
     /**
-     * Defaults to paid in full -- Dad confirms and adjusts from there via the
-     * same Edit Job screen as any other job, rather than retyping it.
-     * Idempotent: converting an already-converted quote just returns the
-     * existing job instead of creating a second one.
+     * Charge is the quote's total (sum of its items) -- what's actually
+     * paid is a separate decision made once the work is done, not baked
+     * into the estimate, so this always starts a job at zero paid. Dad
+     * fills that in from the normal Edit Job screen, same as any other
+     * correction. Idempotent: converting an already-converted quote just
+     * returns the existing job instead of creating a second one.
      */
     @Transactional
     public Job convertToJob(Long quoteId) {
@@ -69,9 +86,10 @@ public class QuoteService {
             return jobService.get(quote.getConvertedToJobId());
         }
 
+        BigDecimal total = totalFor(quoteId);
         Job job = jobService.createJobFromResolvedIdentity(
                 quote.getCustomerId(), quote.getVehicleId(), quote.getVehicleNote(),
-                quote.getWorkType(), quote.getAmount(), quote.getAmount());
+                quote.getWorkType(), total, BigDecimal.ZERO);
 
         quote.setConvertedToJobId(job.getId());
         quoteRepo.save(quote);
@@ -83,7 +101,24 @@ public class QuoteService {
                 .orElseThrow(() -> new IllegalArgumentException("No quote with id " + quoteId));
     }
 
+    public List<QuoteItem> itemsFor(Long quoteId) {
+        return quoteItemRepo.findByQuoteId(quoteId);
+    }
+
+    public BigDecimal totalFor(Long quoteId) {
+        return itemsFor(quoteId).stream()
+                .map(QuoteItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     public List<Quote> recentOpenQuotes() {
         return quoteRepo.findTop20ByConvertedToJobIdIsNullOrderByIdDesc();
+    }
+
+    /** The static seed list (parts-seed.json) merged client-side with this -- the "database of parts" that grows from usage. */
+    public List<String> partSuggestions() {
+        return quoteItemRepo.findDistinctPartNames().stream()
+                .filter(StringUtils::hasText)
+                .toList();
     }
 }

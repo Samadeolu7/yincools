@@ -19,15 +19,7 @@
         .letterhead .business-contact { color: var(--color-ink-secondary); font-size: 0.95rem; }
         h1 { font-size: 1.3rem; margin: 0 0 1rem; text-align: center; }
         .card { line-height: 1.7; }
-        .card .row { display: flex; justify-content: space-between; }
-        .card .amount {
-            margin-top: 0.75rem;
-            padding-top: 0.75rem;
-            border-top: 1px solid var(--color-border-subtle);
-            font-size: 1.3rem;
-            font-weight: 700;
-            text-align: right;
-        }
+        .card .row { display: flex; justify-content: space-between; margin-bottom: 0.3rem; }
         .converted {
             margin-top: 1rem;
             padding: 0.9rem;
@@ -53,10 +45,21 @@
         <span>Vehicle</span><span th:text="${vehicleLabel}"></span>
     </div>
     <div class="row"><span>Work</span><span th:text="${quote.workType}"></span></div>
-    <div class="row" th:if="${quote.partsNote != null and !quote.partsNote.isEmpty()}">
-        <span>Parts</span><span th:text="${quote.partsNote}"></span>
-    </div>
-    <div class="amount" th:text="'NGN ' + ${quote.amount}"></div>
+
+    <table class="parts-table">
+        <thead>
+            <tr><th>Part</th><th>Amount</th></tr>
+        </thead>
+        <tbody>
+            <tr class="row-view" th:each="item : ${items}">
+                <td th:text="${item.partName}"></td>
+                <td style="text-align:right" th:text="'NGN ' + ${item.amount}"></td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr class="total-row"><td>Total</td><td th:text="'NGN ' + ${total}"></td></tr>
+        </tfoot>
+    </table>
 </div>
 
 <div class="converted" th:if="${quote.convertedToJobId != null}">
