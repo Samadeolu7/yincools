@@ -37,18 +37,19 @@ public class SecurityConfig {
                                 "/css/**", "/images/**", "/manifest.webmanifest",
                                 "/icon-192.png", "/icon-512.png", "/sw.js",
                                 "/vehicle-picker.js", "/parts-chips.js", "/offline-queue.js", "/quote-items.js",
+                                "/offline-quote-queue.js",
                                 "/vehicle-seed.json", "/parts-seed.json"
                         ).permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/jobs/new", true)
+                        .defaultSuccessUrl("/quotes/new", true)
                         .permitAll())
                 .rememberMe(remember -> remember
                         .key(rememberMeKey)
                         .tokenValiditySeconds(REMEMBER_ME_VALIDITY_SECONDS)
                         .alwaysRemember(true))
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/api/jobs"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/api/jobs", "/api/quotes"))
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
         return http.build();

@@ -10,8 +10,8 @@
   using the same key as the a.active check below.
 -->
 <nav th:fragment="nav(active)" class="bottom-nav">
-    <a th:href="@{/jobs/new}" th:classappend="${active == 'job'} ? 'active'">Job</a>
     <a th:href="@{/quotes/new}" th:classappend="${active == 'quote'} ? 'active'">Quote</a>
+    <a th:href="@{/jobs/new}" th:classappend="${active == 'job'} ? 'active'">Job</a>
     <a th:href="@{/insights/week}" th:classappend="${active == 'week'} ? 'active'">Week</a>
     <a th:href="@{/insights/debtors}" th:classappend="${active == 'debtors'} ? 'active'">Owed</a>
     <a th:href="@{/expenses/new}" th:classappend="${active == 'expense'} ? 'active'">Spend</a>

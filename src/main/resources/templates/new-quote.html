@@ -14,6 +14,9 @@
 <body class="has-bottom-nav">
 <h1>New Quote</h1>
 
+<div id="unsyncedBadge"></div>
+<div id="offlineSavedBanner"></div>
+
 <div th:if="${not #lists.isEmpty(recentQuotes)}">
     <label>Open quotes</label>
     <div class="chip-row">
@@ -60,8 +63,12 @@
     <button type="submit" class="btn btn-primary">Save quote</button>
 </form>
 
+<script th:inline="javascript">
+    window.YINCOOLS_BUSINESS_NAME = /*[[${businessName}]]*/ 'Yincools';
+</script>
 <script src="/vehicle-picker.js"></script>
 <script src="/quote-items.js"></script>
+<script src="/offline-quote-queue.js"></script>
 <div th:replace="~{fragments/bottom-nav :: nav('quote')}"></div>
 </body>
 </html>

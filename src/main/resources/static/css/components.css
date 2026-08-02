@@ -222,6 +222,49 @@ select {
 .letterhead-contact span:not(:last-child)::after { content: " \00b7 "; }
 
 /*
+ * Offline capture feedback -- shared by New Job (offline-queue.js) and New
+ * Quote (offline-quote-queue.js), same visual language both places so
+ * "this got saved even though you're offline" always looks the same.
+ */
+#unsyncedBadge {
+    display: none;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-muted);
+    color: var(--color-ink-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+#offlineSavedBanner {
+    display: none;
+    margin-bottom: 1.25rem;
+    padding: 0.9rem;
+    border: 2px solid #b8860b;
+    border-radius: var(--radius);
+    background: #fffbea;
+}
+#offlineSavedBanner .label {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #8a6400;
+    margin-bottom: 0.5rem;
+}
+#offlineSavedBanner pre {
+    white-space: pre-wrap;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    margin: 0 0 0.5rem;
+}
+#offlineSavedBanner .wa-link,
+#offlineSavedBanner .share-link {
+    display: inline-block;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-right: 1rem;
+}
+
+/*
  * Persistent bottom nav on every main screen, including New Job -- one
  * consistent position/color across the app. Receipt and Edit Job stay
  * nav-free since they're reached mid-task, right after New Job, not a

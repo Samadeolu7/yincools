@@ -133,6 +133,21 @@ class QuoteServiceTest {
     }
 
     @Test
+    void createQuoteIdempotentRetryWithSameClientIdReturnsTheSameQuoteWithoutDuplicating() {
+        Quote first = quoteService.createQuoteIdempotent("client-abc", "Bode", "08010000000",
+                null, "Camry 2010", null, null, "REGAS", lines("Compressor", 20000));
+
+        Quote retry = quoteService.createQuoteIdempotent("client-abc", "Bode", "08010000000",
+                null, "Camry 2010", null, null, "REGAS", lines("Compressor", 20000));
+
+        assertThat(retry.getId()).isEqualTo(first.getId());
+        assertThat(quoteRepository.count()).isEqualTo(1);
+        assertThat(customerRepository.count()).isEqualTo(1);
+        assertThat(vehicleRepository.count()).isEqualTo(1);
+        assertThat(quoteItemRepository.findByQuoteId(first.getId())).hasSize(1);
+    }
+
+    @Test
     void partSuggestionsReturnsDistinctNamesEverUsed() {
         quoteService.createQuote(null, null, null, null, null, "Car A", "OTHER",
                 List.of(new QuotePartLine("Compressor", new BigDecimal("1000")),

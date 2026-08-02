@@ -90,14 +90,18 @@ free by linking two stylesheets, and a system-wide visual change (which
 already happened once, going from a placeholder green accent to the real
 brand red) is a one-file edit instead of a hunt through every template.
 
-**One consistent bottom nav, everywhere it matters.** New Job, This Week,
-Who Owes Me, Shop Expense, and New Quote all share the same persistent
+**One consistent bottom nav, everywhere it matters.** New Quote, New Job,
+This Week, Who Owes Me, and Shop Expense all share the same persistent
 bottom nav (`fragments/bottom-nav.html`) — same position, same color,
 same active-tab highlight — so Dad never has to relearn where things are
-depending on which screen he's on. Receipt and Edit Job stay nav-free:
-they're reached mid-task, right after New Job, not a place he navigates
-from. Adding a new section later (customer list, settings, ...) is one
-line in that fragment, not a per-screen redesign.
+depending on which screen he's on. Quote leads the nav and is the actual
+landing page (`/`, login, and the PWA `start_url` all land on
+`/quotes/new`) because a quote is what happens *before* a job exists --
+it's the harder sell to get right, and converting an accepted quote into
+a job is already a one-tap "Convert to Job" away. Receipt and Edit Job
+stay nav-free: they're reached mid-task, right after New Job/New Quote,
+not a place he navigates from. Adding a new section later (customer list,
+settings, ...) is one line in that fragment, not a per-screen redesign.
 
 **Vehicles, in three shapes, matching what's actually known:** a `Job` can
 reference a persisted `Vehicle` (customer with 1+ cars — auto-selected if
@@ -141,7 +145,8 @@ one place shows up in the other.
 
 Opens on `http://localhost:8080`, redirects to `/login` (PIN defaults to
 `1234` locally via `APP_PIN` — override it for anything beyond a laptop).
-After login it lands on the New Job screen. Data is stored in a file-backed
+After login it lands on the New Quote screen -- a quote is what happens
+before a job exists, so it's the front door. Data is stored in a file-backed
 H2 database at `./data/` (gitignored) — the H2 console is at `/h2-console`
 if you need to poke at the raw tables (also behind login).
 
@@ -283,21 +288,29 @@ to Postgres, and passes its healthcheck.
   `app.pin` / `app.remember-me-key` come from `APP_PIN` / `APP_REMEMBER_ME_KEY`
   env vars in real deployments (dev defaults are insecure placeholders).
 - [x] **Phase 7b — PWA + offline.** `manifest.webmanifest` + icons generated
-  from the real Yincools mark (installable, `start_url=/jobs/new`, named
-  "Yincools" — not a generic default PWA name/icon). `sw.js` precaches New Job's static
-  assets and keeps a network-first/cache-fallback copy of the page shell
-  itself. New Job's submit is intercepted by `offline-queue.js`: tries the
-  JSON `/api/jobs` endpoint with a timeout, and on failure queues the job in
-  `localStorage`, shows a client-rendered receipt (with a working WhatsApp
-  link) immediately, and retries on the next page load or `online` event.
-  A client-generated `clientId` UUID makes retries safe --
-  `JobService.createJobIdempotent()` returns the existing job instead of
-  writing a duplicate if the same `clientId` comes in twice (the real risk:
-  a lost *response*, not a lost request). `/api/jobs` is deliberately
-  CSRF-exempt (see below) but still requires the same login as everything
-  else. Aggregate screens (This Week, Who Owes Me) were deliberately **not**
+  from the real Yincools mark (installable, `start_url=/quotes/new`, named
+  "Yincools" — not a generic default PWA name/icon). `sw.js` precaches New
+  Job's and New Quote's static assets and keeps a network-first/cache-
+  fallback copy of both page shells. Both forms' submits are intercepted
+  client-side (`offline-queue.js` for jobs, `offline-quote-queue.js` for
+  quotes): each tries its CSRF-exempt JSON endpoint (`/api/jobs`,
+  `/api/quotes`) with a timeout, and on failure queues the record in
+  `localStorage`, shows a client-rendered plain-text summary (with a
+  working WhatsApp link, and for quotes an email link too) immediately,
+  and retries on the next page load or `online` event. A client-generated
+  `clientId` UUID makes retries safe -- `JobService.createJobIdempotent()`
+  / `QuoteService.createQuoteIdempotent()` return the existing record
+  instead of writing a duplicate if the same `clientId` comes in twice
+  (the real risk: a lost *response*, not a lost request). Both API
+  endpoints are deliberately CSRF-exempt (see below) but still require
+  the same login as everything else. The letterhead-styled, image-
+  shareable quote preview is deliberately **not** what's shown offline --
+  it needs the real server-rendered page, so the offline path trades that
+  down to a plain-text summary rather than trying to replicate it
+  client-side; the full experience is one tap away once the quote syncs.
+  Aggregate screens (This Week, Who Owes Me) were deliberately **not**
   made to work offline -- they're reads over server data, and failing
-  honestly with no signal is fine; only capturing the job was worth the
+  honestly with no signal is fine; only capturing the job/quote was worth the
   complexity.
 - [ ] **Phase 8 — Later insights** (once real data exists). Regas-due list
   (per-vehicle, unlocked by Phase 1's `Vehicle` entity), monthly profit
@@ -307,7 +320,7 @@ to Postgres, and passes its healthcheck.
 
 | Route | Behavior |
 |---|---|
-| `GET /` | Redirects to `/jobs/new` |
+| `GET /` | Redirects to `/quotes/new` |
 | `GET /jobs/new` | New Job form; shows the "last entry" quick-fix card and recent customers |
 | `POST /jobs` | Creates a job, redirects to its receipt |
 | `GET /jobs/{id}/edit` | Edit form prefilled with current charge / parts cost / paid |
@@ -327,6 +340,7 @@ to Postgres, and passes its healthcheck.
 | `GET /quotes/{id}` | Letterhead-styled preview with a one-tap image share (native share sheet) plus WhatsApp/email text fallbacks; Convert to Job button if still open |
 | `POST /quotes/{id}/convert` | Creates the job (charged the quote total, zero paid) and redirects to its Edit screen; idempotent |
 | `POST /api/jobs` | JSON, CSRF-exempt: idempotent-by-`clientId` job creation for the offline queue |
+| `POST /api/quotes` | JSON, CSRF-exempt: idempotent-by-`clientId` quote creation for the offline queue |
 | `GET /api/parts/suggestions` | JSON: distinct part names ever used on a quote |
 | `GET /manifest.webmanifest`, `/sw.js` | PWA manifest and service worker |
 

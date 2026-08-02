@@ -1,21 +1,25 @@
 /*
- * Only the New Job screen needs to work with zero signal -- that's the
- * thing that's genuinely lost if it fails ("capturing the job"). Aggregate
- * screens (This Week, Who Owes Me) are reads over server data; offline they
- * just fail to load, which is an honest failure mode, not a broken one.
+ * New Job and New Quote are the two screens that need to work with zero
+ * signal -- those are the things genuinely lost if they fail ("capturing
+ * the job", "capturing the quote"). Aggregate screens (This Week, Who Owes
+ * Me) and the letterhead-styled quote/receipt previews are reads over
+ * server data; offline they just fail to load, which is an honest failure
+ * mode, not a broken one -- only capturing new data was worth the
+ * complexity, not styling it while offline.
  *
  * Static assets (JS, JSON seed lists, icons) are precached on install.
- * /jobs/new itself is NOT precached at install time -- its HTML is
- * server-rendered per-session (CSRF token, recent customers, last entry)
- * and would go stale sitting in a cache. Instead: network-first, and only
- * the last successfully-loaded copy is kept as a fallback for when the
- * network genuinely isn't there. The offline job submission itself doesn't
- * depend on that page's CSRF token anyway -- it goes to the CSRF-exempt
- * /api/jobs JSON endpoint (see SecurityConfig, JobApiController).
+ * Neither /jobs/new nor /quotes/new is precached at install time -- their
+ * HTML is server-rendered per-session (CSRF token, recent customers/quotes,
+ * last entry) and would go stale sitting in a cache. Instead: network-
+ * first, and only the last successfully-loaded copy is kept as a fallback
+ * for when the network genuinely isn't there. Neither page's offline
+ * submission depends on that per-session HTML anyway -- both go to
+ * CSRF-exempt JSON endpoints (see SecurityConfig, JobApiController,
+ * QuoteApiController).
  */
 
-const CACHE_NAME = 'yincools-v4';
-const NEW_JOB_PATH = '/jobs/new';
+const CACHE_NAME = 'yincools-v5';
+const OFFLINE_ENTRY_PATHS = ['/jobs/new', '/quotes/new'];
 
 const PRECACHE_URLS = [
     '/css/tokens.css',
@@ -23,6 +27,8 @@ const PRECACHE_URLS = [
     '/vehicle-picker.js',
     '/parts-chips.js',
     '/offline-queue.js',
+    '/quote-items.js',
+    '/offline-quote-queue.js',
     '/vehicle-seed.json',
     '/parts-seed.json',
     '/manifest.webmanifest',
@@ -57,9 +63,10 @@ self.addEventListener('fetch', function (event) {
 
     const url = new URL(request.url);
 
-    // Navigation to New Job: network-first, cache the good response, fall
-    // back to the last cached copy if the network is unreachable.
-    if (url.pathname === NEW_JOB_PATH && request.mode === 'navigate') {
+    // Navigation to New Job or New Quote: network-first, cache the good
+    // response, fall back to the last cached copy if the network is
+    // unreachable.
+    if (OFFLINE_ENTRY_PATHS.indexOf(url.pathname) !== -1 && request.mode === 'navigate') {
         event.respondWith(
             fetch(request)
                 .then(function (response) {

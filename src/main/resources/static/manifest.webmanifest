@@ -1,7 +1,7 @@
 {
   "name": "Yincools",
   "short_name": "Yincools",
-  "start_url": "/jobs/new",
+  "start_url": "/quotes/new",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",

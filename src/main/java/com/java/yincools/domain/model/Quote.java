@@ -43,4 +43,13 @@ public class Quote {
 
     /** Null until accepted; set by "Convert to Job". */
     private Long convertedToJobId;
+
+    /**
+     * Client-generated UUID from the offline quote-capture flow -- same
+     * idempotency purpose as Job.clientId: lets a retried submission (phone
+     * lost signal before the first response arrived) be recognized as
+     * already-processed instead of creating a duplicate quote. Null for
+     * quotes created through the normal form.
+     */
+    private String clientId;
 }

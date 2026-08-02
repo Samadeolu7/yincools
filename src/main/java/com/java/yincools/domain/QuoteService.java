@@ -13,6 +13,7 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A quote is Dad's pitch, not his bookkeeping -- it never calls
@@ -69,6 +70,27 @@ public class QuoteService {
         }
 
         return quote;
+    }
+
+    /**
+     * For the offline quote-capture API: same idempotency shape as
+     * JobService.createJobIdempotent -- if a quote with this clientId
+     * already exists (the phone retried a submission whose first response
+     * never arrived), return it untouched instead of creating a second one.
+     */
+    @Transactional
+    public Quote createQuoteIdempotent(String clientId, String customerName, String customerPhone,
+                                        Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
+                                        String vehicleNote, String workType, List<QuotePartLine> items) {
+        Optional<Quote> existing = quoteRepo.findByClientId(clientId);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
+        Quote quote = createQuote(customerName, customerPhone, vehicleId, newVehicleDescription, newVehiclePlateNumber,
+                vehicleNote, workType, items);
+        quote.setClientId(clientId);
+        return quoteRepo.save(quote);
     }
 
     /**
