@@ -1,21 +1,31 @@
 /*
- * New Quote's itemized part/amount table -- add/remove rows, live total,
- * part-name autocomplete merging the static seed with every part name a
- * quote has ever used (see /api/parts/suggestions). Serializes rows into
- * a hidden JSON field on submit; the server parses it (QuoteController)
- * into a List<QuotePartLine> rather than needing indexed form-field
- * binding for a variable-length list.
+ * New Quote's itemized part/amount table -- no "add row" button. Starts
+ * with two empty rows; as soon as the last row on screen gets any content,
+ * a fresh empty row appears after it, so the table always has exactly one
+ * spare row ready and grows for as long as Dad keeps typing. Remove (x)
+ * stays available per row. Empty rows are never submitted -- recompute()
+ * filters them out when building the JSON payload, so there's no need to
+ * enforce a minimum row count in the UI.
  *
- * Expects: #partsTableBody (tbody to hold rows), #addPartRow (button),
- * #quoteTotal (display span), #partsJson (hidden input), a <form> that
- * wraps all of this, and a <datalist id="parts-suggestions"> for row
+ * Live total + part-name autocomplete merging the static seed with every
+ * part name a quote has ever used (see /api/parts/suggestions). Serializes
+ * rows into a hidden JSON field kept live on every keystroke and again on
+ * submit; the server parses it (QuoteController) into a
+ * List<QuotePartLine> rather than needing indexed form-field binding for a
+ * variable-length list.
+ *
+ * Expects: #partsTableBody (tbody to hold rows), #quoteTotal (display
+ * span), #partsJson (hidden input), a <form id="newQuoteForm"> wrapping
+ * all of this, and a <datalist id="parts-suggestions"> for row
  * autocomplete.
  */
 (function () {
-    var rowCount = 0;
-
     function currency(n) {
         return 'NGN ' + (isNaN(n) ? '0' : n.toFixed(2));
+    }
+
+    function isRowEmpty(row) {
+        return !row.querySelector('.part-name').value.trim() && !row.querySelector('.part-amount').value.trim();
     }
 
     function recompute() {
@@ -39,8 +49,17 @@
         if (jsonField) jsonField.value = JSON.stringify(items);
     }
 
+    /** If the row that just changed is the last one and now has content, grow one more empty row after it. */
+    function maybeGrow(row) {
+        var tbody = document.getElementById('partsTableBody');
+        var rows = tbody.querySelectorAll('tr');
+        var lastRow = rows[rows.length - 1];
+        if (row === lastRow && !isRowEmpty(row)) {
+            addRow();
+        }
+    }
+
     function addRow() {
-        rowCount++;
         var tbody = document.getElementById('partsTableBody');
         var row = document.createElement('tr');
         row.innerHTML =
@@ -49,8 +68,12 @@
             '<td><button type="button" class="remove-row" aria-label="Remove">&times;</button></td>';
         tbody.appendChild(row);
 
-        row.querySelector('.part-name').addEventListener('input', recompute);
-        row.querySelector('.part-amount').addEventListener('input', recompute);
+        function onInput() {
+            recompute();
+            maybeGrow(row);
+        }
+        row.querySelector('.part-name').addEventListener('input', onInput);
+        row.querySelector('.part-amount').addEventListener('input', onInput);
         row.querySelector('.remove-row').addEventListener('click', function () {
             row.remove();
             recompute();
@@ -75,9 +98,8 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         loadPartSuggestions();
-        var addBtn = document.getElementById('addPartRow');
-        if (addBtn) addBtn.addEventListener('click', addRow);
-        addRow(); // start with one empty row so the form isn't blank
+        addRow(); // start with two empty rows
+        addRow();
 
         var form = document.getElementById('newQuoteForm');
         if (form) form.addEventListener('submit', recompute);

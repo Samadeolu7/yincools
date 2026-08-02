@@ -224,7 +224,11 @@ to Postgres, and passes its healthcheck.
   outside the ledger. New Quote screen reuses the Phase 2 vehicle picker
   as-is. Quotes are itemized (`QuoteItem` part-name/amount rows, total
   computed by summing them) rather than a single amount -- an editable
-  table, not a rigid form. Part names are a real, growing suggestion list
+  table, not a rigid form. No "add row" button: starts with two empty
+  rows, and filling in the last one grows a fresh empty row after it
+  (`quote-items.js`), so the table just keeps up with however many parts
+  Dad types without an extra tap; empty rows are always excluded from
+  what's submitted. Part names are a real, growing suggestion list
   (`/api/parts/suggestions`, merged client-side with the static
   `parts-seed.json` seed, same pattern as vehicles), shared by both the
   quote table and New Job's parts chips. Letterhead-styled quote preview
