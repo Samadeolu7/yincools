@@ -81,6 +81,7 @@ public class QuoteController {
         String quoteText = buildQuoteText(quote, customer, vehicleLabel, items, total);
 
         model.addAttribute("quote", quote);
+        model.addAttribute("quoteNumber", String.format("QT-%06d", quote.getId()));
         model.addAttribute("items", items);
         model.addAttribute("total", total);
         model.addAttribute("customer", customer);

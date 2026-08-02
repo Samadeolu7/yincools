@@ -244,9 +244,21 @@ to Postgres, and passes its healthcheck.
   what's submitted. Part names are a real, growing suggestion list
   (`/api/parts/suggestions`, merged client-side with the static
   `parts-seed.json` seed, same pattern as vehicles), shared by both the
-  quote table and New Job's parts chips. Letterhead-styled quote preview
-  (shared `fragments/letterhead.html`, also on the job receipt), with a
-  one-tap "Share Quote" that renders the actual styled preview to a PNG
+  quote table and New Job's parts chips. The quote preview deliberately
+  separates the *app screen* from the *document*: the page around it is
+  plain app chrome (title, buttons), and the actual quote renders as its
+  own bounded card (`.quote-doc` in `components.css`) styled like a real
+  quotation, not another app screen -- soft shadow and rounded corners
+  instead of the thick black borders used everywhere else, a two-column
+  header (logo left, business identity right), an "ESTIMATE" badge, a
+  generated quote number (`QT-000034`, from the row id), stacked label/
+  value fields for customer/vehicle/service, a Description/Qty/Amount
+  table (qty is always 1 -- there's no quantity concept in the data, so
+  this is presentation only, not a new field), a hero TOTAL block, a
+  blank "Prepared By" signature line, and a two-column footer. No
+  fabricated subtotal/discount rows -- there's no discount concept in
+  the ledger, so a "Subtotal" line would just repeat the total under a
+  different label. One-tap "Share Quote" renders that card to a PNG
   (`html2canvas`, vendored in `static/vendor/` -- no CDN dependency) and
   hands it straight to the OS's native share sheet (`navigator.share`),
   so whatever lands in WhatsApp or email looks like the real letterhead
@@ -337,7 +349,7 @@ to Postgres, and passes its healthcheck.
 | `GET /api/vehicles/suggestions` | JSON: distinct vehicle descriptions typed before |
 | `GET /quotes/new` | New Quote form; shows open (unconverted) quotes to resume |
 | `POST /quotes` | Creates a quote (no `LedgerEntry` written), redirects to its preview |
-| `GET /quotes/{id}` | Letterhead-styled preview with a one-tap image share (native share sheet) plus WhatsApp/email text fallbacks; Convert to Job button if still open |
+| `GET /quotes/{id}` | Professional quotation-document preview with a one-tap image share (native share sheet) plus WhatsApp/email text fallbacks; Convert to Job button if still open |
 | `POST /quotes/{id}/convert` | Creates the job (charged the quote total, zero paid) and redirects to its Edit screen; idempotent |
 | `POST /api/jobs` | JSON, CSRF-exempt: idempotent-by-`clientId` job creation for the offline queue |
 | `POST /api/quotes` | JSON, CSRF-exempt: idempotent-by-`clientId` quote creation for the offline queue |

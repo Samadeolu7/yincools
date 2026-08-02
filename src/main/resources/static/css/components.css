@@ -265,6 +265,176 @@ select {
 }
 
 /*
+ * The shareable quote "document" -- deliberately a different visual
+ * language from the rest of the app (soft shadow + rounded card instead
+ * of the thick black borders used everywhere else) because it's meant to
+ * read as a professional quotation, not another app screen. The plain
+ * page around it (title, buttons) stays normal app chrome; this card is
+ * the one thing dressed up to look like a document, on purpose. Also
+ * what html2canvas captures for the one-tap image share (quote-share.js).
+ */
+.quote-doc {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.10);
+    padding: 1.75rem 1.5rem;
+    max-width: 480px;
+    margin: 1.5rem auto 0;
+}
+.quote-doc-divider {
+    border: none;
+    border-top: 1px solid var(--color-border-subtle);
+    margin: 1.5rem 0;
+}
+
+.quote-doc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.quote-doc-logo { height: 52px; width: auto; flex-shrink: 0; }
+.quote-doc-identity { text-align: right; }
+.quote-doc-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-ink);
+    line-height: 1.15;
+}
+.quote-doc-suffix {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--color-primary);
+}
+.quote-doc-tagline {
+    font-size: 0.8rem;
+    color: var(--color-ink-secondary);
+    margin-top: 0.25rem;
+}
+
+.quote-doc-title-row { text-align: center; }
+.quote-doc-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--color-primary);
+}
+.quote-doc-badge {
+    display: inline-block;
+    margin-top: 0.6rem;
+    padding: 0.2rem 0.8rem;
+    border-radius: 999px;
+    background: var(--color-surface-muted);
+    color: var(--color-ink-secondary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.quote-doc-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--color-ink-secondary);
+}
+.quote-doc-meta strong { color: var(--color-ink); font-weight: 700; }
+
+.quote-doc-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem 1rem;
+}
+.quote-doc-field { flex: 1 1 40%; }
+.quote-doc-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-ink-secondary);
+    margin-bottom: 0.2rem;
+}
+.quote-doc-value {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-ink);
+}
+
+.quote-doc-table { width: 100%; border-collapse: collapse; }
+.quote-doc-table th {
+    text-align: left;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-ink-secondary);
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--color-ink);
+}
+.quote-doc-table td {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--color-border-subtle);
+    font-size: 0.95rem;
+}
+.quote-doc-table th.qty, .quote-doc-table td.qty { text-align: center; width: 2.5rem; }
+.quote-doc-table th.amount, .quote-doc-table td.amount { text-align: right; }
+
+.quote-doc-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 1rem;
+    padding: 1rem 1.1rem;
+    background: var(--color-surface-muted);
+    border-radius: var(--radius);
+    border-left: 4px solid var(--color-primary);
+}
+.quote-doc-total-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-secondary);
+}
+.quote-doc-total-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.quote-doc-signature { text-align: center; }
+.quote-doc-signature .label {
+    font-size: 0.75rem;
+    color: var(--color-ink-secondary);
+    margin-bottom: 1.75rem;
+}
+.quote-doc-signature .line {
+    border-top: 1px solid var(--color-ink);
+    width: 55%;
+    margin: 0 auto 0.4rem;
+}
+.quote-doc-signature .name {
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.quote-doc-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.76rem;
+    color: var(--color-ink-secondary);
+    line-height: 1.6;
+}
+.quote-doc-footer-col strong {
+    display: block;
+    color: var(--color-ink);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.25rem;
+}
+
+/*
  * Persistent bottom nav on every main screen, including New Job -- one
  * consistent position/color across the app. Receipt and Edit Job stay
  * nav-free since they're reached mid-task, right after New Job, not a
