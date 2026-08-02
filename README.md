@@ -90,15 +90,14 @@ free by linking two stylesheets, and a system-wide visual change (which
 already happened once, going from a placeholder green accent to the real
 brand red) is a one-file edit instead of a hunt through every template.
 
-**Navigation matches how often a screen is actually used, not a blanket
-pattern.** New Job, Receipt, and Edit Job are the 15–20×/day loop — they
-carry zero navigation chrome, exactly as before. This Week, Who Owes Me,
-Shop Expense, and New Quote are occasional, so they share a persistent
-bottom nav (`fragments/bottom-nav.html`) that lets Dad jump between them
-directly instead of bouncing back through New Job. Adding a new occasional
-section later (customer list, settings, ...) is one line in that fragment,
-not a per-screen redesign — and it never touches the high-frequency path
-at all.
+**One consistent bottom nav, everywhere it matters.** New Job, This Week,
+Who Owes Me, Shop Expense, and New Quote all share the same persistent
+bottom nav (`fragments/bottom-nav.html`) — same position, same color,
+same active-tab highlight — so Dad never has to relearn where things are
+depending on which screen he's on. Receipt and Edit Job stay nav-free:
+they're reached mid-task, right after New Job, not a place he navigates
+from. Adding a new section later (customer list, settings, ...) is one
+line in that fragment, not a per-screen redesign.
 
 **Vehicles, in three shapes, matching what's actually known:** a `Job` can
 reference a persisted `Vehicle` (customer with 1+ cars — auto-selected if
@@ -255,8 +254,7 @@ to Postgres, and passes its healthcheck.
 - [x] **Phase 5 — Insights.** `InsightService.weeklySummary()` (charged,
   paid, parts cost, shop expenses, profit for the Mon–Sun week containing a
   given date) and `debtorList()` (jobs with a positive balance, highest
-  first). This Week and Who Owes Me screens, linked from a small nav on the
-  New Job screen.
+  first). This Week and Who Owes Me screens, linked from the bottom nav.
 - [x] **Phase 6 — Shop expenses screen.** `/expenses/new` records a
   `SHOP_EXPENSE` ledger entry (amount + optional note) via
   `LedgerService.recordShopExpense()`; feeds straight into the weekly

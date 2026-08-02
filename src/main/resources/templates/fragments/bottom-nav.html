@@ -2,10 +2,12 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <!--
-  Only on the occasional screens (This Week, Who Owes Me, Shop Expense,
-  New Quote) -- New Job/Receipt/Edit Job deliberately don't include this,
-  they stay as navigation-free as before. Call with th:replace="~{fragments/bottom-nav :: nav('week')}"
-  etc., using the same key as the a.active check below.
+  On every main screen, including New Job -- consistent position/color
+  everywhere beats the earlier "keep the 15-20x/day loop nav-free"
+  tradeoff. Receipt and Edit Job still stay nav-free: they're reached
+  mid-task, immediately after New Job, not a place Dad navigates from.
+  Call with th:replace="~{fragments/bottom-nav :: nav('week')}" etc.,
+  using the same key as the a.active check below.
 -->
 <nav th:fragment="nav(active)" class="bottom-nav">
     <a th:href="@{/jobs/new}" th:classappend="${active == 'job'} ? 'active'">Job</a>

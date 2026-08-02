@@ -220,11 +220,12 @@ select {
 .letterhead-contact span:not(:last-child)::after { content: " \00b7 "; }
 
 /*
- * Persistent bottom nav for the occasional screens (This Week, Who Owes
- * Me, Shop Expense, New Quote) -- deliberately NOT on New Job/Receipt/Edit
- * Job, which stay exactly as lean as before since that's the 15-20x/day
- * loop. Adding a new section later (customer list, settings, ...) means
- * one new <a> in fragments/bottom-nav.html, not a per-screen redesign.
+ * Persistent bottom nav on every main screen, including New Job -- one
+ * consistent position/color across the app. Receipt and Edit Job stay
+ * nav-free since they're reached mid-task, right after New Job, not a
+ * place Dad navigates from. Adding a new section later (customer list,
+ * settings, ...) means one new <a> in fragments/bottom-nav.html, not a
+ * per-screen redesign.
  */
 body.has-bottom-nav { padding-bottom: 5rem; }
 

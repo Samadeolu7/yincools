@@ -31,14 +31,6 @@
             font-weight: 700;
             color: var(--color-primary);
         }
-        nav.insights {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-            flex-wrap: wrap;
-        }
-        nav.insights a { color: var(--color-ink-secondary); }
         #partsOther { margin-top: 0.5rem; display: none; }
         #unsyncedBadge {
             display: none;
@@ -77,15 +69,8 @@
         }
     </style>
 </head>
-<body>
+<body class="has-bottom-nav">
 <h1>New Job</h1>
-
-<nav class="insights">
-    <a th:href="@{/insights/week}">This week</a>
-    <a th:href="@{/insights/debtors}">Who owes me</a>
-    <a th:href="@{/expenses/new}">Shop expense</a>
-    <a th:href="@{/quotes/new}">New quote</a>
-</nav>
 
 <div id="unsyncedBadge"></div>
 <div id="offlineSavedBanner"></div>
@@ -168,5 +153,6 @@
 <script src="/vehicle-picker.js"></script>
 <script src="/parts-chips.js"></script>
 <script src="/offline-queue.js"></script>
+<div th:replace="~{fragments/bottom-nav :: nav('job')}"></div>
 </body>
 </html>
