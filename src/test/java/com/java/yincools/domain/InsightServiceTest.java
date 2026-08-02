@@ -98,6 +98,26 @@ class InsightServiceTest {
         assertThat(debtors).extracting(Job::getId).doesNotContain(paidInFull.getId());
     }
 
+    @Test
+    void creditSupplierEntriesReturnsOnlyTaggedEntriesWithinTheRange() {
+        Job tagged = jobService.createJob(null, null, null, null, null, "Car A", "COMPRESSOR",
+                new BigDecimal("30000"), new BigDecimal("20000"), "Compressor", BigDecimal.ZERO, "Chinedu Auto Parts");
+        Job untagged = createWalkIn("Car B", "REGAS",
+                new BigDecimal("10000"), new BigDecimal("3000"), BigDecimal.ZERO);
+        backdateJob(tagged, LocalDate.of(2026, 1, 10));
+        backdateEntries(tagged.getId(), LocalDate.of(2026, 1, 10));
+        backdateJob(untagged, LocalDate.of(2026, 1, 10));
+        backdateEntries(untagged.getId(), LocalDate.of(2026, 1, 10));
+
+        var entries = insightService.creditSupplierEntries(
+                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31));
+
+        assertThat(entries).hasSize(1);
+        assertThat(entries.get(0).getJobId()).isEqualTo(tagged.getId());
+        assertThat(entries.get(0).getPartsSupplier()).isEqualTo("Chinedu Auto Parts");
+        assertThat(entries.get(0).getSignedAmount()).isEqualByComparingTo("20000");
+    }
+
     private void backdateJob(Job job, LocalDate date) {
         job.setDate(date);
         jobRepository.save(job);

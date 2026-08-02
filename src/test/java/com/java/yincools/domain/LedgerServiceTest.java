@@ -152,6 +152,34 @@ class LedgerServiceTest {
     }
 
     @Test
+    void recordingPartsCostWithASupplierTagsTheEntry() {
+        Long jobId = newJob();
+
+        ledgerService.record(EntryType.PARTS_COST, jobId, null, null, new BigDecimal("8000"), "Compressor", "Chinedu Auto Parts");
+
+        var entries = ledgerRepository.findByJobIdAndType(jobId, EntryType.PARTS_COST);
+        assertThat(entries).hasSize(1);
+        assertThat(entries.get(0).getPartsSupplier()).isEqualTo("Chinedu Auto Parts");
+    }
+
+    @Test
+    void taggingASupplierWithNoAmountChangeStillWritesAnEntry() {
+        Long jobId = newJob();
+        ledgerService.record(EntryType.PARTS_COST, jobId, null, null, new BigDecimal("8000"), "Compressor");
+
+        // Same total, but now Dad confirms it came from the credit supplier --
+        // this isn't a no-op like adjustingToTheSameTotalIsANoOp, since a
+        // supplier tag is itself a new fact worth a row.
+        ledgerService.adjust(EntryType.PARTS_COST, jobId, null, null, new BigDecimal("8000"), "Compressor", "Chinedu Auto Parts");
+
+        var entries = ledgerRepository.findByJobIdAndType(jobId, EntryType.PARTS_COST);
+        assertThat(entries).hasSize(2);
+        assertThat(entries.get(1).getSignedAmount()).isEqualByComparingTo("0");
+        assertThat(entries.get(1).getPartsSupplier()).isEqualTo("Chinedu Auto Parts");
+        assertNetEquals("8000", EntryType.PARTS_COST, jobId);
+    }
+
+    @Test
     void sharedPartsCostForDifferentCustomersDoesNotNetAgainstEachOther() {
         ledgerService.recordSharedCost(1L, new BigDecimal("6000"), "shared gas can");
         ledgerService.recordSharedCost(2L, new BigDecimal("2500"), "shared gas can");

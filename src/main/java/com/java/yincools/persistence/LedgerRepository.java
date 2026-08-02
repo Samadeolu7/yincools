@@ -29,4 +29,6 @@ public interface LedgerRepository extends Repository<LedgerEntry, Long> {
     List<LedgerEntry> findByType(EntryType type);
 
     List<LedgerEntry> findByDateBetween(LocalDate start, LocalDate end);
+
+    List<LedgerEntry> findByPartsSupplierIsNotNullAndDateBetweenOrderByDateDesc(LocalDate start, LocalDate end);
 }

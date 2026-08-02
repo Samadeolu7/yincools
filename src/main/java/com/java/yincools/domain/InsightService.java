@@ -45,6 +45,11 @@ public class InsightService {
         return jobRepo.findByCachedBalanceGreaterThanOrderByCachedBalanceDesc(BigDecimal.ZERO);
     }
 
+    /** Every PARTS_COST entry tagged to the credit supplier within a date range -- see LedgerEntry.partsSupplier. */
+    public List<LedgerEntry> creditSupplierEntries(LocalDate start, LocalDate end) {
+        return ledgerRepo.findByPartsSupplierIsNotNullAndDateBetweenOrderByDateDesc(start, end);
+    }
+
     private BigDecimal sumByType(List<LedgerEntry> entries, EntryType type) {
         return entries.stream()
                 .filter(e -> e.getType() == type)

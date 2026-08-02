@@ -105,6 +105,10 @@
         <input type="checkbox" id="sharedPartsCost" name="sharedPartsCost" value="true">
         <label for="sharedPartsCost">Shared across today's visit (not just this car)</label>
     </div>
+    <div class="checkbox-row" th:if="${creditSupplierName != null and !creditSupplierName.isEmpty()}">
+        <input type="checkbox" id="creditSupplier" name="creditSupplier" value="true">
+        <label for="creditSupplier" th:text="'Bought on credit from ' + ${creditSupplierName}"></label>
+    </div>
 
     <button type="submit" class="btn btn-primary">Save job</button>
 </form>

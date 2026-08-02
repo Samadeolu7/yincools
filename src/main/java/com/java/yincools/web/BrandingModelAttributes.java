@@ -39,6 +39,9 @@ public class BrandingModelAttributes {
     @Value("${app.business.bankers}")
     private String businessBankersRaw;
 
+    @Value("${app.credit-supplier.name}")
+    private String creditSupplierName;
+
     @ModelAttribute("businessName")
     public String businessName() {
         return businessName;
@@ -77,5 +80,10 @@ public class BrandingModelAttributes {
     @ModelAttribute("businessBankers")
     public List<String> businessBankers() {
         return StringUtils.hasText(businessBankersRaw) ? Arrays.asList(businessBankersRaw.split("\\|")) : List.of();
+    }
+
+    @ModelAttribute("creditSupplierName")
+    public String creditSupplierName() {
+        return creditSupplierName;
     }
 }

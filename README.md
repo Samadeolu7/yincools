@@ -304,11 +304,22 @@ to Postgres, and passes its healthcheck.
   `SHOP_EXPENSE` ledger entry (amount + optional note) via
   `LedgerService.recordShopExpense()`; feeds straight into the weekly
   profit calculation with no separate write path.
-- [x] **Phase 7a — PIN login + long-lived cookie.** Spring Security, single
-  in-memory user, PIN-only login page, remember-me cookie valid ~1 year so
-  Dad logs in once on his phone and never sees the login screen again.
-  `app.pin` / `app.remember-me-key` come from `APP_PIN` / `APP_REMEMBER_ME_KEY`
-  env vars in real deployments (dev defaults are insecure placeholders).
+- [x] **Phase 7a — PIN login + long-lived cookie.** Spring Security, PIN-only
+  login page, remember-me cookie valid ~1 year so Dad logs in once on his
+  phone and never sees the login screen again. `app.pin` / `app.remember-me-key`
+  come from `APP_PIN` / `APP_REMEMBER_ME_KEY` env vars in real deployments
+  (dev defaults are insecure placeholders). Two accounts share this exact
+  same login screen -- "shop" (Dad, day to day) and "owner" (extra
+  oversight access, `APP_OWNER_PIN`) -- and the form never asks which one
+  you are; `PinAuthenticationProvider` tries the submitted PIN against
+  both known accounts and authenticates as whichever one matches, rather
+  than looking a single account up by a submitted username the way
+  Spring's default `DaoAuthenticationProvider` would. A plain
+  `InMemoryUserDetailsManager`-backed `UserDetailsService` still exists
+  alongside it, since remember-me needs one to reload a user by username
+  on later requests. `/suppliers/**` requires the owner's `ROLE_OWNER` --
+  Dad's account gets a plain 403 there, and it's deliberately not linked
+  from anywhere in his nav.
 - [x] **Phase 7b — PWA + offline.** `manifest.webmanifest` + icons generated
   from the real Yincools mark (installable, `start_url=/quotes/new`, named
   "Yincools" — not a generic default PWA name/icon). `sw.js` precaches New
@@ -334,6 +345,25 @@ to Postgres, and passes its healthcheck.
   made to work offline -- they're reads over server data, and failing
   honestly with no signal is fine; only capturing the job/quote was worth the
   complexity.
+- [x] **Credit supplier tagging + reconciliation report.** Not part of the
+  original phase plan -- added because Dad has one regular supplier who
+  extends credit and keeps his own tally, and there was no way to check
+  what Dad agreed to pay against what the supplier later claims. A
+  `LedgerEntry.partsSupplier` field (nullable, only ever set for
+  PARTS_COST entries actually from that supplier) tags a job's parts cost
+  when Dad checks a "Bought on credit from X" box on New Job or Edit Job
+  -- shown only when `app.credit-supplier.name` is actually configured,
+  since there's no supplier structure worth having until there's a real
+  supplier to track. No separate "agreed price" field exists because the
+  parts cost amount Dad already enters *is* that price. Tagging with no
+  amount change (confirming a supplier after the fact, without correcting
+  the cost) still writes a ledger row -- normally a zero-delta adjustment
+  is a no-op, but a supplier tag is itself a fact worth a row even when
+  the number doesn't move. `/suppliers/credit` (owner login only) lists
+  everything tagged within a date range with a running total, for
+  checking against the supplier's own invoice by hand -- deliberately not
+  an auto-diff against a second, supplier-stated number; that's a bigger
+  feature for if this turns out not to be enough.
 - [ ] **Phase 8 — Later insights** (once real data exists). Regas-due list
   (per-vehicle, unlocked by Phase 1's `Vehicle` entity), monthly profit
   trend, busiest job type.
@@ -366,6 +396,7 @@ to Postgres, and passes its healthcheck.
 | `POST /api/jobs` | JSON, CSRF-exempt: idempotent-by-`clientId` job creation for the offline queue |
 | `POST /api/quotes` | JSON, CSRF-exempt: idempotent-by-`clientId` quote creation for the offline queue |
 | `GET /api/parts/suggestions` | JSON: distinct part names ever used on a quote |
+| `GET /suppliers/credit` | Owner login only (`ROLE_OWNER`, 403 for "shop"): credit-supplier parts cost within a date range, with a running total |
 | `GET /manifest.webmanifest`, `/sw.js` | PWA manifest and service worker |
 
 ### Known simplifications (intentional, not gaps)

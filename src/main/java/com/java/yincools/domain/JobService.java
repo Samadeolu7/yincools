@@ -41,6 +41,17 @@ public class JobService {
                           Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
                           String vehicleNote,
                           String workType, BigDecimal charge, BigDecimal partsCost, String partsNote, BigDecimal paid) {
+        return createJob(customerName, customerPhone, vehicleId, newVehicleDescription, newVehiclePlateNumber,
+                vehicleNote, workType, charge, partsCost, partsNote, paid, null);
+    }
+
+    /** Same as createJob(), plus which supplier the parts cost came from (see LedgerEntry.partsSupplier). */
+    @Transactional
+    public Job createJob(String customerName, String customerPhone,
+                          Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
+                          String vehicleNote,
+                          String workType, BigDecimal charge, BigDecimal partsCost, String partsNote, BigDecimal paid,
+                          String partsSupplier) {
         Long customerId = customerService.resolveOrCreate(customerName, customerPhone);
 
         Long resolvedVehicleId = null;
@@ -56,14 +67,14 @@ public class JobService {
             resolvedVehicleNote = vehicleNote;
         }
 
-        return persistJob(customerId, resolvedVehicleId, resolvedVehicleNote, workType, charge, partsCost, partsNote, paid);
+        return persistJob(customerId, resolvedVehicleId, resolvedVehicleNote, workType, charge, partsCost, partsNote, paid, partsSupplier);
     }
 
     /** For QuoteService.convertToJob -- customer/vehicle are already resolved on the quote, so skip re-resolving them. */
     @Transactional
     public Job createJobFromResolvedIdentity(Long customerId, Long vehicleId, String vehicleNote,
                                               String workType, BigDecimal charge, BigDecimal paid) {
-        return persistJob(customerId, vehicleId, vehicleNote, workType, charge, BigDecimal.ZERO, null, paid);
+        return persistJob(customerId, vehicleId, vehicleNote, workType, charge, BigDecimal.ZERO, null, paid, null);
     }
 
     /**
@@ -103,7 +114,8 @@ public class JobService {
     }
 
     private Job persistJob(Long customerId, Long vehicleId, String vehicleNote, String workType,
-                            BigDecimal charge, BigDecimal partsCost, String partsNote, BigDecimal paid) {
+                            BigDecimal charge, BigDecimal partsCost, String partsNote, BigDecimal paid,
+                            String partsSupplier) {
         Job job = new Job();
         job.setCustomerId(customerId);
         job.setVehicleId(vehicleId);
@@ -116,7 +128,7 @@ public class JobService {
         job = jobRepo.save(job);
 
         ledgerService.record(EntryType.CHARGE, job.getId(), vehicleId, customerId, nullToZero(charge), null);
-        ledgerService.record(EntryType.PARTS_COST, job.getId(), vehicleId, customerId, nullToZero(partsCost), partsNote);
+        ledgerService.record(EntryType.PARTS_COST, job.getId(), vehicleId, customerId, nullToZero(partsCost), partsNote, partsSupplier);
         ledgerService.record(EntryType.PAYMENT, job.getId(), vehicleId, customerId, nullToZero(paid), null);
 
         return jobRepo.findById(job.getId()).orElseThrow();
@@ -124,10 +136,16 @@ public class JobService {
 
     @Transactional
     public void editJob(Long jobId, BigDecimal newCharge, BigDecimal newPartsCost) {
+        editJob(jobId, newCharge, newPartsCost, null);
+    }
+
+    /** Same as editJob(), plus which supplier the parts cost came from (see LedgerEntry.partsSupplier). */
+    @Transactional
+    public void editJob(Long jobId, BigDecimal newCharge, BigDecimal newPartsCost, String partsSupplier) {
         Job job = jobRepo.findById(jobId)
                 .orElseThrow(() -> new IllegalArgumentException("No job with id " + jobId));
         ledgerService.adjust(EntryType.CHARGE, jobId, job.getVehicleId(), job.getCustomerId(), newCharge, null);
-        ledgerService.adjust(EntryType.PARTS_COST, jobId, job.getVehicleId(), job.getCustomerId(), newPartsCost, null);
+        ledgerService.adjust(EntryType.PARTS_COST, jobId, job.getVehicleId(), job.getCustomerId(), newPartsCost, null, partsSupplier);
     }
 
     /**
@@ -161,7 +179,11 @@ public class JobService {
 
     /** Logs a parts cost tied to a customer's visit but not to any one car (§7's "shared visit" case). */
     public void recordSharedPartsCost(Long customerId, BigDecimal amount, String note) {
-        ledgerService.recordSharedCost(customerId, amount, note);
+        recordSharedPartsCost(customerId, amount, note, null);
+    }
+
+    public void recordSharedPartsCost(Long customerId, BigDecimal amount, String note, String partsSupplier) {
+        ledgerService.recordSharedCost(customerId, amount, note, partsSupplier);
     }
 
     public Job get(Long jobId) {

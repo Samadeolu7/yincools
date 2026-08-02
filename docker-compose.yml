@@ -8,6 +8,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - APP_PIN=${APP_PIN}
+      - APP_OWNER_PIN=${APP_OWNER_PIN}
       - APP_REMEMBER_ME_KEY=${APP_REMEMBER_ME_KEY}
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -22,6 +23,7 @@ services:
       - APP_BUSINESS_TEL=${APP_BUSINESS_TEL:-0802 333 2171}
       - APP_BUSINESS_EMAIL=${APP_BUSINESS_EMAIL:-yincoolsautotech@gmail.com}
       - APP_BUSINESS_BANKERS=${APP_BUSINESS_BANKERS:-Eco Bank Plc, Adeniran Ogunsanya Str, Surulere, Lagos|U.B.A. Bode Thomas Str, Surulere, Lagos}
+      - APP_CREDIT_SUPPLIER_NAME=${APP_CREDIT_SUPPLIER_NAME:-}
     depends_on:
       postgres:
         condition: service_healthy

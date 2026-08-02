@@ -34,6 +34,9 @@ public class JobController {
     @Value("${app.business.name}")
     private String businessName;
 
+    @Value("${app.credit-supplier.name}")
+    private String creditSupplierName;
+
     @GetMapping("/new")
     public String newJobForm(Model model) {
         model.addAttribute("workTypes", WORK_TYPES);
@@ -54,6 +57,7 @@ public class JobController {
                              @RequestParam(required = false) String vehicleDescription,
                              @RequestParam(required = false) String vehiclePlateNumber,
                              @RequestParam(defaultValue = "false") boolean sharedPartsCost,
+                             @RequestParam(defaultValue = "false") boolean creditSupplier,
                              @RequestParam String workType,
                              @RequestParam BigDecimal charge,
                              @RequestParam(required = false) BigDecimal partsCost,
@@ -62,16 +66,18 @@ public class JobController {
         boolean hasCustomer = StringUtils.hasText(customerName) || StringUtils.hasText(customerPhone);
         boolean logAsSharedCost = sharedPartsCost && hasCustomer
                 && partsCost != null && partsCost.compareTo(BigDecimal.ZERO) != 0;
+        String partsSupplier = creditSupplier && StringUtils.hasText(creditSupplierName) ? creditSupplierName : null;
 
         Job job = jobService.createJob(customerName, customerPhone,
                 vehicleId,
                 hasCustomer ? vehicleDescription : null,
                 hasCustomer ? vehiclePlateNumber : null,
                 hasCustomer ? null : vehicleDescription,
-                workType, charge, logAsSharedCost ? BigDecimal.ZERO : partsCost, partsNote, paid);
+                workType, charge, logAsSharedCost ? BigDecimal.ZERO : partsCost, partsNote, paid,
+                logAsSharedCost ? null : partsSupplier);
 
         if (logAsSharedCost) {
-            jobService.recordSharedPartsCost(job.getCustomerId(), partsCost, partsNote);
+            jobService.recordSharedPartsCost(job.getCustomerId(), partsCost, partsNote, partsSupplier);
         }
 
         return "redirect:/jobs/" + job.getId() + "/receipt";
@@ -93,8 +99,10 @@ public class JobController {
     public String editJob(@PathVariable Long id,
                            @RequestParam BigDecimal charge,
                            @RequestParam(required = false) BigDecimal partsCost,
-                           @RequestParam(required = false) BigDecimal paid) {
-        jobService.editJob(id, charge, partsCost == null ? BigDecimal.ZERO : partsCost);
+                           @RequestParam(required = false) BigDecimal paid,
+                           @RequestParam(defaultValue = "false") boolean creditSupplier) {
+        String partsSupplier = creditSupplier && StringUtils.hasText(creditSupplierName) ? creditSupplierName : null;
+        jobService.editJob(id, charge, partsCost == null ? BigDecimal.ZERO : partsCost, partsSupplier);
         jobService.recordPayment(id, paid == null ? BigDecimal.ZERO : paid);
         return "redirect:/jobs/" + id + "/receipt";
     }

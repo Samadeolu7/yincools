@@ -47,6 +47,16 @@ public class LedgerEntry {
 
     private String note;
 
+    /**
+     * Which supplier a PARTS_COST entry came from, when it's the one regular
+     * supplier extending credit -- null everywhere else, including most
+     * PARTS_COST entries (most parts aren't from that supplier). Purely
+     * informational: feeds the /suppliers/credit report so what Dad agreed
+     * to pay can be checked against what the supplier's own tally says
+     * later, never anything the ledger math itself depends on.
+     */
+    private String partsSupplier;
+
     private boolean correction;
 
     private Instant createdAt;

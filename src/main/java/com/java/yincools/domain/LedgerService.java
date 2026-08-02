@@ -28,10 +28,23 @@ public class LedgerService {
 
     @Transactional
     public void adjust(EntryType type, Long jobId, Long vehicleId, Long customerId, BigDecimal newTotal, String note) {
+        adjust(type, jobId, vehicleId, customerId, newTotal, note, null);
+    }
+
+    /**
+     * Same as adjust(), plus which supplier the parts came from (only ever
+     * meaningful for PARTS_COST). A zero-delta adjustment is normally a
+     * no-op write, but if a supplier is being newly attached, it still gets
+     * written -- tagging "this came from X" is itself a fact worth a row,
+     * even when the amount doesn't change.
+     */
+    @Transactional
+    public void adjust(EntryType type, Long jobId, Long vehicleId, Long customerId, BigDecimal newTotal, String note,
+                        String partsSupplier) {
         BigDecimal currentNet = netFor(type, jobId);
         BigDecimal delta = newTotal.subtract(currentNet);
 
-        if (delta.compareTo(BigDecimal.ZERO) == 0) {
+        if (delta.compareTo(BigDecimal.ZERO) == 0 && partsSupplier == null) {
             return;
         }
 
@@ -43,6 +56,7 @@ public class LedgerService {
         entry.setCustomerId(customerId);
         entry.setDate(LocalDate.now());
         entry.setNote(note);
+        entry.setPartsSupplier(partsSupplier);
         entry.setCorrection(currentNet.compareTo(BigDecimal.ZERO) != 0);
         entry.setCreatedAt(Instant.now());
 
@@ -53,6 +67,11 @@ public class LedgerService {
     /** Recording a brand new fact is mathematically identical to adjusting from a net of zero. */
     public void record(EntryType type, Long jobId, Long vehicleId, Long customerId, BigDecimal amount, String note) {
         adjust(type, jobId, vehicleId, customerId, amount, note);
+    }
+
+    public void record(EntryType type, Long jobId, Long vehicleId, Long customerId, BigDecimal amount, String note,
+                        String partsSupplier) {
+        adjust(type, jobId, vehicleId, customerId, amount, note, partsSupplier);
     }
 
     @Transactional
@@ -84,6 +103,11 @@ public class LedgerService {
      */
     @Transactional
     public void recordSharedCost(Long customerId, BigDecimal amount, String note) {
+        recordSharedCost(customerId, amount, note, null);
+    }
+
+    @Transactional
+    public void recordSharedCost(Long customerId, BigDecimal amount, String note, String partsSupplier) {
         LedgerEntry entry = new LedgerEntry();
         entry.setType(EntryType.PARTS_COST);
         entry.setSignedAmount(amount);
@@ -92,6 +116,7 @@ public class LedgerService {
         entry.setCustomerId(customerId);
         entry.setDate(LocalDate.now());
         entry.setNote(note);
+        entry.setPartsSupplier(partsSupplier);
         entry.setCorrection(false);
         entry.setCreatedAt(Instant.now());
 
