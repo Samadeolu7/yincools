@@ -14,10 +14,14 @@
  * footer are rendered once with html2canvas and cached in localStorage as
  * plain PNGs; every share after that just draws those cached images and
  * only asks html2canvas to do fresh work on the small #quoteCard. The
- * cache key is a hash of the header+footer HTML itself, not a manually
- * bumped version number, so it self-invalidates if the business config
- * (or the letterhead's own markup) ever changes -- no separate step to
- * remember.
+ * cache key is a hash of the header+footer HTML *and* the CSS files'
+ * actual text -- not a manually bumped version number, so it
+ * self-invalidates whether the letterhead's markup changes OR just its
+ * styling does (a pure CSS tweak leaves the HTML byte-identical, so
+ * hashing markup alone would silently keep serving a stale pre-change
+ * render forever; this bit us once already -- a "AUTO NIG." line-wrap
+ * fix that was CSS-only would never have invalidated a phone's existing
+ * cache under the old hash).
  *
  * Progressive enhancement only: the server always renders working
  * WhatsApp/email text-share links (.fallback-share) first. This script
@@ -66,31 +70,42 @@
             .then(function (canvas) { return canvas.toDataURL('image/png'); });
     }
 
-    /** Cached header/footer PNGs, re-rendered only when their markup changes. */
+    /** Cache key covers both the markup AND the CSS that styles it -- see the file header comment for why. */
+    function computeCacheKey(topEl, bottomEl) {
+        return Promise.all([
+            fetch('/css/tokens.css').then(function (r) { return r.text(); }).catch(function () { return ''; }),
+            fetch('/css/components.css').then(function (r) { return r.text(); }).catch(function () { return ''; })
+        ]).then(function (css) {
+            return hashString(css[0] + '|' + css[1] + '|' + topEl.outerHTML + '|' + bottomEl.outerHTML);
+        });
+    }
+
+    /** Cached header/footer PNGs, re-rendered only when their markup or CSS changes. */
     function getChromeImages(topEl, bottomEl) {
-        var key = hashString(topEl.outerHTML + '|' + bottomEl.outerHTML);
-        var cached = null;
-        try {
-            var raw = localStorage.getItem(CACHE_KEY);
-            cached = raw ? JSON.parse(raw) : null;
-        } catch (e) {
-            cached = null;
-        }
+        return computeCacheKey(topEl, bottomEl).then(function (key) {
+            var cached = null;
+            try {
+                var raw = localStorage.getItem(CACHE_KEY);
+                cached = raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                cached = null;
+            }
 
-        if (cached && cached.key === key) {
-            return Promise.all([loadImage(cached.top), loadImage(cached.bottom)]);
-        }
+            if (cached && cached.key === key) {
+                return Promise.all([loadImage(cached.top), loadImage(cached.bottom)]);
+            }
 
-        return Promise.all([renderToDataUrl(topEl), renderToDataUrl(bottomEl)])
-            .then(function (urls) {
-                try {
-                    localStorage.setItem(CACHE_KEY, JSON.stringify({ key: key, top: urls[0], bottom: urls[1] }));
-                } catch (e) {
-                    // Storage full/unavailable (e.g. private browsing) -- fine,
-                    // it just re-renders the chrome next time too.
-                }
-                return Promise.all([loadImage(urls[0]), loadImage(urls[1])]);
-            });
+            return Promise.all([renderToDataUrl(topEl), renderToDataUrl(bottomEl)])
+                .then(function (urls) {
+                    try {
+                        localStorage.setItem(CACHE_KEY, JSON.stringify({ key: key, top: urls[0], bottom: urls[1] }));
+                    } catch (e) {
+                        // Storage full/unavailable (e.g. private browsing) -- fine,
+                        // it just re-renders the chrome next time too.
+                    }
+                    return Promise.all([loadImage(urls[0]), loadImage(urls[1])]);
+                });
+        });
     }
 
     function composite(topImg, cardCanvas, bottomImg) {

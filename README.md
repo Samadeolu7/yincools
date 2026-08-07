@@ -302,10 +302,19 @@ to Postgres, and passes its healthcheck.
   footer (logo, wordmark, tagline, address/contact/bankers) are the same
   bytes on every single quote -- only the Bill To/table/totals block in
   the middle changes -- so `quote-share.js` rasterizes them once and
-  caches the result in
-  `localStorage` (keyed off a hash of their own markup, so it
-  self-invalidates if the letterhead or business config ever changes);
-  every share after the first only asks `html2canvas` to redo the small
+  caches the result in `localStorage`, keyed off a hash of their markup
+  *and* the CSS files' actual text, not just the markup alone -- a pure
+  styling change (a color, a spacing value, a `white-space: nowrap` fix)
+  leaves the HTML byte-identical, so hashing markup alone would silently
+  keep serving a stale pre-change render forever on any phone that had
+  already generated one share. Caught and fixed this exact gap after a
+  CSS-only fix ("AUTO NIG." wrapping mid-phrase) shipped without the old
+  hash noticing; verified the fix with two headless Chrome runs sharing
+  one profile (so `localStorage` persisted between them) -- editing
+  `components.css` on disk between runs correctly busted the cache (a
+  full 3-call re-render instead of reusing the stale chrome), and a third
+  run with no further change correctly hit the cache again (1 call).
+  Every share after the first only asks `html2canvas` to redo the small
   card and composites it onto the cached chrome, instead of re-decoding
   the logo image and re-laying-out the footer text on every tap.
   "Convert to Job" lands on the normal Edit Job screen, charged the
