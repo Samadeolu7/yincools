@@ -275,10 +275,22 @@ select {
 .quote-doc {
     background: var(--color-surface);
     border: 1px solid var(--color-border-subtle);
-    padding: 2.25rem 1.75rem;
     max-width: 480px;
     margin: 2rem auto;
 }
+/* Page-margin padding lives on the three captured regions themselves
+   (#letterheadChromeTop/#quoteCard/#letterheadChromeBottom), not on
+   .quote-doc -- quote-share.js's html2canvas capture targets those three
+   elements individually for the caching split, never the .quote-doc
+   wrapper itself, so padding placed on the wrapper is structurally
+   invisible to the shared image (the on-screen page still looks right,
+   since a full-page screenshot captures body+wrapper too, which is
+   exactly why this went unnoticed through several rounds of screenshot
+   verification -- only the actual generated share image was ever
+   missing its margins). */
+#letterheadChromeTop { padding: 2.25rem 1.75rem 0; }
+#quoteCard { padding: 0 1.75rem; }
+#letterheadChromeBottom { padding: 0 1.75rem 2.25rem; }
 /* Deliberately just the one line, right under the header -- five ruled
    sections read as a spreadsheet, one clean rule reads as a document.
    Everything after it is separated by whitespace alone. */

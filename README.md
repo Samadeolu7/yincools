@@ -461,6 +461,21 @@ to Postgres, and passes its healthcheck.
   nobody remembered to bump the string. Two rounds of "I'll remember
   next time" was the signal that this needed to stop depending on memory
   at all -- see the comment in `sw.js` and `build.gradle`.
+- `.quote-doc`'s page-margin padding lives on the three individually-
+  captured regions (`#letterheadChromeTop`/`#quoteCard`/
+  `#letterheadChromeBottom`), not on `.quote-doc` itself. This isn't a
+  style choice, it's a real bug that existed from the moment the
+  html2canvas image-share feature was built and went unnoticed through
+  several rounds of "verified" screenshots: `quote-share.js` calls
+  `html2canvas` on the three regions individually (that's the caching
+  split), never on `.quote-doc`, so padding placed on the wrapper is
+  structurally invisible to the generated share image -- the on-screen
+  page looked fine because a full-page screenshot captures `<body>` too,
+  which includes the wrapper's padding; only the actual file that gets
+  shared to a customer was ever missing its margins. Caught after the
+  CACHE_NAME fix above didn't resolve a report of an unprofessional-
+  looking shared image -- that fix was real and worth keeping, but it
+  wasn't the actual cause of what was being seen.
 - Parts cost isn't cached on `Job` (only charge/paid/balance are, per the
   original schema) — it's read straight from the ledger via
   `JobService.partsCostFor()` on the rare screens that need it.
