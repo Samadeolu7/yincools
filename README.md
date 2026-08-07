@@ -265,36 +265,57 @@ to Postgres, and passes its healthcheck.
   block -- the same place a real invoice puts them (`[Street Address]`,
   `Phone`, `Prepared By`, etc. all stacked under `Company Name` on a
   standard invoice template), not scattered into a footer nobody reads
-  first. QUOTATION and an "ESTIMATE" badge sit top-right, the way real
-  invoices put metadata in the corner; a single ruled line closes the
+  first. That contact block is split into three visually distinct
+  clusters (address / WhatsApp+tel+email / banks) with real vertical air
+  between them and a small line icon (pin, chat, phone, mail, bank --
+  inline SVG via `fragments/icons.html`, see below) in front of each
+  line, rather than one same-weight paragraph Dad has to parse line by
+  line. QUOTATION and an "ESTIMATE" badge sit top-right, the way real
+  invoices put metadata in the corner -- QUOTATION sized well above the
+  badge so the hierarchy between "what this document is" and "it's not
+  binding yet" is obvious at a glance; a single ruled line closes the
   header -- deliberately the only rule on the page, since five ruled
   sections read as a spreadsheet and one clean rule reads as a document;
   everything below it is separated by whitespace alone. A "Bill To" /
-  "Quote Details" pair sits side by side underneath (customer/vehicle/phone on
-  the left, a generated quote number `QT-000034` / date / a computed
-  7-day "Valid Until" / service on the right -- validity is a display
-  convention, not a stored field, since nothing about expiring quotes is
-  actually enforced anywhere). The Description/Qty/Amount table (qty is
-  always 1 -- there's no quantity concept in the data, purely
-  presentational) is deliberately the dominant element on the page, with
-  real row height and a couple of faint blank ruled rows trailing the
+  "Quote Details" pair sits side by side underneath, each with a small
+  icon next to its label and its own Customer/Vehicle/Phone or Quote
+  #/Date/Valid Until/Service rows laid out on a shared label-column grid
+  (`.quote-doc-detail-row`) so every value lines up on one vertical axis
+  instead of trailing its label by however many characters that
+  particular label happens to be -- a generated quote number `QT-000034`
+  / date / a computed 7-day "Valid Until" / service on the right,
+  validity a display convention rather than a stored field, since
+  nothing about expiring quotes is actually enforced anywhere. The
+  Description/Qty/Amount table (qty is always 1 -- there's no quantity
+  concept in the data, purely presentational) is deliberately the
+  dominant element on the page, with real row height, tabular-figure
+  amounts so digits land on the same vertical line regardless of which
+  digits appear, and a couple of faint blank ruled rows trailing the
   real ones, like a preprinted invoice pad rather than a table that just
   stops. Totals live below the table, not inside it -- Subtotal and a
   literal "Discount ₦0.00" (there's no discount concept in the ledger,
   but showing zero is an accurate statement, not fabricated data) stay
-  quiet, and TOTAL is the one thing sized and colored to compete with the
-  table for attention. The table itself is zebra-striped with a thin
-  vertical rule around the Qty column, the same scannability convention
-  every real invoicing tool (QuickBooks, Zoho, Xero) uses -- a plain-
-  ruled table with every row the same weight is harder to track across
-  than one where alternate rows are quietly shaded. A "Thank you for your
-  business!" line and a blank two-up signature row (Prepared By on the
-  business's side, Customer Acceptance blank for an in-person sign-off if
-  the quote gets printed) get real space above them instead of sitting
-  cramped under the total -- and that's the whole footer now; with the
-  address/contact/bank details moved up to the header, the bottom of the
-  document stays genuinely quiet instead of repeating information already
-  shown once. One-tap "Share Quote" renders that document to a PNG
+  quiet, and TOTAL sits in its own highlighted band with a brand-red
+  left accent bar, the one thing sized and colored to compete with the
+  table for attention the way a commercial invoicing tool calls its
+  total out as a block rather than just the last, slightly-bolder row in
+  a list. The table itself is zebra-striped with a thin vertical rule
+  around the Qty column, the same scannability convention every real
+  invoicing tool (QuickBooks, Zoho, Xero) uses -- a plain-ruled table
+  with every row the same weight is harder to track across than one
+  where alternate rows are quietly shaded, kept deliberately faint (a 3%
+  tint) so it guides the eye rather than becoming a visible stripe of
+  its own. A "Thank you for your business!" line and a blank two-up
+  signature row (Prepared By on the business's side, Customer Acceptance
+  blank for an in-person sign-off if the quote gets printed) get real
+  space above them instead of sitting cramped under the total, closing
+  with a second ruled line and the same address/contact/bank facts
+  repeated as a scannable three-column strip (Address / Contact / Banks,
+  each with its own icon+label) -- deliberately redundant with the
+  header block above: a printed or photocopied quote may get handed over
+  folded or glanced at from the bottom up, so the full particulars close
+  the document the way a real invoice closes with them, not just opens
+  with them. One-tap "Share Quote" renders that document to a PNG
   (`html2canvas`, vendored in `static/vendor/` -- no CDN dependency) and
   hands it straight to the OS's native share sheet (`navigator.share`),
   so whatever lands in WhatsApp or email looks like the real letterhead
@@ -323,7 +344,18 @@ to Postgres, and passes its healthcheck.
   run with no further change correctly hit the cache again (1 call).
   Every share after the first only asks `html2canvas` to redo the small
   card and composites it onto the cached chrome, instead of re-decoding
-  the logo image and re-laying-out the footer text on every tap.
+  the logo image and re-laying-out the footer text on every tap. The
+  header/footer's line icons are inline `<svg>` markup (`fragments/icons.html`,
+  `th:replace="~{fragments/icons :: pin}"` etc.), not `<img src="*.svg">`
+  the way the logo is a `<img src="*.png">` -- `html2canvas` doesn't
+  reliably rasterize external SVG image references into the composited
+  PNG even though they render perfectly on-screen (they came out as
+  broken slivers in the actual shared image the first time round, caught
+  the same way the zero-margin bug was: by generating the real composited
+  PNG through the driven `navigator.share` capture, not just screenshotting
+  the on-screen page). Inline SVG nodes get drawn directly and don't have
+  that gap; the logo itself is unaffected since raster `<img>` sources
+  were never the problem.
   "Convert to Job" lands on the normal Edit Job screen, charged the
   quote's total but starting at zero paid -- a quote is an estimate, not
   an assumption that it was paid in full. A quote is editable at any

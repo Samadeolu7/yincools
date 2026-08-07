@@ -288,16 +288,16 @@ select {
    exactly why this went unnoticed through several rounds of screenshot
    verification -- only the actual generated share image was ever
    missing its margins). */
-#letterheadChromeTop { padding: 2.5rem 2.25rem 0; }
-#quoteCard { padding: 0 2.25rem; }
-#letterheadChromeBottom { padding: 0 2.25rem 2.5rem; }
+#letterheadChromeTop { padding: 2.75rem 2.5rem 0; }
+#quoteCard { padding: 0 2.5rem; }
+#letterheadChromeBottom { padding: 0 2.5rem 2.75rem; }
 /* Deliberately just the one line, right under the header -- five ruled
    sections read as a spreadsheet, one clean rule reads as a document.
    Everything after it is separated by whitespace alone. */
 .quote-doc-divider {
     border: none;
     border-top: 1px solid var(--color-ink);
-    margin: 1.75rem 0;
+    margin: 2rem 0;
 }
 
 /* Header: logo + identity anchored left, QUOTATION/badge anchored top-right --
@@ -313,16 +313,16 @@ select {
     align-items: flex-start;
     gap: 0.75rem;
 }
-.quote-doc-logo { height: 48px; width: auto; flex-shrink: 0; }
+.quote-doc-logo { height: 56px; width: auto; flex-shrink: 0; }
 .quote-doc-identity { text-align: left; }
 .quote-doc-name {
-    font-size: 1.3rem;
+    font-size: 1.55rem;
     font-weight: 700;
     color: var(--color-ink);
     line-height: 1.2;
 }
 .quote-doc-suffix {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.05em;
     color: var(--color-primary);
@@ -330,74 +330,100 @@ select {
     white-space: nowrap;
 }
 .quote-doc-tagline {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
+    font-style: italic;
     color: var(--color-ink-secondary);
-    margin-top: 0.2rem;
+    margin-top: 0.25rem;
 }
 /* The business's own address/contact/bank details -- same spot a real
    invoice puts them, stacked right under the company name, not in a
    footer nobody reads first. Deliberately quieter than the name/tagline
-   above it: this is reference information, not the headline. */
+   above it: this is reference information, not the headline. Grouped
+   into address / contact / banks, each its own cluster with real
+   separation, instead of one dense, same-weight paragraph. */
 .quote-doc-header-contact {
-    margin-top: 0.6rem;
-    font-size: 0.72rem;
+    margin-top: 1.1rem;
+    font-size: 0.75rem;
     color: var(--color-ink-secondary);
-    line-height: 1.6;
 }
-.quote-doc-header-right { text-align: right; flex-shrink: 0; }
+.quote-doc-contact-group + .quote-doc-contact-group { margin-top: 0.75rem; }
+.quote-doc-contact-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.quote-doc-contact-line + .quote-doc-contact-line { margin-top: 0.3rem; }
+.quote-doc-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+}
+.quote-doc-header-right { text-align: right; flex-shrink: 0; margin-top: 0.35rem; }
 .quote-doc-title {
-    font-size: 1.15rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
     color: var(--color-primary);
 }
 .quote-doc-badge {
     display: inline-block;
-    margin-top: 0.4rem;
+    margin-top: 0.6rem;
     padding: 0.15rem 0.7rem;
     border: 1px solid var(--color-ink-secondary);
     color: var(--color-ink-secondary);
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: 700;
     letter-spacing: 0.06em;
 }
 
-/* Bill To / Quote Details -- an address block, side by side, like an invoice. */
+/* Bill To / Quote Details -- an address block, side by side, like an invoice.
+   Both columns are left-aligned internally (labels left, values left on
+   their own axis) -- centering or right-aligning a list of label/value
+   pairs is what made this read as decoration instead of data to scan. */
 .quote-doc-info {
     display: flex;
     justify-content: space-between;
-    gap: 1.5rem;
+    gap: 2rem;
     font-size: 0.9rem;
-    line-height: 1.7;
-    margin-bottom: 2.25rem;
+    margin-bottom: 2.5rem;
 }
 .quote-doc-info-col { flex: 1 1 50%; }
-.quote-doc-info-col-right { text-align: right; }
+.quote-doc-info-col-right { text-align: left; }
 .quote-doc-section-label {
-    font-size: 0.72rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--color-ink-secondary);
-    margin-bottom: 0.4rem;
-}
-.quote-doc-value {
-    font-size: 1.05rem;
-    font-weight: 700;
     color: var(--color-ink);
+    margin-bottom: 0.85rem;
 }
+/* Label/value on a shared grid axis across every row in the column, so
+   values line up on one vertical line instead of trailing the label by
+   however many characters that particular label happens to be. */
+.quote-doc-detail-row {
+    display: grid;
+    grid-template-columns: 6.5rem 1fr;
+    gap: 0.5rem;
+    padding: 0.2rem 0;
+}
+.quote-doc-detail-label { color: var(--color-ink-secondary); }
+.quote-doc-detail-value { font-weight: 600; color: var(--color-ink); }
 
 /* The item table is the document -- it should dominate the page, so rows
    get real height and the header/footer around it stay comparatively quiet. */
 .quote-doc-table { width: 100%; border-collapse: collapse; }
 .quote-doc-table th {
     text-align: left;
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.08em;
     color: var(--color-ink-secondary);
-    padding-bottom: 0.7rem;
+    padding-bottom: 0.9rem;
     border-bottom: 2px solid var(--color-ink);
 }
 .quote-doc-table th, .quote-doc-table td { padding-left: 1.25rem; }
@@ -414,11 +440,16 @@ select {
     border-left: 1px solid var(--color-border-subtle);
     border-right: 1px solid var(--color-border-subtle);
 }
-.quote-doc-table th.amount, .quote-doc-table td.amount { text-align: right; }
+.quote-doc-table th.amount, .quote-doc-table td.amount {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
 /* Zebra striping -- real invoices use it for scannability, not decoration;
    a plain-ruled table with five rows the same weight is harder to track
-   across than one where every other row is quietly shaded. */
-.quote-doc-table tbody tr:nth-child(even) { background: var(--color-surface-muted); }
+   across than one where every other row is quietly shaded. Deliberately
+   very faint (a 3% tint, not --color-surface-muted's 5%) -- it should
+   guide the eye across a row, not become a visible stripe of its own. */
+.quote-doc-table tbody tr:nth-child(even) { background: rgba(21, 22, 22, 0.03); }
 /* Faint trailing blank rows -- an empty-ruled-line feel like a preprinted
    invoice pad, not a table that just stops the moment the data does. */
 .quote-doc-blank-row td { color: transparent; }
@@ -437,22 +468,34 @@ select {
     font-size: 0.9rem;
     color: var(--color-ink-secondary);
 }
-.quote-doc-totals-row span:last-child { min-width: 7rem; text-align: right; }
+.quote-doc-totals-row span:last-child {
+    min-width: 7rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+/* TOTAL is the one thing meant to visually compete with the table -- a
+   highlighted band with a brand-red accent bar, the way a commercial
+   invoicing tool (QuickBooks, Zoho) calls the total out as its own block
+   rather than just the last, slightly-bolder row in a list. */
 .quote-doc-total-final {
-    margin-top: 0.4rem;
-    padding-top: 0.7rem;
-    border-top: 2px solid var(--color-ink);
-    font-size: 1.3rem;
-    font-weight: 700;
+    justify-content: space-between;
+    margin-top: 0.75rem;
+    padding: 0.9rem 1rem;
+    background: var(--color-surface-muted);
+    border-left: 6px solid var(--color-primary);
+    border-top: none;
+    font-size: 1.55rem;
+    font-weight: 800;
     color: var(--color-primary);
 }
+.quote-doc-total-final span:first-child { color: var(--color-ink); font-size: 1rem; }
 
 .quote-doc-thanks {
     text-align: center;
     font-size: 0.85rem;
     font-style: italic;
     color: var(--color-ink-secondary);
-    margin-top: 2.5rem;
+    margin-top: 2.75rem;
 }
 
 /* Two sign-off blocks side by side -- the business's own ("Prepared By")
@@ -462,7 +505,7 @@ select {
     display: flex;
     justify-content: space-between;
     gap: 1.5rem;
-    margin-top: 2rem;
+    margin-top: 2.75rem;
 }
 .quote-doc-signature { flex: 1 1 50%; text-align: center; }
 .quote-doc-signature .label {
@@ -482,6 +525,32 @@ select {
     font-weight: 700;
     min-height: 1.2em;
 }
+
+/* Closing footer strip -- the same address/contact/bank facts already
+   shown in the header, repeated here as a scannable three-column block
+   the way a printed invoice closes with its full particulars, since a
+   physical copy of this quote may get handed over without its header
+   in view (folded, photocopied, or just glanced at from the bottom up). */
+.quote-doc-footer-divider { margin: 2.25rem 0 1.5rem; }
+.quote-doc-footer-contact {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    font-size: 0.72rem;
+    color: var(--color-ink-secondary);
+}
+.quote-doc-footer-col { flex: 1 1 33%; }
+.quote-doc-footer-col-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-ink);
+    margin-bottom: 0.5rem;
+}
+.quote-doc-footer-col-body { line-height: 1.6; }
 
 /*
  * Persistent bottom nav on every main screen, including New Job -- one

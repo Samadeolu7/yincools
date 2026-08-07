@@ -58,12 +58,31 @@
                     </div>
                     <div class="quote-doc-tagline" th:if="${businessTagline != null and !businessTagline.isEmpty()}" th:text="${businessTagline}"></div>
                     <div class="quote-doc-header-contact">
-                        <div th:if="${businessAddress != null and !businessAddress.isEmpty()}" th:text="${businessAddress}"></div>
-                        <div th:if="${businessWhatsapp != null and !businessWhatsapp.isEmpty()}" th:text="'WhatsApp: ' + ${businessWhatsapp}"></div>
-                        <div th:if="${businessTel != null and !businessTel.isEmpty()}" th:text="'Tel: ' + ${businessTel}"></div>
-                        <div th:if="${businessEmail != null and !businessEmail.isEmpty()}" th:text="${businessEmail}"></div>
-                        <div th:if="${not #lists.isEmpty(businessBankers)}">
-                            <span>Banks: </span><span th:text="${#strings.listJoin(businessBankers, '; ')}"></span>
+                        <div class="quote-doc-contact-group" th:if="${businessAddress != null and !businessAddress.isEmpty()}">
+                            <div class="quote-doc-contact-line">
+                                <span th:replace="~{fragments/icons :: pin}"></span>
+                                <span th:text="${businessAddress}"></span>
+                            </div>
+                        </div>
+                        <div class="quote-doc-contact-group" th:if="${(businessWhatsapp != null and !businessWhatsapp.isEmpty()) or (businessTel != null and !businessTel.isEmpty()) or (businessEmail != null and !businessEmail.isEmpty())}">
+                            <div class="quote-doc-contact-line" th:if="${businessWhatsapp != null and !businessWhatsapp.isEmpty()}">
+                                <span th:replace="~{fragments/icons :: chat}"></span>
+                                <span th:text="'WhatsApp: ' + ${businessWhatsapp}"></span>
+                            </div>
+                            <div class="quote-doc-contact-line" th:if="${businessTel != null and !businessTel.isEmpty()}">
+                                <span th:replace="~{fragments/icons :: phone}"></span>
+                                <span th:text="'Tel: ' + ${businessTel}"></span>
+                            </div>
+                            <div class="quote-doc-contact-line" th:if="${businessEmail != null and !businessEmail.isEmpty()}">
+                                <span th:replace="~{fragments/icons :: mail}"></span>
+                                <span th:text="${businessEmail}"></span>
+                            </div>
+                        </div>
+                        <div class="quote-doc-contact-group" th:if="${not #lists.isEmpty(businessBankers)}">
+                            <div class="quote-doc-contact-line">
+                                <span th:replace="~{fragments/icons :: bank}"></span>
+                                <span><span>Banks: </span><span th:text="${#strings.listJoin(businessBankers, '; ')}"></span></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -79,19 +98,44 @@
     <div id="quoteCard">
         <div class="quote-doc-info">
             <div class="quote-doc-info-col">
-                <div class="quote-doc-section-label">Bill To</div>
-                <div class="quote-doc-value" th:if="${customer != null and customer.name != null and !customer.name.isEmpty()}"
-                     th:text="${customer.name}"></div>
-                <div th:if="${vehicleLabel != null and !vehicleLabel.isEmpty()}" th:text="${vehicleLabel}"></div>
-                <div th:if="${customer != null and customer.phone != null and !customer.phone.isEmpty()}"
-                     th:text="${customer.phone}"></div>
+                <div class="quote-doc-section-label">
+                    <span th:replace="~{fragments/icons :: person}"></span>
+                    <span>Bill To</span>
+                </div>
+                <div class="quote-doc-detail-row">
+                    <span class="quote-doc-detail-label">Customer:</span>
+                    <span class="quote-doc-detail-value" th:text="${customer != null and customer.name != null and !customer.name.isEmpty()} ? ${customer.name} : '—'"></span>
+                </div>
+                <div class="quote-doc-detail-row">
+                    <span class="quote-doc-detail-label">Vehicle:</span>
+                    <span class="quote-doc-detail-value" th:text="${vehicleLabel != null and !vehicleLabel.isEmpty()} ? ${vehicleLabel} : '—'"></span>
+                </div>
+                <div class="quote-doc-detail-row">
+                    <span class="quote-doc-detail-label">Phone:</span>
+                    <span class="quote-doc-detail-value" th:text="${customer != null and customer.phone != null and !customer.phone.isEmpty()} ? ${customer.phone} : '—'"></span>
+                </div>
             </div>
             <div class="quote-doc-info-col quote-doc-info-col-right">
-                <div class="quote-doc-section-label">Quote Details</div>
-                <div>Quote #: <span th:text="${quoteNumber}"></span></div>
-                <div>Date: <span th:text="${quote.date}"></span></div>
-                <div>Valid Until: <span th:text="${validUntil}"></span></div>
-                <div>Service: <span th:text="${quote.workType}"></span></div>
+                <div class="quote-doc-section-label">
+                    <span th:replace="~{fragments/icons :: document}"></span>
+                    <span>Quote Details</span>
+                </div>
+                <div class="quote-doc-detail-row">
+                    <span class="quote-doc-detail-label">Quote #:</span>
+                    <span class="quote-doc-detail-value" th:text="${quoteNumber}"></span>
+                </div>
+                <div class="quote-doc-detail-row">
+                    <span class="quote-doc-detail-label">Date:</span>
+                    <span class="quote-doc-detail-value" th:text="${quote.date}"></span>
+                </div>
+                <div class="quote-doc-detail-row">
+                    <span class="quote-doc-detail-label">Valid Until:</span>
+                    <span class="quote-doc-detail-value" th:text="${validUntil}"></span>
+                </div>
+                <div class="quote-doc-detail-row">
+                    <span class="quote-doc-detail-label">Service:</span>
+                    <span class="quote-doc-detail-value" th:text="${quote.workType}"></span>
+                </div>
             </div>
         </div>
 
@@ -139,6 +183,39 @@
                 <div class="label">Customer Acceptance</div>
                 <div class="line"></div>
                 <div class="name">&nbsp;</div>
+            </div>
+        </div>
+
+        <hr class="quote-doc-divider quote-doc-footer-divider"
+            th:if="${(businessAddress != null and !businessAddress.isEmpty()) or (businessWhatsapp != null and !businessWhatsapp.isEmpty()) or (businessTel != null and !businessTel.isEmpty()) or (businessEmail != null and !businessEmail.isEmpty()) or (not #lists.isEmpty(businessBankers))}">
+        <div class="quote-doc-footer-contact"
+             th:if="${(businessAddress != null and !businessAddress.isEmpty()) or (businessWhatsapp != null and !businessWhatsapp.isEmpty()) or (businessTel != null and !businessTel.isEmpty()) or (businessEmail != null and !businessEmail.isEmpty()) or (not #lists.isEmpty(businessBankers))}">
+            <div class="quote-doc-footer-col" th:if="${businessAddress != null and !businessAddress.isEmpty()}">
+                <div class="quote-doc-footer-col-label">
+                    <span th:replace="~{fragments/icons :: pin}"></span>
+                    <span>Address</span>
+                </div>
+                <div class="quote-doc-footer-col-body" th:text="${businessAddress}"></div>
+            </div>
+            <div class="quote-doc-footer-col" th:if="${(businessWhatsapp != null and !businessWhatsapp.isEmpty()) or (businessTel != null and !businessTel.isEmpty()) or (businessEmail != null and !businessEmail.isEmpty())}">
+                <div class="quote-doc-footer-col-label">
+                    <span th:replace="~{fragments/icons :: phone}"></span>
+                    <span>Contact</span>
+                </div>
+                <div class="quote-doc-footer-col-body">
+                    <div th:if="${businessWhatsapp != null and !businessWhatsapp.isEmpty()}" th:text="'WhatsApp: ' + ${businessWhatsapp}"></div>
+                    <div th:if="${businessTel != null and !businessTel.isEmpty()}" th:text="'Tel: ' + ${businessTel}"></div>
+                    <div th:if="${businessEmail != null and !businessEmail.isEmpty()}" th:text="${businessEmail}"></div>
+                </div>
+            </div>
+            <div class="quote-doc-footer-col" th:if="${not #lists.isEmpty(businessBankers)}">
+                <div class="quote-doc-footer-col-label">
+                    <span th:replace="~{fragments/icons :: bank}"></span>
+                    <span>Banks</span>
+                </div>
+                <div class="quote-doc-footer-col-body">
+                    <div th:each="banker : ${businessBankers}" th:text="${banker}"></div>
+                </div>
             </div>
         </div>
     </div>

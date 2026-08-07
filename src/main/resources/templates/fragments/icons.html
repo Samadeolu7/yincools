@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  Small line icons used on the quote document (header contact block, Bill
+  To / Quote Details labels, footer contact strip). Inlined as real SVG
+  markup rather than <img src="*.svg"> -- html2canvas (the library behind
+  one-tap "Share Quote") doesn't reliably rasterize external SVG image
+  references into the composited PNG it hands to the OS share sheet, even
+  though they render perfectly on-screen; inline <svg> nodes are drawn
+  directly and don't have that gap. The PNG logo elsewhere on this page
+  isn't affected -- this is specifically an SVG-as-<img> problem.
+  Call with th:replace="~{fragments/icons :: pin}" etc.
+-->
+<svg th:fragment="pin" class="quote-doc-icon" viewBox="0 0 24 24" fill="none" stroke="#DD2B1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 22s7-7.58 7-12a7 7 0 1 0-14 0c0 4.42 7 12 7 12z"/>
+    <circle cx="12" cy="10" r="2.5"/>
+</svg>
+<svg th:fragment="phone" class="quote-doc-icon" viewBox="0 0 24 24" fill="none" stroke="#DD2B1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 2 6a2 2 0 0 1 2-2z"/>
+</svg>
+<svg th:fragment="chat" class="quote-doc-icon" viewBox="0 0 24 24" fill="none" stroke="#DD2B1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+</svg>
+<svg th:fragment="mail" class="quote-doc-icon" viewBox="0 0 24 24" fill="none" stroke="#DD2B1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="4" width="20" height="16" rx="2"/>
+    <path d="m2 6 10 7 10-7"/>
+</svg>
+<svg th:fragment="bank" class="quote-doc-icon" viewBox="0 0 24 24" fill="none" stroke="#DD2B1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 10h18M5 10v9M9.5 10v9M14.5 10v9M19 10v9M3 21h18M12 2 3 8h18z"/>
+</svg>
+<svg th:fragment="person" class="quote-doc-icon" viewBox="0 0 24 24" fill="none" stroke="#DD2B1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="4"/>
+    <path d="M4 21c0-4 4-7 8-7s8 3 8 7"/>
+</svg>
+<svg th:fragment="document" class="quote-doc-icon" viewBox="0 0 24 24" fill="none" stroke="#DD2B1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M9 13h6M9 17h6"/>
+</svg>
+</body>
+</html>
