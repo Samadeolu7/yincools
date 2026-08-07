@@ -43,3 +43,14 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// sw.js's CACHE_NAME is a template placeholder (${buildVersion}), expanded
+// here to a fresh value on every build -- see the comment in sw.js for why:
+// relying on a human to remember to bump a version string by hand already
+// caused two rounds of "the CSS change shipped but nobody with the PWA
+// already installed ever saw it" in this project.
+processResources {
+    filesMatching('**/sw.js') {
+        expand(buildVersion: System.currentTimeMillis())
+    }
+}

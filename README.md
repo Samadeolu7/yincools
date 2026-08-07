@@ -449,12 +449,18 @@ to Postgres, and passes its healthcheck.
   documents that don't exist yet. Worth revisiting the day a second
   document type is actually being built -- that's when the real shared
   shape becomes visible instead of assumed.
-- `sw.js`'s `CACHE_NAME` **must be bumped** whenever a precached file
-  (`tokens.css`, `components.css`, any file in `PRECACHE_URLS`) changes --
-  it's a cache-first strategy keyed on that name, so an unbumped version
-  means every phone that already installed the PWA keeps serving the old
-  file forever. This bit us once already (a CSS redesign that shipped
-  correctly to the server but never reached an already-installed phone).
+- `sw.js`'s `CACHE_NAME` is no longer a hand-maintained version string --
+  it's a `${buildVersion}` placeholder, expanded by `build.gradle`'s
+  `processResources` to `System.currentTimeMillis()` at build time, so
+  every build gets a fresh cache name with no manual step to remember.
+  This replaced a manually-bumped version number after it silently bit
+  the project *twice*: once during the letterhead redesign, and again
+  across four straight commits of the quote's visual redesign (paper-on-
+  desk framing, invoice conventions, etc.) that all shipped correctly to
+  the server but never reached an already-installed phone, because
+  nobody remembered to bump the string. Two rounds of "I'll remember
+  next time" was the signal that this needed to stop depending on memory
+  at all -- see the comment in `sw.js` and `build.gradle`.
 - Parts cost isn't cached on `Job` (only charge/paid/balance are, per the
   original schema) — it's read straight from the ledger via
   `JobService.partsCostFor()` on the rare screens that need it.

@@ -18,7 +18,14 @@
  * QuoteApiController).
  */
 
-const CACHE_NAME = 'yincools-v5';
+// Filled in at build time by Gradle's processResources (see build.gradle) --
+// every build gets a fresh cache name automatically, so a static-asset
+// change (CSS, JS, icons) can never again silently keep serving a stale
+// cached copy to an already-installed phone just because a human forgot to
+// bump a version string by hand. That happened twice in this project
+// already (see README's "Known simplifications") before this was made
+// build-driven instead of memory-driven.
+const CACHE_NAME = 'yincools-${buildVersion}';
 const OFFLINE_ENTRY_PATHS = ['/jobs/new', '/quotes/new'];
 
 const PRECACHE_URLS = [
