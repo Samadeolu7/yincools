@@ -270,17 +270,23 @@ to Postgres, and passes its healthcheck.
   a long item table or an enforced item cap, both bigger undertakings
   than the actual ask each time it came up; letting height grow naturally
   while the width reads as "page-like" gets most of the same perception
-  far more cheaply. Logo, business identity, and the business's own
-  address/WhatsApp/tel/email/bankers all anchor the top-left as one
-  block -- the same place a real invoice puts them (`[Street Address]`,
-  `Phone`, `Prepared By`, etc. all stacked under `Company Name` on a
-  standard invoice template), not scattered into a footer nobody reads
-  first. That contact block is split into three visually distinct
-  clusters (address / WhatsApp+tel+email / banks) with real vertical air
-  between them and a small line icon (pin, chat, phone, mail, bank --
-  inline SVG via `fragments/icons.html`, see below) in front of each
-  line, rather than one same-weight paragraph Dad has to parse line by
-  line. QUOTATION and an "ESTIMATE" badge sit top-right, the way real
+  far more cheaply. Logo and business identity anchor the header's top
+  row; the business's own address/WhatsApp/tel/email/bankers sit in
+  their own full-width row right below it -- same place a real invoice
+  puts them (`[Street Address]`, `Phone`, `Prepared By`, etc. under
+  `Company Name` on a standard invoice template), not scattered into a
+  footer nobody reads first. That contact row is a sibling of the
+  logo+identity row, not nested under it -- it starts flush at the
+  document's own left edge (the same x-position as the logo, the table,
+  every other left-aligned block on the page) rather than inheriting an
+  indent from sitting under the company name; a business's contact
+  details are the page's own information, not a continuation of the
+  name text above them. It's split into three visually distinct clusters
+  (address / WhatsApp+tel+email / banks) with real vertical air between
+  them and a small line icon (pin, chat, phone, mail, bank -- inline SVG
+  via `fragments/icons.html`, see below) in front of each line, rather
+  than one same-weight paragraph Dad has to parse line by line.
+  QUOTATION and an "ESTIMATE" badge sit top-right, the way real
   invoices put metadata in the corner -- QUOTATION sized well above the
   badge so the hierarchy between "what this document is" and "it's not
   binding yet" is obvious at a glance; a single ruled line closes the
@@ -300,7 +306,12 @@ to Postgres, and passes its healthcheck.
   concept in the data, purely presentational) is deliberately the
   dominant element on the page, with real row height, tabular-figure
   amounts so digits land on the same vertical line regardless of which
-  digits appear, and a couple of faint blank ruled rows trailing the
+  digits appear. Column headers are sized *larger* than the item rows
+  underneath them (0.95rem vs 0.9rem) -- backwards from a first
+  instinct that labels should whisper and data should speak, but a
+  table needs its headers to read as clearly in charge of the columns
+  below them, not quieter than the data they're labeling. A couple of
+  faint blank ruled rows trail the
   real ones, like a preprinted invoice pad rather than a table that just
   stops. Totals live below the table, not inside it -- Subtotal and a
   literal "Discount ₦0.00" (there's no discount concept in the ledger,
@@ -318,14 +329,16 @@ to Postgres, and passes its healthcheck.
   its own. A "Thank you for your business!" line and a blank two-up
   signature row (Prepared By on the business's side, Customer Acceptance
   blank for an in-person sign-off if the quote gets printed) get real
-  space above them instead of sitting cramped under the total, closing
-  with a second ruled line and the same address/contact/bank facts
-  repeated as a scannable three-column strip (Address / Contact / Banks,
-  each with its own icon+label) -- deliberately redundant with the
-  header block above: a printed or photocopied quote may get handed over
-  folded or glanced at from the bottom up, so the full particulars close
-  the document the way a real invoice closes with them, not just opens
-  with them. One-tap "Share Quote" renders that document to a PNG
+  space above them instead of sitting cramped under the total, and
+  that's the whole footer -- an earlier pass also repeated the address/
+  contact/bank facts down here as a three-column strip, deliberately
+  redundant with the header block for a quote that gets printed and
+  photocopied; walked back once it was actually on screen, since with
+  the contact block already anchored clearly in the header the repeat
+  just read as clutter rather than earning its keep, and a quote that
+  only ever leaves the shop as a shared image doesn't have the same
+  "the header might not be in view" problem a physical printout would.
+  One-tap "Share Quote" renders that document to a PNG
   (`html2canvas`, vendored in `static/vendor/` -- no CDN dependency) and
   hands it straight to the OS's native share sheet (`navigator.share`),
   so whatever lands in WhatsApp or email looks like the real letterhead
