@@ -272,11 +272,29 @@ select {
  * is the one thing meant to look like paper, on purpose. Also what
  * html2canvas captures for the one-tap image share (quote-share.js).
  */
+/* A real fixed width, not max-width -- this is a document, not a
+   responsive webpage. On a phone narrower than 700px the browser used to
+   shrink .quote-doc to fit, which didn't just make everything tiny: fixed-
+   width children (the Qty column, the totals' amount column, the detail-
+   row label grid) don't shrink with it, so content actively clipped off
+   the right edge. It also meant the shared PNG -- which html2canvas
+   captures at .quote-doc's actual on-screen DOM size -- came out at
+   whatever narrow width Dad's phone happened to be, instead of looking
+   like the wide, spacious document it was designed as. A genuine fixed
+   width fixes both at once: the live page scrolls horizontally inside
+   .quote-doc-scroll instead of clipping, and the share image is always
+   captured at the full 700px "on paper" layout regardless of viewport,
+   the same way WhatsApp/email happily displays a scaled-down thumbnail
+   of a wide image without needing the source to already be narrow. */
 .quote-doc {
     background: var(--color-surface);
     border: 1px solid var(--color-border-subtle);
-    max-width: 700px;
+    width: 700px;
     margin: 2rem auto;
+}
+.quote-doc-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 /* Page-margin padding lives on the three captured regions themselves
    (#letterheadChromeTop/#quoteCard/#letterheadChromeBottom), not on

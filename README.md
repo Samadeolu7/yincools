@@ -253,9 +253,19 @@ to Postgres, and passes its healthcheck.
   widgets. The page around it is visibly a different color
   (`--color-surface-muted`) from the document itself (plain white with a
   hairline border, no shadow) -- the contrast is what makes `.quote-doc`'s
-  fixed width (700px, wide enough for the table to genuinely spread out
-  rather than feel like a phone card) read as a sheet of paper sitting on
-  a desk. A true fixed A4 aspect ratio (fixed height too, not just width)
+  width (700px, wide enough for the table to genuinely spread out rather
+  than feel like a phone card) read as a sheet of paper sitting on a
+  desk. That width is a genuine `width: 700px`, not a `max-width` --
+  `.quote-doc` used to shrink to fit a narrow phone screen, which didn't
+  just make everything tiny, it actively clipped content: fixed-width
+  children (the Qty column, the totals' amount column, the label grid in
+  Bill To/Quote Details) don't shrink along with their parent, so text
+  ran off the right edge on a real phone even though it looked fine in
+  every desktop-width test along the way. `.quote-doc` is a document, not
+  a responsive webpage, so it now behaves like one: always 700px,
+  wrapped in a `.quote-doc-scroll` that scrolls horizontally on anything
+  narrower, the same tradeoff a wide spreadsheet or a PDF makes on
+  mobile. A true fixed A4 aspect ratio (fixed height too, not just width)
   is still not implemented -- that would need either real pagination for
   a long item table or an enforced item cap, both bigger undertakings
   than the actual ask each time it came up; letting height grow naturally
@@ -355,7 +365,21 @@ to Postgres, and passes its healthcheck.
   PNG through the driven `navigator.share` capture, not just screenshotting
   the on-screen page). Inline SVG nodes get drawn directly and don't have
   that gap; the logo itself is unaffected since raster `<img>` sources
-  were never the problem.
+  were never the problem. All three `html2canvas` calls also pass
+  `windowWidth: 820` -- `.quote-doc` being a genuine fixed 700px (above)
+  is necessary but not sufficient for the shared image to come out full-
+  width on a real phone: `html2canvas` renders through its own internal
+  clone, sized to the *actual* browser window unless told otherwise, and
+  a phone's real viewport (~360-400px) is narrower than the document
+  itself, so without `windowWidth` the capture clipped to phone-width
+  even though `.quote-doc`'s own CSS width was already fixed at 700px.
+  Verified by driving the capture from a genuinely narrow (390px)
+  headless Chrome window -- the exported file still came out
+  1396x2800px (698x1400 CSS px at the 2x capture scale), confirming the
+  shared image is always the full "on paper" layout regardless of
+  whatever narrow viewport actually triggered the share, and WhatsApp/
+  email simply display a scaled-down thumbnail of it, the same way they
+  would for any oversized photo.
   "Convert to Job" lands on the normal Edit Job screen, charged the
   quote's total but starting at zero paid -- a quote is an estimate, not
   an assumption that it was paid in full. A quote is editable at any

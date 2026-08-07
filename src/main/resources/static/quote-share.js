@@ -36,6 +36,17 @@
  */
 (function () {
     var CACHE_KEY = 'yincools-letterhead-chrome-cache';
+    /* .quote-doc has a real fixed width (700px, see components.css) so the
+       shared image always looks like the wide, spacious document it was
+       designed as, never a phone-narrow shrink of it. But html2canvas
+       renders through its own internal clone, sized to the *actual*
+       browser window by default -- on a real phone that's ~360-400px,
+       narrower than .quote-doc itself, so without telling it otherwise
+       html2canvas clips the capture to that narrow width even though the
+       element's own CSS width is 700px. windowWidth forces its virtual
+       render window wide enough to fit the whole document regardless of
+       the real device's viewport. */
+    var CAPTURE_WINDOW_WIDTH = 820;
 
     function supportsFileShare() {
         if (!navigator.canShare || !navigator.share) return false;
@@ -66,7 +77,7 @@
     }
 
     function renderToDataUrl(el) {
-        return html2canvas(el, { backgroundColor: '#ffffff', scale: 2 })
+        return html2canvas(el, { backgroundColor: '#ffffff', scale: 2, windowWidth: CAPTURE_WINDOW_WIDTH })
             .then(function (canvas) { return canvas.toDataURL('image/png'); });
     }
 
@@ -131,7 +142,7 @@
 
         return getChromeImages(topEl, bottomEl)
             .then(function (images) {
-                return html2canvas(cardEl, { backgroundColor: '#ffffff', scale: 2 })
+                return html2canvas(cardEl, { backgroundColor: '#ffffff', scale: 2, windowWidth: CAPTURE_WINDOW_WIDTH })
                     .then(function (cardCanvas) { return composite(images[0], cardCanvas, images[1]); });
             })
             .catch(function () {
@@ -139,7 +150,7 @@
                 // capturing the whole thing fresh, same as before this
                 // optimization existed. Slower, but never worse than
                 // sharing nothing.
-                return html2canvas(wholeEl, { backgroundColor: '#ffffff', scale: 2 });
+                return html2canvas(wholeEl, { backgroundColor: '#ffffff', scale: 2, windowWidth: CAPTURE_WINDOW_WIDTH });
             });
     }
 
