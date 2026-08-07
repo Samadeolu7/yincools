@@ -278,10 +278,16 @@ to Postgres, and passes its healthcheck.
   literal "Discount ₦0.00" (there's no discount concept in the ledger,
   but showing zero is an accurate statement, not fabricated data) stay
   quiet, and TOTAL is the one thing sized and colored to compete with the
-  table for attention. A blank "Prepared By" signature line gets real
-  space above it instead of sitting cramped under the total, and the
-  footer is two clean columns (address/contact | bank details) instead
-  of one dense paragraph. One-tap "Share Quote" renders that document to a PNG
+  table for attention. The table itself is zebra-striped with a thin
+  vertical rule around the Qty column, the same scannability convention
+  every real invoicing tool (QuickBooks, Zoho, Xero) uses -- a plain-
+  ruled table with every row the same weight is harder to track across
+  than one where alternate rows are quietly shaded. A "Thank you for your
+  business!" line and a blank two-up signature row (Prepared By on the
+  business's side, Customer Acceptance blank for an in-person sign-off if
+  the quote gets printed) get real space above them instead of sitting
+  cramped under the total, and the footer is two clean columns (address/
+  contact | bank details) instead of one dense paragraph. One-tap "Share Quote" renders that document to a PNG
   (`html2canvas`, vendored in `static/vendor/` -- no CDN dependency) and
   hands it straight to the OS's native share sheet (`navigator.share`),
   so whatever lands in WhatsApp or email looks like the real letterhead

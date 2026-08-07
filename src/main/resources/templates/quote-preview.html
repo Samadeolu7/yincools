@@ -115,13 +115,22 @@
                 <span th:text="'₦' + ${#numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}"></span>
             </div>
         </div>
+
+        <div class="quote-doc-thanks">Thank you for your business!</div>
     </div>
 
     <div id="letterheadChromeBottom">
-        <div class="quote-doc-signature">
-            <div class="label">Prepared By</div>
-            <div class="line"></div>
-            <div class="name" th:text="${businessName} + (${businessSuffix != null and !businessSuffix.isEmpty()} ? ' ' + ${businessSuffix} : '')"></div>
+        <div class="quote-doc-signature-row">
+            <div class="quote-doc-signature">
+                <div class="label">Prepared By</div>
+                <div class="line"></div>
+                <div class="name" th:text="${businessName} + (${businessSuffix != null and !businessSuffix.isEmpty()} ? ' ' + ${businessSuffix} : '')"></div>
+            </div>
+            <div class="quote-doc-signature">
+                <div class="label">Customer Acceptance</div>
+                <div class="line"></div>
+                <div class="name">&nbsp;</div>
+            </div>
         </div>
 
         <div class="quote-doc-footer">

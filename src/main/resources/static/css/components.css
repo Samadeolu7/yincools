@@ -315,6 +315,7 @@ select {
     letter-spacing: 0.05em;
     color: var(--color-primary);
     margin-left: 0.35rem;
+    white-space: nowrap;
 }
 .quote-doc-tagline {
     font-size: 0.75rem;
@@ -377,13 +378,25 @@ select {
     padding-bottom: 0.7rem;
     border-bottom: 2px solid var(--color-ink);
 }
+.quote-doc-table th, .quote-doc-table td { padding-left: 0.6rem; }
+.quote-doc-table th:first-child, .quote-doc-table td:first-child { padding-left: 0; }
 .quote-doc-table td {
-    padding: 1rem 0;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
     border-bottom: 1px solid var(--color-border-subtle);
     font-size: 1.02rem;
 }
-.quote-doc-table th.qty, .quote-doc-table td.qty { text-align: center; width: 3rem; }
+.quote-doc-table th.qty, .quote-doc-table td.qty {
+    text-align: center;
+    width: 3rem;
+    border-left: 1px solid var(--color-border-subtle);
+    border-right: 1px solid var(--color-border-subtle);
+}
 .quote-doc-table th.amount, .quote-doc-table td.amount { text-align: right; }
+/* Zebra striping -- real invoices use it for scannability, not decoration;
+   a plain-ruled table with five rows the same weight is harder to track
+   across than one where every other row is quietly shaded. */
+.quote-doc-table tbody tr:nth-child(even) { background: var(--color-surface-muted); }
 /* Faint trailing blank rows -- an empty-ruled-line feel like a preprinted
    invoice pad, not a table that just stops the moment the data does. */
 .quote-doc-blank-row td { color: transparent; }
@@ -412,23 +425,40 @@ select {
     color: var(--color-primary);
 }
 
-.quote-doc-signature {
+.quote-doc-thanks {
     text-align: center;
-    margin-top: 3rem;
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--color-ink-secondary);
+    margin-top: 2.5rem;
 }
+
+/* Two sign-off blocks side by side -- the business's own ("Prepared By")
+   and a blank line for the customer to sign if the quote gets printed and
+   accepted in person, same convention as a paper quotation pad. */
+.quote-doc-signature-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+.quote-doc-signature { flex: 1 1 50%; text-align: center; }
 .quote-doc-signature .label {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     color: var(--color-ink-secondary);
     margin-bottom: 1.75rem;
 }
 .quote-doc-signature .line {
     border-top: 1px solid var(--color-ink);
-    width: 55%;
+    width: 85%;
     margin: 0 auto 0.4rem;
 }
 .quote-doc-signature .name {
     font-size: 0.85rem;
     font-weight: 700;
+    min-height: 1.2em;
 }
 
 /* Footer: two clean columns, deliberately the quietest thing on the page --
