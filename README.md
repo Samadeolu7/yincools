@@ -250,10 +250,22 @@ to Postgres, and passes its healthcheck.
   own document (`.quote-doc` in `components.css`) built like a real
   quotation, not a card floating on a dashboard -- no shadow, no rounded
   box, no centering, since invoices are grids and alignment, not Material
-  widgets. Logo and business identity anchor the top-left; QUOTATION and
-  an "ESTIMATE" badge sit top-right, the way real invoices put metadata
-  in the corner; a ruled line closes the header. A "Bill To" / "Quote
-  Details" pair sits side by side underneath (customer/vehicle/phone on
+  widgets. The page around it is visibly a different color
+  (`--color-surface-muted`) from the document itself (plain white with a
+  hairline border, no shadow) -- the contrast is what makes `.quote-doc`'s
+  fixed width read as a sheet of paper sitting on a desk, rather than
+  just "the layout is narrow on mobile" (the alternative, actually
+  fixing the page to A4's pixel proportions, was deliberately rejected --
+  item count varies, and a fixed aspect ratio would either strand a
+  two-item quote in mostly dead space or need real pagination logic for a
+  long one; letting height grow naturally while only the width reads as
+  "page-like" gets the same perception cheaply). Logo and business
+  identity anchor the top-left; QUOTATION and an "ESTIMATE" badge sit
+  top-right, the way real invoices put metadata in the corner; a single
+  ruled line closes the header -- deliberately the only rule on the page,
+  since five ruled sections read as a spreadsheet and one clean rule
+  reads as a document; everything below it is separated by whitespace
+  alone. A "Bill To" / "Quote Details" pair sits side by side underneath (customer/vehicle/phone on
   the left, a generated quote number `QT-000034` / date / a computed
   7-day "Valid Until" / service on the right -- validity is a display
   convention, not a stored field, since nothing about expiring quotes is
@@ -413,6 +425,15 @@ to Postgres, and passes its healthcheck.
 
 ### Known simplifications (intentional, not gaps)
 
+- The quote document (`.quote-doc`) is one specific template, not a
+  reusable `DocumentLayout` abstraction shared by future invoices/job
+  sheets/receipts, and there's no pagination story for a long item table.
+  Both were floated during the quote's design and deliberately deferred:
+  there's exactly one document type in the app right now, so extracting a
+  shared shape would be guessing at what's actually common between
+  documents that don't exist yet. Worth revisiting the day a second
+  document type is actually being built -- that's when the real shared
+  shape becomes visible instead of assumed.
 - `sw.js`'s `CACHE_NAME` **must be bumped** whenever a precached file
   (`tokens.css`, `components.css`, any file in `PRECACHE_URLS`) changes --
   it's a cache-first strategy keyed on that name, so an unbumped version

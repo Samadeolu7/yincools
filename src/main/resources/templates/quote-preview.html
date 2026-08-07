@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="/css/components.css">
     <title>Quote</title>
     <style>
+        /* The desk the paper sits on -- only on this page. .quote-doc stays
+           pure white with a hairline edge, so the color contrast alone (not
+           a shadow) is what makes its fixed width visible as a sheet of
+           paper rather than just "the page is narrow on mobile". */
+        body { background: var(--color-surface-muted); }
         h1 { font-size: 1.3rem; margin: 0 0 1rem; text-align: center; }
         .converted {
             margin-top: 1rem;
@@ -81,8 +86,6 @@
             </div>
         </div>
 
-        <hr class="quote-doc-divider">
-
         <table class="quote-doc-table">
             <thead>
                 <tr><th>Description</th><th class="qty">Qty</th><th class="amount">Amount</th></tr>
@@ -121,7 +124,6 @@
             <div class="name" th:text="${businessName} + (${businessSuffix != null and !businessSuffix.isEmpty()} ? ' ' + ${businessSuffix} : '')"></div>
         </div>
 
-        <hr class="quote-doc-divider">
         <div class="quote-doc-footer">
             <div class="quote-doc-footer-col">
                 <strong>Address</strong>

@@ -274,14 +274,18 @@ select {
  */
 .quote-doc {
     background: var(--color-surface);
-    padding: 2rem 1.5rem;
+    border: 1px solid var(--color-border-subtle);
+    padding: 2.25rem 1.75rem;
     max-width: 480px;
-    margin: 1.5rem auto 0;
+    margin: 2rem auto;
 }
+/* Deliberately just the one line, right under the header -- five ruled
+   sections read as a spreadsheet, one clean rule reads as a document.
+   Everything after it is separated by whitespace alone. */
 .quote-doc-divider {
     border: none;
     border-top: 1px solid var(--color-ink);
-    margin: 1.5rem 0;
+    margin: 1.75rem 0;
 }
 
 /* Header: logo + identity anchored left, QUOTATION/badge anchored top-right --
@@ -342,6 +346,7 @@ select {
     gap: 1.5rem;
     font-size: 0.9rem;
     line-height: 1.7;
+    margin-bottom: 2.25rem;
 }
 .quote-doc-info-col { flex: 1 1 50%; }
 .quote-doc-info-col-right { text-align: right; }
@@ -373,9 +378,9 @@ select {
     border-bottom: 2px solid var(--color-ink);
 }
 .quote-doc-table td {
-    padding: 0.9rem 0;
+    padding: 1rem 0;
     border-bottom: 1px solid var(--color-border-subtle);
-    font-size: 1rem;
+    font-size: 1.02rem;
 }
 .quote-doc-table th.qty, .quote-doc-table td.qty { text-align: center; width: 3rem; }
 .quote-doc-table th.amount, .quote-doc-table td.amount { text-align: right; }
@@ -426,21 +431,25 @@ select {
     font-weight: 700;
 }
 
-/* Footer: two clean columns instead of one dense paragraph. */
+/* Footer: two clean columns, deliberately the quietest thing on the page --
+   smaller and lighter than everything above it, so the eye never lands
+   here first. No rule above it either; the gap alone is the separation. */
 .quote-doc-footer {
     display: flex;
     justify-content: space-between;
     gap: 1.5rem;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     color: var(--color-ink-secondary);
     line-height: 1.8;
-    margin-bottom: 1rem;
+    margin-top: 2.5rem;
 }
+.quote-doc-footer + .quote-doc-footer { margin-top: 1rem; }
 .quote-doc-footer-col-right { text-align: right; }
 .quote-doc-footer-col strong {
     display: block;
-    color: var(--color-ink);
-    font-size: 0.72rem;
+    color: var(--color-ink-secondary);
+    font-size: 0.68rem;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     margin-bottom: 0.3rem;
