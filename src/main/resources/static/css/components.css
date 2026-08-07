@@ -265,143 +265,152 @@ select {
 }
 
 /*
- * The shareable quote "document" -- deliberately a different visual
- * language from the rest of the app (soft shadow + rounded card instead
- * of the thick black borders used everywhere else) because it's meant to
- * read as a professional quotation, not another app screen. The plain
- * page around it (title, buttons) stays normal app chrome; this card is
- * the one thing dressed up to look like a document, on purpose. Also
- * what html2canvas captures for the one-tap image share (quote-share.js).
+ * The shareable quote "document" -- built as a document, not a card. No
+ * shadow, no rounded box, no centering: real invoices are grids, left
+ * alignment, ruled sections and whitespace, not Material-style widgets.
+ * The plain page around it (title, buttons) stays normal app chrome; this
+ * is the one thing meant to look like paper, on purpose. Also what
+ * html2canvas captures for the one-tap image share (quote-share.js).
  */
 .quote-doc {
     background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.10);
-    padding: 1.75rem 1.5rem;
+    padding: 2rem 1.5rem;
     max-width: 480px;
     margin: 1.5rem auto 0;
 }
 .quote-doc-divider {
     border: none;
-    border-top: 1px solid var(--color-border-subtle);
+    border-top: 1px solid var(--color-ink);
     margin: 1.5rem 0;
 }
 
+/* Header: logo + identity anchored left, QUOTATION/badge anchored top-right --
+   metadata belongs in the corner on a real invoice, not centered under the logo. */
 .quote-doc-header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: flex-start;
     gap: 1rem;
 }
-.quote-doc-logo { height: 52px; width: auto; flex-shrink: 0; }
-.quote-doc-identity { text-align: right; }
+.quote-doc-header-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+.quote-doc-logo { height: 48px; width: auto; flex-shrink: 0; }
+.quote-doc-identity { text-align: left; }
 .quote-doc-name {
-    font-size: 1.75rem;
+    font-size: 1.3rem;
     font-weight: 700;
     color: var(--color-ink);
-    line-height: 1.15;
+    line-height: 1.2;
 }
 .quote-doc-suffix {
-    display: block;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.05em;
     color: var(--color-primary);
+    margin-left: 0.35rem;
 }
 .quote-doc-tagline {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--color-ink-secondary);
-    margin-top: 0.25rem;
+    margin-top: 0.2rem;
 }
-
-.quote-doc-title-row { text-align: center; }
+.quote-doc-header-right { text-align: right; flex-shrink: 0; }
 .quote-doc-title {
-    font-size: 1.5rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     color: var(--color-primary);
 }
 .quote-doc-badge {
     display: inline-block;
-    margin-top: 0.6rem;
-    padding: 0.2rem 0.8rem;
-    border-radius: 999px;
-    background: var(--color-surface-muted);
+    margin-top: 0.4rem;
+    padding: 0.15rem 0.7rem;
+    border: 1px solid var(--color-ink-secondary);
     color: var(--color-ink-secondary);
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.06em;
 }
 
-.quote-doc-meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-    color: var(--color-ink-secondary);
-}
-.quote-doc-meta strong { color: var(--color-ink); font-weight: 700; }
-
+/* Bill To / Quote Details -- an address block, side by side, like an invoice. */
 .quote-doc-info {
     display: flex;
-    flex-wrap: wrap;
-    gap: 1.25rem 1rem;
+    justify-content: space-between;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
 }
-.quote-doc-field { flex: 1 1 40%; }
-.quote-doc-label {
+.quote-doc-info-col { flex: 1 1 50%; }
+.quote-doc-info-col-right { text-align: right; }
+.quote-doc-section-label {
     font-size: 0.72rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     color: var(--color-ink-secondary);
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.4rem;
 }
 .quote-doc-value {
     font-size: 1.05rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--color-ink);
 }
 
+/* The item table is the document -- it should dominate the page, so rows
+   get real height and the header/footer around it stay comparatively quiet. */
 .quote-doc-table { width: 100%; border-collapse: collapse; }
 .quote-doc-table th {
     text-align: left;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--color-ink-secondary);
-    padding-bottom: 0.6rem;
+    padding-bottom: 0.7rem;
     border-bottom: 2px solid var(--color-ink);
 }
 .quote-doc-table td {
-    padding: 0.6rem 0;
+    padding: 0.9rem 0;
     border-bottom: 1px solid var(--color-border-subtle);
-    font-size: 0.95rem;
+    font-size: 1rem;
 }
-.quote-doc-table th.qty, .quote-doc-table td.qty { text-align: center; width: 2.5rem; }
+.quote-doc-table th.qty, .quote-doc-table td.qty { text-align: center; width: 3rem; }
 .quote-doc-table th.amount, .quote-doc-table td.amount { text-align: right; }
+/* Faint trailing blank rows -- an empty-ruled-line feel like a preprinted
+   invoice pad, not a table that just stops the moment the data does. */
+.quote-doc-blank-row td { color: transparent; }
 
-.quote-doc-total {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-top: 1rem;
-    padding: 1rem 1.1rem;
-    background: var(--color-surface-muted);
-    border-radius: var(--radius);
-    border-left: 4px solid var(--color-primary);
+/* Totals live below the table, not inside it -- Subtotal/Discount are quiet,
+   TOTAL is the one thing that should visually compete with the table. */
+.quote-doc-totals {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
 }
-.quote-doc-total-label {
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
+.quote-doc-totals-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1.5rem;
+    padding: 0.35rem 0;
+    font-size: 0.9rem;
     color: var(--color-ink-secondary);
 }
-.quote-doc-total-value {
-    font-size: 1.6rem;
+.quote-doc-totals-row span:last-child { min-width: 7rem; text-align: right; }
+.quote-doc-total-final {
+    margin-top: 0.4rem;
+    padding-top: 0.7rem;
+    border-top: 2px solid var(--color-ink);
+    font-size: 1.3rem;
     font-weight: 700;
     color: var(--color-primary);
 }
 
-.quote-doc-signature { text-align: center; }
+.quote-doc-signature {
+    text-align: center;
+    margin-top: 3rem;
+}
 .quote-doc-signature .label {
     font-size: 0.75rem;
     color: var(--color-ink-secondary);
@@ -417,21 +426,24 @@ select {
     font-weight: 700;
 }
 
+/* Footer: two clean columns instead of one dense paragraph. */
 .quote-doc-footer {
     display: flex;
     justify-content: space-between;
-    gap: 1rem;
-    font-size: 0.76rem;
+    gap: 1.5rem;
+    font-size: 0.78rem;
     color: var(--color-ink-secondary);
-    line-height: 1.6;
+    line-height: 1.8;
+    margin-bottom: 1rem;
 }
+.quote-doc-footer-col-right { text-align: right; }
 .quote-doc-footer-col strong {
     display: block;
     color: var(--color-ink);
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.3rem;
 }
 
 /*

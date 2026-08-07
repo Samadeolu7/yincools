@@ -247,18 +247,29 @@ to Postgres, and passes its healthcheck.
   quote table and New Job's parts chips. The quote preview deliberately
   separates the *app screen* from the *document*: the page around it is
   plain app chrome (title, buttons), and the actual quote renders as its
-  own bounded card (`.quote-doc` in `components.css`) styled like a real
-  quotation, not another app screen -- soft shadow and rounded corners
-  instead of the thick black borders used everywhere else, a two-column
-  header (logo left, business identity right), an "ESTIMATE" badge, a
-  generated quote number (`QT-000034`, from the row id), stacked label/
-  value fields for customer/vehicle/service, a Description/Qty/Amount
-  table (qty is always 1 -- there's no quantity concept in the data, so
-  this is presentation only, not a new field), a hero TOTAL block, a
-  blank "Prepared By" signature line, and a two-column footer. No
-  fabricated subtotal/discount rows -- there's no discount concept in
-  the ledger, so a "Subtotal" line would just repeat the total under a
-  different label. One-tap "Share Quote" renders that card to a PNG
+  own document (`.quote-doc` in `components.css`) built like a real
+  quotation, not a card floating on a dashboard -- no shadow, no rounded
+  box, no centering, since invoices are grids and alignment, not Material
+  widgets. Logo and business identity anchor the top-left; QUOTATION and
+  an "ESTIMATE" badge sit top-right, the way real invoices put metadata
+  in the corner; a ruled line closes the header. A "Bill To" / "Quote
+  Details" pair sits side by side underneath (customer/vehicle/phone on
+  the left, a generated quote number `QT-000034` / date / a computed
+  7-day "Valid Until" / service on the right -- validity is a display
+  convention, not a stored field, since nothing about expiring quotes is
+  actually enforced anywhere). The Description/Qty/Amount table (qty is
+  always 1 -- there's no quantity concept in the data, purely
+  presentational) is deliberately the dominant element on the page, with
+  real row height and a couple of faint blank ruled rows trailing the
+  real ones, like a preprinted invoice pad rather than a table that just
+  stops. Totals live below the table, not inside it -- Subtotal and a
+  literal "Discount ₦0.00" (there's no discount concept in the ledger,
+  but showing zero is an accurate statement, not fabricated data) stay
+  quiet, and TOTAL is the one thing sized and colored to compete with the
+  table for attention. A blank "Prepared By" signature line gets real
+  space above it instead of sitting cramped under the total, and the
+  footer is two clean columns (address/contact | bank details) instead
+  of one dense paragraph. One-tap "Share Quote" renders that document to a PNG
   (`html2canvas`, vendored in `static/vendor/` -- no CDN dependency) and
   hands it straight to the OS's native share sheet (`navigator.share`),
   so whatever lands in WhatsApp or email looks like the real letterhead
@@ -271,8 +282,9 @@ to Postgres, and passes its healthcheck.
   fallback on any browser that can't share files (most desktops), and are
   only hidden once the richer path is confirmed to work. The header/
   footer (logo, wordmark, tagline, address/contact/bankers) are the same
-  bytes on every single quote -- only the card in the middle changes --
-  so `quote-share.js` rasterizes them once and caches the result in
+  bytes on every single quote -- only the Bill To/table/totals block in
+  the middle changes -- so `quote-share.js` rasterizes them once and
+  caches the result in
   `localStorage` (keyed off a hash of their own markup, so it
   self-invalidates if the letterhead or business config ever changes);
   every share after the first only asks `html2canvas` to redo the small

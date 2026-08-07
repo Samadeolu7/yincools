@@ -82,6 +82,7 @@ public class QuoteController {
 
         model.addAttribute("quote", quote);
         model.addAttribute("quoteNumber", String.format("QT-%06d", quote.getId()));
+        model.addAttribute("validUntil", quote.getDate().plusDays(7));
         model.addAttribute("items", items);
         model.addAttribute("total", total);
         model.addAttribute("customer", customer);
