@@ -275,7 +275,7 @@ select {
 .quote-doc {
     background: var(--color-surface);
     border: 1px solid var(--color-border-subtle);
-    max-width: 480px;
+    max-width: 700px;
     margin: 2rem auto;
 }
 /* Page-margin padding lives on the three captured regions themselves
@@ -288,9 +288,9 @@ select {
    exactly why this went unnoticed through several rounds of screenshot
    verification -- only the actual generated share image was ever
    missing its margins). */
-#letterheadChromeTop { padding: 2.25rem 1.75rem 0; }
-#quoteCard { padding: 0 1.75rem; }
-#letterheadChromeBottom { padding: 0 1.75rem 2.25rem; }
+#letterheadChromeTop { padding: 2.5rem 2.25rem 0; }
+#quoteCard { padding: 0 2.25rem; }
+#letterheadChromeBottom { padding: 0 2.25rem 2.5rem; }
 /* Deliberately just the one line, right under the header -- five ruled
    sections read as a spreadsheet, one clean rule reads as a document.
    Everything after it is separated by whitespace alone. */
@@ -333,6 +333,16 @@ select {
     font-size: 0.75rem;
     color: var(--color-ink-secondary);
     margin-top: 0.2rem;
+}
+/* The business's own address/contact/bank details -- same spot a real
+   invoice puts them, stacked right under the company name, not in a
+   footer nobody reads first. Deliberately quieter than the name/tagline
+   above it: this is reference information, not the headline. */
+.quote-doc-header-contact {
+    margin-top: 0.6rem;
+    font-size: 0.72rem;
+    color: var(--color-ink-secondary);
+    line-height: 1.6;
 }
 .quote-doc-header-right { text-align: right; flex-shrink: 0; }
 .quote-doc-title {
@@ -390,17 +400,17 @@ select {
     padding-bottom: 0.7rem;
     border-bottom: 2px solid var(--color-ink);
 }
-.quote-doc-table th, .quote-doc-table td { padding-left: 0.6rem; }
+.quote-doc-table th, .quote-doc-table td { padding-left: 1.25rem; }
 .quote-doc-table th:first-child, .quote-doc-table td:first-child { padding-left: 0; }
 .quote-doc-table td {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-top: 1.1rem;
+    padding-bottom: 1.1rem;
     border-bottom: 1px solid var(--color-border-subtle);
-    font-size: 1.02rem;
+    font-size: 1.05rem;
 }
 .quote-doc-table th.qty, .quote-doc-table td.qty {
     text-align: center;
-    width: 3rem;
+    width: 5rem;
     border-left: 1px solid var(--color-border-subtle);
     border-right: 1px solid var(--color-border-subtle);
 }
@@ -471,30 +481,6 @@ select {
     font-size: 0.85rem;
     font-weight: 700;
     min-height: 1.2em;
-}
-
-/* Footer: two clean columns, deliberately the quietest thing on the page --
-   smaller and lighter than everything above it, so the eye never lands
-   here first. No rule above it either; the gap alone is the separation. */
-.quote-doc-footer {
-    display: flex;
-    justify-content: space-between;
-    gap: 1.5rem;
-    font-size: 0.72rem;
-    color: var(--color-ink-secondary);
-    line-height: 1.8;
-    margin-top: 2.5rem;
-}
-.quote-doc-footer + .quote-doc-footer { margin-top: 1rem; }
-.quote-doc-footer-col-right { text-align: right; }
-.quote-doc-footer-col strong {
-    display: block;
-    color: var(--color-ink-secondary);
-    font-size: 0.68rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 0.3rem;
 }
 
 /*

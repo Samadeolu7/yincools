@@ -57,6 +57,15 @@
                         <span class="quote-doc-suffix" th:if="${businessSuffix != null and !businessSuffix.isEmpty()}" th:text="${businessSuffix}"></span>
                     </div>
                     <div class="quote-doc-tagline" th:if="${businessTagline != null and !businessTagline.isEmpty()}" th:text="${businessTagline}"></div>
+                    <div class="quote-doc-header-contact">
+                        <div th:if="${businessAddress != null and !businessAddress.isEmpty()}" th:text="${businessAddress}"></div>
+                        <div th:if="${businessWhatsapp != null and !businessWhatsapp.isEmpty()}" th:text="'WhatsApp: ' + ${businessWhatsapp}"></div>
+                        <div th:if="${businessTel != null and !businessTel.isEmpty()}" th:text="'Tel: ' + ${businessTel}"></div>
+                        <div th:if="${businessEmail != null and !businessEmail.isEmpty()}" th:text="${businessEmail}"></div>
+                        <div th:if="${not #lists.isEmpty(businessBankers)}">
+                            <span>Banks: </span><span th:text="${#strings.listJoin(businessBankers, '; ')}"></span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="quote-doc-header-right">
@@ -130,25 +139,6 @@
                 <div class="label">Customer Acceptance</div>
                 <div class="line"></div>
                 <div class="name">&nbsp;</div>
-            </div>
-        </div>
-
-        <div class="quote-doc-footer">
-            <div class="quote-doc-footer-col">
-                <strong>Address</strong>
-                <span th:if="${businessAddress != null and !businessAddress.isEmpty()}" th:text="${businessAddress}"></span>
-            </div>
-            <div class="quote-doc-footer-col quote-doc-footer-col-right">
-                <strong>Contact</strong>
-                <div th:if="${businessWhatsapp != null and !businessWhatsapp.isEmpty()}" th:text="'WhatsApp: ' + ${businessWhatsapp}"></div>
-                <div th:if="${businessTel != null and !businessTel.isEmpty()}" th:text="'Tel: ' + ${businessTel}"></div>
-                <div th:if="${businessEmail != null and !businessEmail.isEmpty()}" th:text="${businessEmail}"></div>
-            </div>
-        </div>
-        <div class="quote-doc-footer" th:if="${not #lists.isEmpty(businessBankers)}">
-            <div class="quote-doc-footer-col">
-                <strong>Bank Details</strong>
-                <div th:each="b : ${businessBankers}" th:text="${b}"></div>
             </div>
         </div>
     </div>

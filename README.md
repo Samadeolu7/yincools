@@ -253,19 +253,24 @@ to Postgres, and passes its healthcheck.
   widgets. The page around it is visibly a different color
   (`--color-surface-muted`) from the document itself (plain white with a
   hairline border, no shadow) -- the contrast is what makes `.quote-doc`'s
-  fixed width read as a sheet of paper sitting on a desk, rather than
-  just "the layout is narrow on mobile" (the alternative, actually
-  fixing the page to A4's pixel proportions, was deliberately rejected --
-  item count varies, and a fixed aspect ratio would either strand a
-  two-item quote in mostly dead space or need real pagination logic for a
-  long one; letting height grow naturally while only the width reads as
-  "page-like" gets the same perception cheaply). Logo and business
-  identity anchor the top-left; QUOTATION and an "ESTIMATE" badge sit
-  top-right, the way real invoices put metadata in the corner; a single
-  ruled line closes the header -- deliberately the only rule on the page,
-  since five ruled sections read as a spreadsheet and one clean rule
-  reads as a document; everything below it is separated by whitespace
-  alone. A "Bill To" / "Quote Details" pair sits side by side underneath (customer/vehicle/phone on
+  fixed width (700px, wide enough for the table to genuinely spread out
+  rather than feel like a phone card) read as a sheet of paper sitting on
+  a desk. A true fixed A4 aspect ratio (fixed height too, not just width)
+  is still not implemented -- that would need either real pagination for
+  a long item table or an enforced item cap, both bigger undertakings
+  than the actual ask each time it came up; letting height grow naturally
+  while the width reads as "page-like" gets most of the same perception
+  far more cheaply. Logo, business identity, and the business's own
+  address/WhatsApp/tel/email/bankers all anchor the top-left as one
+  block -- the same place a real invoice puts them (`[Street Address]`,
+  `Phone`, `Prepared By`, etc. all stacked under `Company Name` on a
+  standard invoice template), not scattered into a footer nobody reads
+  first. QUOTATION and an "ESTIMATE" badge sit top-right, the way real
+  invoices put metadata in the corner; a single ruled line closes the
+  header -- deliberately the only rule on the page, since five ruled
+  sections read as a spreadsheet and one clean rule reads as a document;
+  everything below it is separated by whitespace alone. A "Bill To" /
+  "Quote Details" pair sits side by side underneath (customer/vehicle/phone on
   the left, a generated quote number `QT-000034` / date / a computed
   7-day "Valid Until" / service on the right -- validity is a display
   convention, not a stored field, since nothing about expiring quotes is
@@ -286,8 +291,10 @@ to Postgres, and passes its healthcheck.
   business!" line and a blank two-up signature row (Prepared By on the
   business's side, Customer Acceptance blank for an in-person sign-off if
   the quote gets printed) get real space above them instead of sitting
-  cramped under the total, and the footer is two clean columns (address/
-  contact | bank details) instead of one dense paragraph. One-tap "Share Quote" renders that document to a PNG
+  cramped under the total -- and that's the whole footer now; with the
+  address/contact/bank details moved up to the header, the bottom of the
+  document stays genuinely quiet instead of repeating information already
+  shown once. One-tap "Share Quote" renders that document to a PNG
   (`html2canvas`, vendored in `static/vendor/` -- no CDN dependency) and
   hands it straight to the OS's native share sheet (`navigator.share`),
   so whatever lands in WhatsApp or email looks like the real letterhead
