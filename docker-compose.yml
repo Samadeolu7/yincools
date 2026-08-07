@@ -18,7 +18,7 @@ services:
       - APP_BUSINESS_NAME=${APP_BUSINESS_NAME:-Yincools}
       - APP_BUSINESS_SUFFIX=${APP_BUSINESS_SUFFIX:-AUTO NIG.}
       - APP_BUSINESS_TAGLINE=${APP_BUSINESS_TAGLINE:-Specialist in Car-Condition & any Automobile Works}
-      - APP_BUSINESS_ADDRESS=${APP_BUSINESS_ADDRESS:-73, Mercy Eneli Street, (Owolarafe Motors) Off Alhaji Masha, Surulere, Lagos.}
+      - APP_BUSINESS_ADDRESS=${APP_BUSINESS_ADDRESS:-67, Mercy Eneli Street, Off Adisa Bashua, Alhaji Masha, Surulere, Lagos.}
       - APP_BUSINESS_WHATSAPP=${APP_BUSINESS_WHATSAPP:-081 4404 9067}
       - APP_BUSINESS_TEL=${APP_BUSINESS_TEL:-0802 333 2171}
       - APP_BUSINESS_EMAIL=${APP_BUSINESS_EMAIL:-yincoolsautotech@gmail.com}
