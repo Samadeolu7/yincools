@@ -4,6 +4,7 @@ import com.java.yincools.domain.model.Customer;
 import com.java.yincools.domain.model.EntryType;
 import com.java.yincools.domain.model.Job;
 import com.java.yincools.domain.model.Vehicle;
+import com.java.yincools.domain.model.WorkType;
 import com.java.yincools.persistence.JobRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,7 @@ public class JobService {
     public Job createJob(String customerName, String customerPhone,
                           Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
                           String vehicleNote,
-                          String workType, BigDecimal charge, BigDecimal partsCost, String partsNote, BigDecimal paid) {
+                          WorkType workType, BigDecimal charge, BigDecimal partsCost, String partsNote, BigDecimal paid) {
         return createJob(customerName, customerPhone, vehicleId, newVehicleDescription, newVehiclePlateNumber,
                 vehicleNote, workType, charge, partsCost, partsNote, paid, null);
     }
@@ -50,7 +51,7 @@ public class JobService {
     public Job createJob(String customerName, String customerPhone,
                           Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
                           String vehicleNote,
-                          String workType, BigDecimal charge, BigDecimal partsCost, String partsNote, BigDecimal paid,
+                          WorkType workType, BigDecimal charge, BigDecimal partsCost, String partsNote, BigDecimal paid,
                           String partsSupplier) {
         Long customerId = customerService.resolveOrCreate(customerName, customerPhone);
 
@@ -73,7 +74,7 @@ public class JobService {
     /** For QuoteService.convertToJob -- customer/vehicle are already resolved on the quote, so skip re-resolving them. */
     @Transactional
     public Job createJobFromResolvedIdentity(Long customerId, Long vehicleId, String vehicleNote,
-                                              String workType, BigDecimal charge, BigDecimal paid) {
+                                              WorkType workType, BigDecimal charge, BigDecimal paid) {
         return persistJob(customerId, vehicleId, vehicleNote, workType, charge, BigDecimal.ZERO, null, paid, null);
     }
 
@@ -90,7 +91,7 @@ public class JobService {
     @Transactional
     public Job createJobIdempotent(String clientId, String customerName, String customerPhone,
                                     Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
-                                    String vehicleNote, String workType, BigDecimal charge,
+                                    String vehicleNote, WorkType workType, BigDecimal charge,
                                     BigDecimal partsCost, String partsNote, boolean partsCostIsShared, BigDecimal paid) {
         Optional<Job> existing = jobRepo.findByClientId(clientId);
         if (existing.isPresent()) {
@@ -113,7 +114,7 @@ public class JobService {
         return job;
     }
 
-    private Job persistJob(Long customerId, Long vehicleId, String vehicleNote, String workType,
+    private Job persistJob(Long customerId, Long vehicleId, String vehicleNote, WorkType workType,
                             BigDecimal charge, BigDecimal partsCost, String partsNote, BigDecimal paid,
                             String partsSupplier) {
         Job job = new Job();

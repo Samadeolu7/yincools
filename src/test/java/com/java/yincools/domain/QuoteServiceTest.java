@@ -3,6 +3,7 @@ package com.java.yincools.domain;
 import com.java.yincools.domain.model.EntryType;
 import com.java.yincools.domain.model.Job;
 import com.java.yincools.domain.model.Quote;
+import com.java.yincools.domain.model.WorkType;
 import com.java.yincools.persistence.CustomerRepository;
 import com.java.yincools.persistence.JobRepository;
 import com.java.yincools.persistence.LedgerRepository;
@@ -58,7 +59,7 @@ class QuoteServiceTest {
     @Test
     void createQuoteNeverWritesALedgerEntry() {
         quoteService.createQuote("Bode", "08010000000", null, "Camry 2010", null, null,
-                "REGAS", lines("Compressor", 20000));
+                WorkType.REGAS, lines("Compressor", 20000));
 
         assertThat(ledgerRepository.findByType(EntryType.CHARGE)).isEmpty();
         assertThat(ledgerRepository.findByType(EntryType.PARTS_COST)).isEmpty();
@@ -69,7 +70,7 @@ class QuoteServiceTest {
     @Test
     void createQuoteForWalkInStoresFreeTextVehicleNote() {
         Quote quote = quoteService.createQuote(null, null, null, null, null, "Blue Corolla",
-                "OTHER", lines("Gas", 5000));
+                WorkType.OTHER, lines("Gas", 5000));
 
         assertThat(quote.getCustomerId()).isNull();
         assertThat(quote.getVehicleId()).isNull();
@@ -79,7 +80,7 @@ class QuoteServiceTest {
     @Test
     void totalIsTheSumOfItemLines() {
         Quote quote = quoteService.createQuote(null, null, null, null, null, "Corolla",
-                "REGAS", List.of(
+                WorkType.REGAS, List.of(
                         new QuotePartLine("Compressor", new BigDecimal("18000")),
                         new QuotePartLine("Gas", new BigDecimal("5000")),
                         new QuotePartLine("Labor", new BigDecimal("3000"))));
@@ -91,7 +92,7 @@ class QuoteServiceTest {
     @Test
     void convertToJobChargesTheQuoteTotalButStartsAtZeroPaid() {
         Quote quote = quoteService.createQuote("Ada", "0800000001", null, "Toyota Hilux", null, null,
-                "COMPRESSOR", lines("Compressor", 30000));
+                WorkType.COMPRESSOR, lines("Compressor", 30000));
 
         Job job = quoteService.convertToJob(quote.getId());
 
@@ -110,7 +111,7 @@ class QuoteServiceTest {
     @Test
     void convertingAnAlreadyConvertedQuoteIsIdempotent() {
         Quote quote = quoteService.createQuote(null, null, null, null, null, "Civic",
-                "FAN", lines("Relay", 4000));
+                WorkType.FAN, lines("Relay", 4000));
 
         Job first = quoteService.convertToJob(quote.getId());
         Job second = quoteService.convertToJob(quote.getId());
@@ -122,9 +123,9 @@ class QuoteServiceTest {
     @Test
     void recentOpenQuotesExcludesConvertedOnes() {
         Quote open = quoteService.createQuote(null, null, null, null, null, "Car A",
-                "OTHER", lines("Hoses", 1000));
+                WorkType.OTHER, lines("Hoses", 1000));
         Quote toConvert = quoteService.createQuote(null, null, null, null, null, "Car B",
-                "OTHER", lines("Hoses", 2000));
+                WorkType.OTHER, lines("Hoses", 2000));
         quoteService.convertToJob(toConvert.getId());
 
         var openQuotes = quoteService.recentOpenQuotes();
@@ -135,10 +136,10 @@ class QuoteServiceTest {
     @Test
     void createQuoteIdempotentRetryWithSameClientIdReturnsTheSameQuoteWithoutDuplicating() {
         Quote first = quoteService.createQuoteIdempotent("client-abc", "Bode", "08010000000",
-                null, "Camry 2010", null, null, "REGAS", lines("Compressor", 20000));
+                null, "Camry 2010", null, null, WorkType.REGAS, lines("Compressor", 20000));
 
         Quote retry = quoteService.createQuoteIdempotent("client-abc", "Bode", "08010000000",
-                null, "Camry 2010", null, null, "REGAS", lines("Compressor", 20000));
+                null, "Camry 2010", null, null, WorkType.REGAS, lines("Compressor", 20000));
 
         assertThat(retry.getId()).isEqualTo(first.getId());
         assertThat(quoteRepository.count()).isEqualTo(1);
@@ -150,10 +151,10 @@ class QuoteServiceTest {
     @Test
     void editQuoteReplacesItemsAndRecomputesTotal() {
         Quote quote = quoteService.createQuote(null, null, null, null, null, "Corolla",
-                "REGAS", lines("Compressor", 20000));
+                WorkType.REGAS, lines("Compressor", 20000));
 
         quoteService.editQuote(quote.getId(), null, null, null, null, null, "Corolla",
-                "REGAS", List.of(
+                WorkType.REGAS, List.of(
                         new QuotePartLine("Compressor", new BigDecimal("22000")),
                         new QuotePartLine("Gas", new BigDecimal("5000"))));
 
@@ -164,10 +165,10 @@ class QuoteServiceTest {
     @Test
     void editingAnUnconvertedQuoteStillWritesNoLedgerEntries() {
         Quote quote = quoteService.createQuote(null, null, null, null, null, "Corolla",
-                "REGAS", lines("Compressor", 20000));
+                WorkType.REGAS, lines("Compressor", 20000));
 
         quoteService.editQuote(quote.getId(), null, null, null, null, null, "Corolla",
-                "REGAS", lines("Compressor", 25000));
+                WorkType.REGAS, lines("Compressor", 25000));
 
         assertThat(ledgerRepository.findByType(EntryType.CHARGE)).isEmpty();
     }
@@ -175,13 +176,13 @@ class QuoteServiceTest {
     @Test
     void editingAConvertedQuotePushesTheNewTotalOntoTheJobsCharge() {
         Quote quote = quoteService.createQuote("Ada", "0800000001", null, "Toyota Hilux", null, null,
-                "COMPRESSOR", lines("Compressor", 30000));
+                WorkType.COMPRESSOR, lines("Compressor", 30000));
         Job job = quoteService.convertToJob(quote.getId());
 
         // Turns out the supplier charged more than expected -- Dad edits the
         // quote after the fact, and the job's charge should follow it.
         quoteService.editQuote(quote.getId(), "Ada", "0800000001", null, "Toyota Hilux", null, null,
-                "COMPRESSOR", lines("Compressor", 35000));
+                WorkType.COMPRESSOR, lines("Compressor", 35000));
 
         Job updated = jobRepository.findById(job.getId()).orElseThrow();
         assertThat(updated.getCachedCharge()).isEqualByComparingTo("35000");
@@ -192,10 +193,10 @@ class QuoteServiceTest {
 
     @Test
     void partSuggestionsReturnsDistinctNamesEverUsed() {
-        quoteService.createQuote(null, null, null, null, null, "Car A", "OTHER",
+        quoteService.createQuote(null, null, null, null, null, "Car A", WorkType.OTHER,
                 List.of(new QuotePartLine("Compressor", new BigDecimal("1000")),
                         new QuotePartLine("Gas", new BigDecimal("500"))));
-        quoteService.createQuote(null, null, null, null, null, "Car B", "OTHER",
+        quoteService.createQuote(null, null, null, null, null, "Car B", WorkType.OTHER,
                 lines("Compressor", 2000));
 
         assertThat(quoteService.partSuggestions()).containsExactlyInAnyOrder("Compressor", "Gas");

@@ -10,6 +10,7 @@ import com.java.yincools.domain.model.Customer;
 import com.java.yincools.domain.model.Job;
 import com.java.yincools.domain.model.Quote;
 import com.java.yincools.domain.model.QuoteItem;
+import com.java.yincools.domain.model.WorkType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -31,8 +32,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class QuoteController {
 
-    private static final List<String> WORK_TYPES =
-            List.of("REGAS", "COMPRESSOR", "CONDENSER", "FAN", "DIAGNOSIS", "OTHER");
+    private static final List<WorkType> WORK_TYPES = List.of(WorkType.values());
 
     private final QuoteService quoteService;
     private final CustomerService customerService;
@@ -55,7 +55,7 @@ public class QuoteController {
                                @RequestParam(required = false) Long vehicleId,
                                @RequestParam(required = false) String vehicleDescription,
                                @RequestParam(required = false) String vehiclePlateNumber,
-                               @RequestParam String workType,
+                               @RequestParam WorkType workType,
                                @RequestParam(required = false) String partsJson) throws Exception {
         boolean hasCustomer = StringUtils.hasText(customerName) || StringUtils.hasText(customerPhone);
 
@@ -131,7 +131,7 @@ public class QuoteController {
                              @RequestParam(required = false) Long vehicleId,
                              @RequestParam(required = false) String vehicleDescription,
                              @RequestParam(required = false) String vehiclePlateNumber,
-                             @RequestParam String workType,
+                             @RequestParam WorkType workType,
                              @RequestParam(required = false) String partsJson) throws Exception {
         boolean hasCustomer = StringUtils.hasText(customerName) || StringUtils.hasText(customerPhone);
         List<QuotePartLine> items = parsePartsJson(partsJson);

@@ -2,6 +2,7 @@ package com.java.yincools.web;
 
 import com.java.yincools.domain.JobService;
 import com.java.yincools.domain.model.Job;
+import com.java.yincools.domain.model.WorkType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -48,7 +49,7 @@ public class JobApiController {
             String vehicleDescription,
             String vehiclePlateNumber,
             Boolean sharedPartsCost,
-            String workType,
+            WorkType workType,
             BigDecimal charge,
             BigDecimal partsCost,
             String partsNote,

@@ -3,6 +3,7 @@ package com.java.yincools.domain;
 import com.java.yincools.domain.model.Job;
 import com.java.yincools.domain.model.Quote;
 import com.java.yincools.domain.model.QuoteItem;
+import com.java.yincools.domain.model.WorkType;
 import com.java.yincools.persistence.QuoteItemRepository;
 import com.java.yincools.persistence.QuoteRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ public class QuoteService {
     public Quote createQuote(String customerName, String customerPhone,
                               Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
                               String vehicleNote,
-                              String workType, List<QuotePartLine> items) {
+                              WorkType workType, List<QuotePartLine> items) {
         Long customerId = customerService.resolveOrCreate(customerName, customerPhone);
 
         Long resolvedVehicleId = null;
@@ -77,7 +78,7 @@ public class QuoteService {
     @Transactional
     public Quote editQuote(Long quoteId, String customerName, String customerPhone,
                             Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
-                            String vehicleNote, String workType, List<QuotePartLine> items) {
+                            String vehicleNote, WorkType workType, List<QuotePartLine> items) {
         Quote quote = get(quoteId);
 
         Long customerId = customerService.resolveOrCreate(customerName, customerPhone);
@@ -132,7 +133,7 @@ public class QuoteService {
     @Transactional
     public Quote createQuoteIdempotent(String clientId, String customerName, String customerPhone,
                                         Long vehicleId, String newVehicleDescription, String newVehiclePlateNumber,
-                                        String vehicleNote, String workType, List<QuotePartLine> items) {
+                                        String vehicleNote, WorkType workType, List<QuotePartLine> items) {
         Optional<Quote> existing = quoteRepo.findByClientId(clientId);
         if (existing.isPresent()) {
             return existing.get();

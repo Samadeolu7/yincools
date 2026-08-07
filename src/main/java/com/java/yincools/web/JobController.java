@@ -3,6 +3,7 @@ package com.java.yincools.web;
 import com.java.yincools.domain.JobService;
 import com.java.yincools.domain.model.Customer;
 import com.java.yincools.domain.model.Job;
+import com.java.yincools.domain.model.WorkType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -24,8 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JobController {
 
-    private static final List<String> WORK_TYPES =
-            List.of("REGAS", "COMPRESSOR", "CONDENSER", "FAN", "DIAGNOSIS", "OTHER");
+    private static final List<WorkType> WORK_TYPES = List.of(WorkType.values());
     private static final List<String> QUICK_AMOUNTS =
             List.of("5000", "10000", "15000", "20000");
 
@@ -58,7 +58,7 @@ public class JobController {
                              @RequestParam(required = false) String vehiclePlateNumber,
                              @RequestParam(defaultValue = "false") boolean sharedPartsCost,
                              @RequestParam(defaultValue = "false") boolean creditSupplier,
-                             @RequestParam String workType,
+                             @RequestParam WorkType workType,
                              @RequestParam BigDecimal charge,
                              @RequestParam(required = false) BigDecimal partsCost,
                              @RequestParam(required = false) String partsNote,

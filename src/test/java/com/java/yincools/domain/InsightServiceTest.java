@@ -2,6 +2,7 @@ package com.java.yincools.domain;
 
 import com.java.yincools.domain.model.EntryType;
 import com.java.yincools.domain.model.Job;
+import com.java.yincools.domain.model.WorkType;
 import com.java.yincools.persistence.CustomerRepository;
 import com.java.yincools.persistence.JobRepository;
 import com.java.yincools.persistence.LedgerRepository;
@@ -44,7 +45,7 @@ class InsightServiceTest {
         insightService = new InsightService(ledgerRepository, jobRepository);
     }
 
-    private Job createWalkIn(String vehicleNote, String workType, BigDecimal charge, BigDecimal partsCost, BigDecimal paid) {
+    private Job createWalkIn(String vehicleNote, WorkType workType, BigDecimal charge, BigDecimal partsCost, BigDecimal paid) {
         return jobService.createJob(null, null, null, null, null, vehicleNote, workType, charge, partsCost, null, paid);
     }
 
@@ -55,13 +56,13 @@ class InsightServiceTest {
         LocalDate lastWeekSunday = monday.minusDays(1);
 
         // in-week job
-        Job inWeek = createWalkIn("Car A", "REGAS",
+        Job inWeek = createWalkIn("Car A", WorkType.REGAS,
                 new BigDecimal("15000"), new BigDecimal("3000"), new BigDecimal("15000"));
         backdateJob(inWeek, monday.plusDays(2));
         backdateEntries(inWeek.getId(), monday.plusDays(2));
 
         // out-of-week job (should not count)
-        Job outOfWeek = createWalkIn("Car B", "REGAS",
+        Job outOfWeek = createWalkIn("Car B", WorkType.REGAS,
                 new BigDecimal("99999"), new BigDecimal("1"), new BigDecimal("1"));
         backdateJob(outOfWeek, lastWeekSunday);
         backdateEntries(outOfWeek.getId(), lastWeekSunday);
@@ -84,11 +85,11 @@ class InsightServiceTest {
 
     @Test
     void debtorListReturnsOnlyJobsWithPositiveBalanceOrderedHighestFirst() {
-        Job paidInFull = createWalkIn("Car A", "REGAS",
+        Job paidInFull = createWalkIn("Car A", WorkType.REGAS,
                 new BigDecimal("10000"), BigDecimal.ZERO, new BigDecimal("10000"));
-        Job smallDebt = createWalkIn("Car B", "REGAS",
+        Job smallDebt = createWalkIn("Car B", WorkType.REGAS,
                 new BigDecimal("10000"), BigDecimal.ZERO, new BigDecimal("7000"));
-        Job bigDebt = createWalkIn("Car C", "REGAS",
+        Job bigDebt = createWalkIn("Car C", WorkType.REGAS,
                 new BigDecimal("20000"), BigDecimal.ZERO, new BigDecimal("0"));
 
         var debtors = insightService.debtorList();
@@ -100,9 +101,9 @@ class InsightServiceTest {
 
     @Test
     void creditSupplierEntriesReturnsOnlyTaggedEntriesWithinTheRange() {
-        Job tagged = jobService.createJob(null, null, null, null, null, "Car A", "COMPRESSOR",
+        Job tagged = jobService.createJob(null, null, null, null, null, "Car A", WorkType.COMPRESSOR,
                 new BigDecimal("30000"), new BigDecimal("20000"), "Compressor", BigDecimal.ZERO, "Chinedu Auto Parts");
-        Job untagged = createWalkIn("Car B", "REGAS",
+        Job untagged = createWalkIn("Car B", WorkType.REGAS,
                 new BigDecimal("10000"), new BigDecimal("3000"), BigDecimal.ZERO);
         backdateJob(tagged, LocalDate.of(2026, 1, 10));
         backdateEntries(tagged.getId(), LocalDate.of(2026, 1, 10));

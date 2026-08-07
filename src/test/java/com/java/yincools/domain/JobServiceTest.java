@@ -2,6 +2,7 @@ package com.java.yincools.domain;
 
 import com.java.yincools.domain.model.Customer;
 import com.java.yincools.domain.model.Job;
+import com.java.yincools.domain.model.WorkType;
 import com.java.yincools.persistence.CustomerRepository;
 import com.java.yincools.persistence.JobRepository;
 import com.java.yincools.persistence.LedgerRepository;
@@ -42,19 +43,19 @@ class JobServiceTest {
     }
 
     /** Walk-in: no customer, vehicle is free text on the job. */
-    private Job createWalkIn(String vehicleNote, String workType, BigDecimal charge, BigDecimal partsCost, BigDecimal paid) {
+    private Job createWalkIn(String vehicleNote, WorkType workType, BigDecimal charge, BigDecimal partsCost, BigDecimal paid) {
         return jobService.createJob(null, null, null, null, null, vehicleNote, workType, charge, partsCost, null, paid);
     }
 
     /** Customer job with a new vehicle description (creates or reuses a Vehicle row). */
-    private Job createForCustomer(String name, String phone, String vehicleDescription, String workType,
+    private Job createForCustomer(String name, String phone, String vehicleDescription, WorkType workType,
                                    BigDecimal charge, BigDecimal partsCost, BigDecimal paid) {
         return jobService.createJob(name, phone, null, vehicleDescription, null, null, workType, charge, partsCost, null, paid);
     }
 
     @Test
     void createJobStoresChargePartsCostAndPaymentAndComputesBalance() {
-        Job job = createForCustomer("Bode", "08010000000", "Camry 2010", "REGAS",
+        Job job = createForCustomer("Bode", "08010000000", "Camry 2010", WorkType.REGAS,
                 new BigDecimal("15000"), new BigDecimal("2000"), new BigDecimal("5000"));
 
         assertThat(job.getCachedCharge()).isEqualByComparingTo("15000");
@@ -66,9 +67,9 @@ class JobServiceTest {
 
     @Test
     void secondJobForSamePhoneAndVehicleReusesExistingCustomerAndVehicle() {
-        Job first = createForCustomer("Bode", "08010000000", "Camry 2010", "REGAS",
+        Job first = createForCustomer("Bode", "08010000000", "Camry 2010", WorkType.REGAS,
                 new BigDecimal("15000"), BigDecimal.ZERO, BigDecimal.ZERO);
-        Job second = createForCustomer("Bode", "08010000000", "Camry 2010", "DIAGNOSIS",
+        Job second = createForCustomer("Bode", "08010000000", "Camry 2010", WorkType.DIAGNOSIS,
                 new BigDecimal("3000"), BigDecimal.ZERO, BigDecimal.ZERO);
 
         assertThat(second.getCustomerId()).isEqualTo(first.getCustomerId());
@@ -79,9 +80,9 @@ class JobServiceTest {
 
     @Test
     void secondVehicleForSameCustomerCreatesASeparateVehicleRow() {
-        Job first = createForCustomer("Ada", "0800000001", "Toyota Hilux", "REGAS",
+        Job first = createForCustomer("Ada", "0800000001", "Toyota Hilux", WorkType.REGAS,
                 new BigDecimal("15000"), BigDecimal.ZERO, BigDecimal.ZERO);
-        Job second = createForCustomer("Ada", "0800000001", "Honda Accord", "REGAS",
+        Job second = createForCustomer("Ada", "0800000001", "Honda Accord", WorkType.REGAS,
                 new BigDecimal("10000"), BigDecimal.ZERO, BigDecimal.ZERO);
 
         assertThat(second.getCustomerId()).isEqualTo(first.getCustomerId());
@@ -91,11 +92,11 @@ class JobServiceTest {
 
     @Test
     void pickingAnExistingVehicleIdSkipsCreatingANewOne() {
-        Job first = createForCustomer("Ada", "0800000001", "Toyota Hilux", "REGAS",
+        Job first = createForCustomer("Ada", "0800000001", "Toyota Hilux", WorkType.REGAS,
                 new BigDecimal("15000"), BigDecimal.ZERO, BigDecimal.ZERO);
 
         Job second = jobService.createJob("Ada", "0800000001", first.getVehicleId(), null, null, null,
-                "DIAGNOSIS", new BigDecimal("3000"), BigDecimal.ZERO, null, BigDecimal.ZERO);
+                WorkType.DIAGNOSIS, new BigDecimal("3000"), BigDecimal.ZERO, null, BigDecimal.ZERO);
 
         assertThat(second.getVehicleId()).isEqualTo(first.getVehicleId());
         assertThat(vehicleRepository.count()).isEqualTo(1);
@@ -103,7 +104,7 @@ class JobServiceTest {
 
     @Test
     void jobWithNoCustomerInfoIsAllowedAndVehicleIsFreeText() {
-        Job job = createWalkIn("Random car", "OTHER",
+        Job job = createWalkIn("Random car", WorkType.OTHER,
                 new BigDecimal("5000"), BigDecimal.ZERO, BigDecimal.ZERO);
 
         assertThat(job.getCustomerId()).isNull();
@@ -114,9 +115,9 @@ class JobServiceTest {
 
     @Test
     void vehicleLabelForPrefersThePersistedVehicleAndFallsBackToTheWalkInNote() {
-        Job withVehicle = createForCustomer("Bode", "08010000000", "Camry 2010", "REGAS",
+        Job withVehicle = createForCustomer("Bode", "08010000000", "Camry 2010", WorkType.REGAS,
                 new BigDecimal("15000"), BigDecimal.ZERO, BigDecimal.ZERO);
-        Job walkIn = createWalkIn("Blue Corolla", "OTHER", BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
+        Job walkIn = createWalkIn("Blue Corolla", WorkType.OTHER, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
 
         assertThat(jobService.vehicleLabelFor(withVehicle)).isEqualTo("Camry 2010");
         assertThat(jobService.vehicleLabelFor(walkIn)).isEqualTo("Blue Corolla");
@@ -124,7 +125,7 @@ class JobServiceTest {
 
     @Test
     void editJobCorrectsChargeAndPartsCostWithoutTouchingPayment() {
-        Job job = createWalkIn("Corolla", "COMPRESSOR",
+        Job job = createWalkIn("Corolla", WorkType.COMPRESSOR,
                 new BigDecimal("20000"), new BigDecimal("6000"), new BigDecimal("20000"));
 
         jobService.editJob(job.getId(), new BigDecimal("18000"), new BigDecimal("6000"));
@@ -137,7 +138,7 @@ class JobServiceTest {
 
     @Test
     void recordPaymentUpdatesTotalPaidToTheNewStatedAmount() {
-        Job job = createWalkIn("Civic", "FAN",
+        Job job = createWalkIn("Civic", WorkType.FAN,
                 new BigDecimal("10000"), BigDecimal.ZERO, new BigDecimal("3000"));
 
         jobService.recordPayment(job.getId(), new BigDecimal("10000"));
@@ -149,7 +150,7 @@ class JobServiceTest {
 
     @Test
     void voidJobZeroesOutTheBalanceButKeepsTheRow() {
-        Job job = createWalkIn("Sienna", "CONDENSER",
+        Job job = createWalkIn("Sienna", WorkType.CONDENSER,
                 new BigDecimal("25000"), new BigDecimal("5000"), new BigDecimal("10000"));
 
         jobService.voidJob(job.getId());
@@ -163,10 +164,10 @@ class JobServiceTest {
 
     @Test
     void recentCustomersReturnsMostRecentlyUsedFirstWithoutDuplicates() {
-        Job j1 = createForCustomer("Ada", "0800000001", "Car A", "OTHER", BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
-        createWalkIn("Car B", "OTHER", BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
-        createForCustomer("Ada", "0800000001", "Car A again", "OTHER", BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
-        Job j4 = createForCustomer("Chidi", "0800000002", "Car C", "OTHER", BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
+        Job j1 = createForCustomer("Ada", "0800000001", "Car A", WorkType.OTHER, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
+        createWalkIn("Car B", WorkType.OTHER, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
+        createForCustomer("Ada", "0800000001", "Car A again", WorkType.OTHER, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
+        Job j4 = createForCustomer("Chidi", "0800000002", "Car C", WorkType.OTHER, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
 
         List<Customer> recent = jobService.recentCustomers();
 
@@ -176,8 +177,8 @@ class JobServiceTest {
 
     @Test
     void lastJobReturnsTheMostRecentlyCreatedJob() {
-        createWalkIn("Car A", "OTHER", BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
-        Job second = createWalkIn("Car B", "OTHER", BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
+        createWalkIn("Car A", WorkType.OTHER, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
+        Job second = createWalkIn("Car B", WorkType.OTHER, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);
 
         assertThat(jobService.lastJob()).isPresent();
         assertThat(jobService.lastJob().get().getId()).isEqualTo(second.getId());
@@ -185,7 +186,7 @@ class JobServiceTest {
 
     @Test
     void partsCostForReflectsCorrectionsMadeThroughEditJob() {
-        Job job = createWalkIn("Car C", "OTHER",
+        Job job = createWalkIn("Car C", WorkType.OTHER,
                 new BigDecimal("10000"), new BigDecimal("2000"), BigDecimal.ZERO);
         assertThat(jobService.partsCostFor(job.getId())).isEqualByComparingTo("2000");
 
@@ -196,7 +197,7 @@ class JobServiceTest {
 
     @Test
     void recordSharedPartsCostIsTiedToCustomerNotAnyJob() {
-        Job job = createForCustomer("Fleet Co", "0800000009", "Truck 1", "OTHER",
+        Job job = createForCustomer("Fleet Co", "0800000009", "Truck 1", WorkType.OTHER,
                 new BigDecimal("10000"), BigDecimal.ZERO, BigDecimal.ZERO);
 
         jobService.recordSharedPartsCost(job.getCustomerId(), new BigDecimal("6000"), "shared gas can");
@@ -209,7 +210,7 @@ class JobServiceTest {
     @Test
     void partsNoteFromTappedChipsLandsOnThePartsCostLedgerEntry() {
         Job job = jobService.createJob(null, null, null, null, null, "Corolla",
-                "REGAS", new BigDecimal("10000"), new BigDecimal("4000"), "Compressor, Relay", BigDecimal.ZERO);
+                WorkType.REGAS, new BigDecimal("10000"), new BigDecimal("4000"), "Compressor, Relay", BigDecimal.ZERO);
 
         var entries = ledgerRepository.findByJobIdAndType(job.getId(), com.java.yincools.domain.model.EntryType.PARTS_COST);
         assertThat(entries).hasSize(1);
@@ -219,11 +220,11 @@ class JobServiceTest {
     @Test
     void createJobIdempotentRetryWithSameClientIdReturnsTheSameJobWithoutDuplicating() {
         Job first = jobService.createJobIdempotent("client-abc", "Bode", "08010000000",
-                null, "Camry 2010", null, null, "REGAS",
+                null, "Camry 2010", null, null, WorkType.REGAS,
                 new BigDecimal("15000"), BigDecimal.ZERO, null, false, new BigDecimal("15000"));
 
         Job retry = jobService.createJobIdempotent("client-abc", "Bode", "08010000000",
-                null, "Camry 2010", null, null, "REGAS",
+                null, "Camry 2010", null, null, WorkType.REGAS,
                 new BigDecimal("15000"), BigDecimal.ZERO, null, false, new BigDecimal("15000"));
 
         assertThat(retry.getId()).isEqualTo(first.getId());
@@ -235,11 +236,11 @@ class JobServiceTest {
     @Test
     void createJobIdempotentRetryDoesNotDuplicateASharedPartsCostEntry() {
         jobService.createJobIdempotent("client-shared", "Fleet Co", "0800000009",
-                null, "Truck 1", null, null, "REGAS",
+                null, "Truck 1", null, null, WorkType.REGAS,
                 new BigDecimal("10000"), new BigDecimal("6000"), "shared gas can", true, new BigDecimal("10000"));
 
         Job retry = jobService.createJobIdempotent("client-shared", "Fleet Co", "0800000009",
-                null, "Truck 1", null, null, "REGAS",
+                null, "Truck 1", null, null, WorkType.REGAS,
                 new BigDecimal("10000"), new BigDecimal("6000"), "shared gas can", true, new BigDecimal("10000"));
 
         // CHARGE + PAYMENT (tied to the job) + one shared PARTS_COST entry -- a

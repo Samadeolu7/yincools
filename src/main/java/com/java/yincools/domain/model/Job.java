@@ -1,6 +1,8 @@
 package com.java.yincools.domain.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import lombok.Getter;
@@ -33,7 +35,8 @@ public class Job {
     /** Free text for a walk-in with no customer -- never becomes a Vehicle row. */
     private String vehicleNote;
 
-    private String workType;
+    @Enumerated(EnumType.STRING)
+    private WorkType workType;
 
     private LocalDate date;
 

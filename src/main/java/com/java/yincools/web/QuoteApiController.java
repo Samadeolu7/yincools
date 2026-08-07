@@ -3,6 +3,7 @@ package com.java.yincools.web;
 import com.java.yincools.domain.QuotePartLine;
 import com.java.yincools.domain.QuoteService;
 import com.java.yincools.domain.model.Quote;
+import com.java.yincools.domain.model.WorkType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,7 +52,7 @@ public class QuoteApiController {
             Long vehicleId,
             String vehicleDescription,
             String vehiclePlateNumber,
-            String workType,
+            WorkType workType,
             List<QuotePartLine> items
     ) {
     }
