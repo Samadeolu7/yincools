@@ -30,9 +30,12 @@
  * can't do any of this (most desktops) sees exactly what it saw before.
  *
  * Expects: #letterheadChromeTop / #quoteCard / #letterheadChromeBottom
- * (the three stacked regions to compose), #shareQuoteBtn (data-share-title
- * / data-share-text for the caption), html2canvas already loaded, and
- * .fallback-share on the links to hide.
+ * (the three stacked regions to compose), #shareQuoteBtn, html2canvas
+ * already loaded, and .fallback-share on the links to hide.
+ *
+ * The native share carries the image file only -- no title/text caption.
+ * Dad just wants to hand someone the picture, not a picture plus a
+ * pre-filled message he didn't write.
  */
 (function () {
     var CACHE_KEY = 'yincools-letterhead-chrome-cache';
@@ -179,10 +182,10 @@
                 })
                 .then(function (blob) {
                     var file = new File([blob], 'quote.png', { type: 'image/png' });
+                    // Files only -- no title/text, so the share sheet sends
+                    // just the image with no caption message attached.
                     return navigator.share({
-                        files: [file],
-                        title: shareBtn.getAttribute('data-share-title') || document.title,
-                        text: shareBtn.getAttribute('data-share-text') || ''
+                        files: [file]
                     });
                 })
                 .catch(function () {

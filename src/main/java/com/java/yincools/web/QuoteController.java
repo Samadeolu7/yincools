@@ -78,6 +78,9 @@ public class QuoteController {
         BigDecimal total = quoteService.totalFor(id);
         Customer customer = quote.getCustomerId() != null ? customerService.findById(quote.getCustomerId()).orElse(null) : null;
         String vehicleLabel = vehicleService.labelFor(quote.getVehicleId(), quote.getVehicleNote());
+        String vehiclePlateNumber = quote.getVehicleId() != null
+                ? vehicleService.findById(quote.getVehicleId()).map(v -> v.getPlateNumber()).orElse(null)
+                : null;
         String quoteText = buildQuoteText(quote, customer, vehicleLabel, items, total);
 
         model.addAttribute("quote", quote);
@@ -87,6 +90,7 @@ public class QuoteController {
         model.addAttribute("total", total);
         model.addAttribute("customer", customer);
         model.addAttribute("vehicleLabel", vehicleLabel);
+        model.addAttribute("vehiclePlateNumber", vehiclePlateNumber);
         model.addAttribute("quoteText", quoteText);
         model.addAttribute("whatsappLink", whatsAppLink(customer, quoteText));
         model.addAttribute("mailtoLink", mailtoLink(businessName + " Quote", quoteText));

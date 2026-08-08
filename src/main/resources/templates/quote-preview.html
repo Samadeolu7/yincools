@@ -111,6 +111,10 @@
                     <span class="quote-doc-detail-label">Vehicle:</span>
                     <span class="quote-doc-detail-value" th:text="${vehicleLabel != null and !vehicleLabel.isEmpty()} ? ${vehicleLabel} : '—'"></span>
                 </div>
+                <div class="quote-doc-detail-row" th:if="${vehiclePlateNumber != null and !vehiclePlateNumber.isEmpty()}">
+                    <span class="quote-doc-detail-label">Plate:</span>
+                    <span class="quote-doc-detail-value" th:text="${vehiclePlateNumber}"></span>
+                </div>
                 <div class="quote-doc-detail-row">
                     <span class="quote-doc-detail-label">Phone:</span>
                     <span class="quote-doc-detail-value" th:text="${customer != null and customer.phone != null and !customer.phone.isEmpty()} ? ${customer.phone} : '—'"></span>
@@ -190,8 +194,7 @@
 </div>
 </div>
 
-<button type="button" id="shareQuoteBtn" class="btn btn-primary" style="display:none;"
-        data-share-title="Quote" th:attr="data-share-text=${quoteText}">
+<button type="button" id="shareQuoteBtn" class="btn btn-primary" style="display:none;">
     Share Quote
 </button>
 
