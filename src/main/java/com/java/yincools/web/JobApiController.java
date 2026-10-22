@@ -1,9 +1,11 @@
 package com.java.yincools.web;
 
 import com.java.yincools.domain.JobService;
+import com.java.yincools.domain.VehicleService;
 import com.java.yincools.domain.model.Job;
 import com.java.yincools.domain.model.WorkType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,11 +34,16 @@ public class JobApiController {
 
     @PostMapping
     public JobResponse createJob(@RequestBody JobRequest req) {
+        boolean hasCustomer = StringUtils.hasText(req.customerName()) || StringUtils.hasText(req.customerPhone());
         boolean sharedPartsCost = Boolean.TRUE.equals(req.sharedPartsCost());
 
         Job job = jobService.createJobIdempotent(req.clientId(), req.customerName(), req.customerPhone(),
-                req.vehicleId(), req.vehicleDescription(), req.vehiclePlateNumber(), req.vehicleDescription(),
+                req.vehicleId(),
+                hasCustomer ? req.vehicleDescription() : null,
+                hasCustomer ? req.vehiclePlateNumber() : null,
+                hasCustomer ? null : VehicleService.noteWithPlate(req.vehicleDescription(), req.vehiclePlateNumber()),
                 req.workType(), req.charge(), req.partsCost(), req.partsNote(), sharedPartsCost, req.paid());
+        jobService.updateMileage(job.getId(), req.mileage());
 
         return new JobResponse(job.getId(), job.getCachedCharge(), job.getCachedPaid(), job.getCachedBalance());
     }
@@ -48,6 +55,7 @@ public class JobApiController {
             Long vehicleId,
             String vehicleDescription,
             String vehiclePlateNumber,
+            String mileage,
             Boolean sharedPartsCost,
             WorkType workType,
             BigDecimal charge,

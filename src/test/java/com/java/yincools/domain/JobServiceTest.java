@@ -113,6 +113,20 @@ class JobServiceTest {
         assertThat(vehicleRepository.count()).isZero();
     }
 
+    /**
+     * JobController builds vehicleNote via VehicleService.noteWithPlate
+     * before calling createJob -- this confirms a walk-in's plate survives
+     * end to end instead of being silently dropped (the bug that motivated
+     * noteWithPlate in the first place).
+     */
+    @Test
+    void walkInJobKeepsThePlateInTheVehicleNote() {
+        Job job = createWalkIn(VehicleService.noteWithPlate("Blue Corolla", "abc 123"), WorkType.OTHER,
+                new BigDecimal("5000"), BigDecimal.ZERO, BigDecimal.ZERO);
+
+        assertThat(job.getVehicleNote()).isEqualTo("Blue Corolla (ABC123)");
+    }
+
     @Test
     void vehicleLabelForPrefersThePersistedVehicleAndFallsBackToTheWalkInNote() {
         Job withVehicle = createForCustomer("Bode", "08010000000", "Camry 2010", WorkType.REGAS,

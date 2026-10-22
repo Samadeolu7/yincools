@@ -66,7 +66,7 @@ public class QuoteController {
                 vehicleId,
                 hasCustomer ? vehicleDescription : null,
                 hasCustomer ? vehiclePlateNumber : null,
-                hasCustomer ? null : QuoteService.noteWithPlate(vehicleDescription, vehiclePlateNumber),
+                hasCustomer ? null : VehicleService.noteWithPlate(vehicleDescription, vehiclePlateNumber),
                 workType, items);
         quoteService.updateMileage(quote.getId(), mileage);
 
@@ -147,7 +147,7 @@ public class QuoteController {
                 vehicleId,
                 hasCustomer ? vehicleDescription : null,
                 hasCustomer ? vehiclePlateNumber : null,
-                hasCustomer ? null : QuoteService.noteWithPlate(vehicleDescription, vehiclePlateNumber),
+                hasCustomer ? null : VehicleService.noteWithPlate(vehicleDescription, vehiclePlateNumber),
                 workType, items);
         quoteService.updateMileage(id, mileage);
 

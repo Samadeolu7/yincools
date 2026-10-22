@@ -97,6 +97,8 @@
         lines.push(new Date().toISOString().slice(0, 10));
         if (payload.customerName) lines.push('Customer: ' + payload.customerName);
         if (payload.vehicleDescription) lines.push('Vehicle: ' + payload.vehicleDescription);
+        if (payload.vehiclePlateNumber) lines.push('Plate: ' + payload.vehiclePlateNumber);
+        if (payload.mileage) lines.push('Mileage: ' + payload.mileage);
         lines.push('Work: ' + payload.workType);
         var charge = parseFloat(payload.charge || '0') || 0;
         var paid = parseFloat(payload.paid || '0') || 0;
@@ -133,6 +135,7 @@
             vehicleId: field('vehicleId') ? Number(field('vehicleId')) : null,
             vehicleDescription: field('vehicleDescription'),
             vehiclePlateNumber: field('vehiclePlateNumber'),
+            mileage: field('mileage'),
             sharedPartsCost: !!(document.getElementById('sharedPartsCost') && document.getElementById('sharedPartsCost').checked),
             workType: field('workType'),
             charge: field('charge'),

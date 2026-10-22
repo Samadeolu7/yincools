@@ -1,6 +1,7 @@
 package com.java.yincools.web;
 
 import com.java.yincools.domain.JobService;
+import com.java.yincools.domain.VehicleService;
 import com.java.yincools.domain.model.Customer;
 import com.java.yincools.domain.model.Job;
 import com.java.yincools.domain.model.WorkType;
@@ -56,6 +57,7 @@ public class JobController {
                              @RequestParam(required = false) Long vehicleId,
                              @RequestParam(required = false) String vehicleDescription,
                              @RequestParam(required = false) String vehiclePlateNumber,
+                             @RequestParam(required = false) String mileage,
                              @RequestParam(defaultValue = "false") boolean sharedPartsCost,
                              @RequestParam(defaultValue = "false") boolean creditSupplier,
                              @RequestParam WorkType workType,
@@ -72,9 +74,10 @@ public class JobController {
                 vehicleId,
                 hasCustomer ? vehicleDescription : null,
                 hasCustomer ? vehiclePlateNumber : null,
-                hasCustomer ? null : vehicleDescription,
+                hasCustomer ? null : VehicleService.noteWithPlate(vehicleDescription, vehiclePlateNumber),
                 workType, charge, logAsSharedCost ? BigDecimal.ZERO : partsCost, partsNote, paid,
                 logAsSharedCost ? null : partsSupplier);
+        jobService.updateMileage(job.getId(), mileage);
 
         if (logAsSharedCost) {
             jobService.recordSharedPartsCost(job.getCustomerId(), partsCost, partsNote, partsSupplier);
@@ -97,6 +100,7 @@ public class JobController {
 
     @PostMapping("/{id}/edit")
     public String editJob(@PathVariable Long id,
+                           @RequestParam(required = false) String mileage,
                            @RequestParam BigDecimal charge,
                            @RequestParam(required = false) BigDecimal partsCost,
                            @RequestParam(required = false) BigDecimal paid,
@@ -104,6 +108,7 @@ public class JobController {
         String partsSupplier = creditSupplier && StringUtils.hasText(creditSupplierName) ? creditSupplierName : null;
         jobService.editJob(id, charge, partsCost == null ? BigDecimal.ZERO : partsCost, partsSupplier);
         jobService.recordPayment(id, paid == null ? BigDecimal.ZERO : paid);
+        jobService.updateMileage(id, mileage);
         return "redirect:/jobs/" + id + "/receipt";
     }
 
@@ -118,7 +123,8 @@ public class JobController {
         Job job = jobService.get(id);
         Customer customer = jobService.customerFor(job).orElse(null);
         String vehicleLabel = jobService.vehicleLabelFor(job);
-        String receiptText = buildReceiptText(job, customer, vehicleLabel);
+        String vehiclePlateNumber = jobService.vehiclePlateFor(job);
+        String receiptText = buildReceiptText(job, customer, vehicleLabel, vehiclePlateNumber);
 
         model.addAttribute("job", job);
         model.addAttribute("customer", customer);
@@ -127,7 +133,7 @@ public class JobController {
         return "receipt";
     }
 
-    private String buildReceiptText(Job job, Customer customer, String vehicleLabel) {
+    private String buildReceiptText(Job job, Customer customer, String vehicleLabel, String vehiclePlateNumber) {
         StringBuilder sb = new StringBuilder();
         sb.append(businessName).append(" Job Receipt\n");
         sb.append(job.getDate()).append("\n");
@@ -136,6 +142,12 @@ public class JobController {
         }
         if (StringUtils.hasText(vehicleLabel)) {
             sb.append("Vehicle: ").append(vehicleLabel).append("\n");
+        }
+        if (StringUtils.hasText(vehiclePlateNumber)) {
+            sb.append("Plate: ").append(vehiclePlateNumber).append("\n");
+        }
+        if (StringUtils.hasText(job.getMileage())) {
+            sb.append("Mileage: ").append(job.getMileage()).append("\n");
         }
         sb.append("Work: ").append(job.getWorkType()).append("\n");
         sb.append("Charge: NGN ").append(job.getCachedCharge()).append("\n");

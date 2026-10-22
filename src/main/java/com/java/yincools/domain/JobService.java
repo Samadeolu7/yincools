@@ -170,6 +170,14 @@ public class JobService {
     }
 
     @Transactional
+    public void updateMileage(Long jobId, String mileage) {
+        Job job = jobRepo.findById(jobId)
+                .orElseThrow(() -> new IllegalArgumentException("No job with id " + jobId));
+        job.setMileage(StringUtils.hasText(mileage) ? mileage.trim() : null);
+        jobRepo.save(job);
+    }
+
+    @Transactional
     public void voidJob(Long jobId) {
         Job job = jobRepo.findById(jobId)
                 .orElseThrow(() -> new IllegalArgumentException("No job with id " + jobId));
@@ -210,6 +218,14 @@ public class JobService {
     /** The vehicle's description if it has a persisted Vehicle, else the free-text walk-in note, else null. */
     public String vehicleLabelFor(Job job) {
         return vehicleService.labelFor(job.getVehicleId(), job.getVehicleNote());
+    }
+
+    /** The vehicle's plate number if it has a persisted Vehicle, else null -- a walk-in's plate rides in vehicleNote instead. */
+    public String vehiclePlateFor(Job job) {
+        if (job.getVehicleId() == null) {
+            return null;
+        }
+        return vehicleService.findById(job.getVehicleId()).map(Vehicle::getPlateNumber).orElse(null);
     }
 
     public Optional<Job> lastJob() {

@@ -21,13 +21,14 @@ public class CustomerService {
 
     public Long resolveOrCreate(String name, String phone) {
         boolean hasName = StringUtils.hasText(name);
-        boolean hasPhone = StringUtils.hasText(phone);
+        String normalizedPhone = normalizePhone(phone);
+        boolean hasPhone = normalizedPhone != null;
         if (!hasName && !hasPhone) {
             return null;
         }
 
         if (hasPhone) {
-            Optional<Customer> existing = customerRepo.findByPhone(phone);
+            Optional<Customer> existing = customerRepo.findByPhone(normalizedPhone);
             if (existing.isPresent()) {
                 return existing.get().getId();
             }
@@ -35,7 +36,7 @@ public class CustomerService {
 
         Customer customer = new Customer();
         customer.setName(name);
-        customer.setPhone(phone);
+        customer.setPhone(normalizedPhone);
         return customerRepo.save(customer).getId();
     }
 
@@ -44,6 +45,25 @@ public class CustomerService {
     }
 
     public Optional<Customer> findByPhone(String phone) {
-        return customerRepo.findByPhone(phone);
+        return customerRepo.findByPhone(normalizePhone(phone));
+    }
+
+    /**
+     * "0803...", "+234 803..." and "234-803..." are the same number typed
+     * three different ways -- without this they silently became three
+     * different Customer rows, each with its own vehicle history and debt.
+     * Converges everything to the local "0..." form (what's already typed
+     * most of the time), stripped of spaces/dashes/parens. Doesn't rewrite
+     * phone numbers already stored before this normalization existed.
+     */
+    private static String normalizePhone(String phone) {
+        if (!StringUtils.hasText(phone)) {
+            return null;
+        }
+        String digits = phone.replaceAll("[^0-9]", "");
+        if (digits.length() == 13 && digits.startsWith("234")) {
+            digits = "0" + digits.substring(3);
+        }
+        return digits.isEmpty() ? null : digits;
     }
 }

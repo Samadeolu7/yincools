@@ -40,6 +40,9 @@ public class Job {
 
     private LocalDate date;
 
+    /** Free text (e.g. "120,000 km") shown on the receipt. */
+    private String mileage;
+
     private BigDecimal cachedCharge;
 
     private BigDecimal cachedPaid;

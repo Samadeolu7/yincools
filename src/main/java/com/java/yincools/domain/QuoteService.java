@@ -111,14 +111,6 @@ public class QuoteService {
         return quote;
     }
 
-    /** With no customer there's no Vehicle row to hold the plate, so it rides along in the free-text note. */
-    public static String noteWithPlate(String description, String plate) {
-        if (!StringUtils.hasText(plate)) {
-            return description;
-        }
-        return StringUtils.hasText(description) ? description + " (" + plate.trim() + ")" : plate.trim();
-    }
-
     @Transactional
     public void updateMileage(Long quoteId, String mileage) {
         Quote quote = get(quoteId);
@@ -182,6 +174,7 @@ public class QuoteService {
 
         quote.setConvertedToJobId(job.getId());
         quoteRepo.save(quote);
+        jobService.updateMileage(job.getId(), quote.getMileage());
         return job;
     }
 

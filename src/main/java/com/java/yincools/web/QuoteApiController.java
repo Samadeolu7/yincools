@@ -2,6 +2,7 @@ package com.java.yincools.web;
 
 import com.java.yincools.domain.QuotePartLine;
 import com.java.yincools.domain.QuoteService;
+import com.java.yincools.domain.VehicleService;
 import com.java.yincools.domain.model.Quote;
 import com.java.yincools.domain.model.WorkType;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +40,7 @@ public class QuoteApiController {
                 req.vehicleId(),
                 hasCustomer ? req.vehicleDescription() : null,
                 hasCustomer ? req.vehiclePlateNumber() : null,
-                hasCustomer ? null : QuoteService.noteWithPlate(req.vehicleDescription(), req.vehiclePlateNumber()),
+                hasCustomer ? null : VehicleService.noteWithPlate(req.vehicleDescription(), req.vehiclePlateNumber()),
                 req.workType(), items);
         quoteService.updateMileage(quote.getId(), req.mileage());
 
