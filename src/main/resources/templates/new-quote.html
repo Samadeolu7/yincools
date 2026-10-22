@@ -37,6 +37,9 @@
     <label for="customerPhone">Customer phone (optional)</label>
     <input type="tel" inputmode="tel" id="customerPhone" name="customerPhone" onchange="lookupVehicles(this.value)">
 
+    <label for="mileage">Mileage (optional)</label>
+    <input type="text" inputmode="numeric" id="mileage" name="mileage" placeholder="e.g. 120,000 km">
+
     <label for="vehicleDescription">Vehicle (optional)</label>
     <div id="vehiclePicker" class="chip-row" style="display:none;"></div>
     <input type="text" id="vehicleDescription" name="vehicleDescription" list="vehicle-suggestions"

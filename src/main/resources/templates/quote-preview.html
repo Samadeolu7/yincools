@@ -116,8 +116,8 @@
                     <span class="quote-doc-detail-value" th:text="${vehiclePlateNumber}"></span>
                 </div>
                 <div class="quote-doc-detail-row">
-                    <span class="quote-doc-detail-label">Phone:</span>
-                    <span class="quote-doc-detail-value" th:text="${customer != null and customer.phone != null and !customer.phone.isEmpty()} ? ${customer.phone} : '—'"></span>
+                    <span class="quote-doc-detail-label">Mileage:</span>
+                    <span class="quote-doc-detail-value" th:text="${quote.mileage != null and !quote.mileage.isEmpty()} ? ${quote.mileage} : '—'"></span>
                 </div>
             </div>
             <div class="quote-doc-info-col quote-doc-info-col-right">

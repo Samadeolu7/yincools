@@ -111,6 +111,21 @@ public class QuoteService {
         return quote;
     }
 
+    /** With no customer there's no Vehicle row to hold the plate, so it rides along in the free-text note. */
+    public static String noteWithPlate(String description, String plate) {
+        if (!StringUtils.hasText(plate)) {
+            return description;
+        }
+        return StringUtils.hasText(description) ? description + " (" + plate.trim() + ")" : plate.trim();
+    }
+
+    @Transactional
+    public void updateMileage(Long quoteId, String mileage) {
+        Quote quote = get(quoteId);
+        quote.setMileage(StringUtils.hasText(mileage) ? mileage.trim() : null);
+        quoteRepo.save(quote);
+    }
+
     private void saveItems(Long quoteId, List<QuotePartLine> items) {
         for (QuotePartLine line : items) {
             if (!StringUtils.hasText(line.partName()) || line.amount() == null) {

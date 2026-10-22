@@ -39,8 +39,9 @@ public class QuoteApiController {
                 req.vehicleId(),
                 hasCustomer ? req.vehicleDescription() : null,
                 hasCustomer ? req.vehiclePlateNumber() : null,
-                hasCustomer ? null : req.vehicleDescription(),
+                hasCustomer ? null : QuoteService.noteWithPlate(req.vehicleDescription(), req.vehiclePlateNumber()),
                 req.workType(), items);
+        quoteService.updateMileage(quote.getId(), req.mileage());
 
         return new QuoteResponse(quote.getId());
     }
@@ -52,6 +53,7 @@ public class QuoteApiController {
             Long vehicleId,
             String vehicleDescription,
             String vehiclePlateNumber,
+            String mileage,
             WorkType workType,
             List<QuotePartLine> items
     ) {

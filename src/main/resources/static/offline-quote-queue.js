@@ -149,6 +149,7 @@
             vehicleId: field('vehicleId') ? Number(field('vehicleId')) : null,
             vehicleDescription: field('vehicleDescription'),
             vehiclePlateNumber: field('vehiclePlateNumber'),
+            mileage: field('mileage'),
             workType: field('workType'),
             items: items
         };

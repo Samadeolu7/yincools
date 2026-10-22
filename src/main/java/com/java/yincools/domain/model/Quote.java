@@ -44,6 +44,9 @@ public class Quote {
 
     private LocalDate date;
 
+    /** Free text (e.g. "120,000 km") shown on the quote document. */
+    private String mileage;
+
     /** Null until accepted; set by "Convert to Job". */
     private Long convertedToJobId;
 

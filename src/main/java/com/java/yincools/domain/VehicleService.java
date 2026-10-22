@@ -16,7 +16,16 @@ public class VehicleService {
     private final VehicleRepository vehicleRepo;
 
     public Vehicle findOrCreate(Long customerId, String description, String plateNumber) {
-        return vehicleRepo.findByCustomerIdAndDescription(customerId, description)
+        Optional<Vehicle> existing = vehicleRepo.findByCustomerIdAndDescription(customerId, description);
+        if (existing.isPresent()) {
+            Vehicle vehicle = existing.get();
+            if (StringUtils.hasText(plateNumber) && !plateNumber.trim().equals(vehicle.getPlateNumber())) {
+                vehicle.setPlateNumber(plateNumber.trim());
+                return vehicleRepo.save(vehicle);
+            }
+            return vehicle;
+        }
+        return Optional.<Vehicle>empty()
                 .orElseGet(() -> {
                     Vehicle vehicle = new Vehicle();
                     vehicle.setCustomerId(customerId);

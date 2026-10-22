@@ -55,6 +55,7 @@ public class QuoteController {
                                @RequestParam(required = false) Long vehicleId,
                                @RequestParam(required = false) String vehicleDescription,
                                @RequestParam(required = false) String vehiclePlateNumber,
+                               @RequestParam(required = false) String mileage,
                                @RequestParam WorkType workType,
                                @RequestParam(required = false) String partsJson) throws Exception {
         boolean hasCustomer = StringUtils.hasText(customerName) || StringUtils.hasText(customerPhone);
@@ -65,8 +66,9 @@ public class QuoteController {
                 vehicleId,
                 hasCustomer ? vehicleDescription : null,
                 hasCustomer ? vehiclePlateNumber : null,
-                hasCustomer ? null : vehicleDescription,
+                hasCustomer ? null : QuoteService.noteWithPlate(vehicleDescription, vehiclePlateNumber),
                 workType, items);
+        quoteService.updateMileage(quote.getId(), mileage);
 
         return "redirect:/quotes/" + quote.getId();
     }
@@ -81,7 +83,7 @@ public class QuoteController {
         String vehiclePlateNumber = quote.getVehicleId() != null
                 ? vehicleService.findById(quote.getVehicleId()).map(v -> v.getPlateNumber()).orElse(null)
                 : null;
-        String quoteText = buildQuoteText(quote, customer, vehicleLabel, items, total);
+        String quoteText = buildQuoteText(quote, customer, vehicleLabel, vehiclePlateNumber, items, total);
 
         model.addAttribute("quote", quote);
         model.addAttribute("quoteNumber", String.format("QT-%06d", quote.getId()));
@@ -135,6 +137,7 @@ public class QuoteController {
                              @RequestParam(required = false) Long vehicleId,
                              @RequestParam(required = false) String vehicleDescription,
                              @RequestParam(required = false) String vehiclePlateNumber,
+                             @RequestParam(required = false) String mileage,
                              @RequestParam WorkType workType,
                              @RequestParam(required = false) String partsJson) throws Exception {
         boolean hasCustomer = StringUtils.hasText(customerName) || StringUtils.hasText(customerPhone);
@@ -144,13 +147,14 @@ public class QuoteController {
                 vehicleId,
                 hasCustomer ? vehicleDescription : null,
                 hasCustomer ? vehiclePlateNumber : null,
-                hasCustomer ? null : vehicleDescription,
+                hasCustomer ? null : QuoteService.noteWithPlate(vehicleDescription, vehiclePlateNumber),
                 workType, items);
+        quoteService.updateMileage(id, mileage);
 
         return "redirect:/quotes/" + id;
     }
 
-    private String buildQuoteText(Quote quote, Customer customer, String vehicleLabel, List<QuoteItem> items, BigDecimal total) {
+    private String buildQuoteText(Quote quote, Customer customer, String vehicleLabel, String plate, List<QuoteItem> items, BigDecimal total) {
         StringBuilder sb = new StringBuilder();
         sb.append(businessName).append(" Quote\n");
         sb.append(quote.getDate()).append("\n");
@@ -159,6 +163,12 @@ public class QuoteController {
         }
         if (StringUtils.hasText(vehicleLabel)) {
             sb.append("Vehicle: ").append(vehicleLabel).append("\n");
+        }
+        if (StringUtils.hasText(plate)) {
+            sb.append("Plate: ").append(plate).append("\n");
+        }
+        if (StringUtils.hasText(quote.getMileage())) {
+            sb.append("Mileage: ").append(quote.getMileage()).append("\n");
         }
         sb.append("Work: ").append(quote.getWorkType()).append("\n\n");
         for (QuoteItem item : items) {
