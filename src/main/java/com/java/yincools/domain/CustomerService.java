@@ -54,9 +54,10 @@ public class CustomerService {
      * different Customer rows, each with its own vehicle history and debt.
      * Converges everything to the local "0..." form (what's already typed
      * most of the time), stripped of spaces/dashes/parens. Doesn't rewrite
-     * phone numbers already stored before this normalization existed.
+     * phone numbers already stored before this normalization existed --
+     * see StartupDataMigration for that.
      */
-    private static String normalizePhone(String phone) {
+    public static String normalizePhone(String phone) {
         if (!StringUtils.hasText(phone)) {
             return null;
         }

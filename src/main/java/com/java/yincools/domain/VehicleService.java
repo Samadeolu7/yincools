@@ -50,8 +50,10 @@ public class VehicleService {
      * Uppercased, stripped of everything but letters/digits, so "abc 123"
      * and "ABC-123" are recognized as the same plate instead of silently
      * creating two different vehicles (or two different walk-in notes).
+     * Doesn't rewrite plates already stored before this normalization
+     * existed -- see StartupDataMigration for that.
      */
-    private static String normalizePlate(String plate) {
+    public static String normalizePlate(String plate) {
         if (!StringUtils.hasText(plate)) {
             return null;
         }
